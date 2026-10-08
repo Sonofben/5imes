@@ -41,6 +41,27 @@ Every company starts with a 14-day Pro trial.
 - **Attendance rows are append-only from the client.** There are no insert or update policies, so rows are written only by `check_in()`.
 - **Plan limits are enforced in the database:** office count, radius, and the manager role.
 
+## Tests
+
+GitHub runs these automatically on every push. Results show under the repo's **Actions** tab, and as a ✅ or ❌ next to each commit.
+
+- **Database rules** (`supabase/tests/10_attendance_rules.sql`, 37 checks). The suite covers:
+  - Gmail blocking
+  - invites and approvals
+  - office and home check-in, plus flags
+  - staff unable to tamper with records
+  - one company unable to see another's data
+  - Basic-plan limits
+  - trial expiry
+- **Lint, type-check and production build** of the app.
+
+To run the database tests yourself, use a **throwaway** Postgres 16. Never run them against your real Supabase project.
+```bash
+cd supabase
+psql -v ON_ERROR_STOP=1 -f tests/00_supabase_stub.sql -f migrations/0001_init.sql -f tests/10_attendance_rules.sql
+```
+Each check prints `PASS: …` and the run ends with `✅ ALL DATABASE TESTS PASSED`. The first failure stops with `FAIL: …`.
+
 ## Local development
 
 ```bash
