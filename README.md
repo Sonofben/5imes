@@ -12,7 +12,7 @@
   - Postgres with row-level security gives multi-tenancy: every row carries `org_id`, and policies keep companies apart.
   - Supabase Auth handles sign-in by Microsoft, Google, or a magic link to a company email.
 - **Payments:** Paystack (NGN), routed to a subaccount.
-- **Hosting:** Contabo VPS with PM2 and Nginx. See **[DEPLOY.md](DEPLOY.md)**.
+- **Hosting:** Docker container on the shared Contabo VPS, behind the host's Nginx. See **[DEPLOY.md](DEPLOY.md)**.
 
 ## Plans
 

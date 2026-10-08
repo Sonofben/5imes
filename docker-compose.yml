@@ -1,0 +1,27 @@
+# 5ime on the shared VPS.
+# - Listens ONLY on 127.0.0.1:3005 — the host's Nginx is the single public front door.
+# - Memory/CPU capped so it can never starve other apps (e.g. CACTS) on the same server.
+# Usage (in this folder, with a filled-in .env):  docker compose up -d --build
+name: fivetime
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    image: fivetime-web:latest
+    container_name: fivetime-web
+    env_file: .env
+    ports:
+      - "127.0.0.1:3005:3000"
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
