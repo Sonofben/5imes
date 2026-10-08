@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 5ime
 
-## Getting Started
+> Work from anywhere, 5 days, on time.
 
-First, run the development server:
+5ime is hybrid-work attendance SaaS. Staff check in by GPS at their approved **office** or approved **home**, and the system checks that against each day's schedule. Companies pay per person per month in naira.
+
+## Stack
+
+- **App:** Next.js 15 (App Router), installable on phones as a PWA.
+- **Styling:** Tailwind v4.
+- **Data and sign-in:** Supabase.
+  - Postgres with row-level security gives multi-tenancy: every row carries `org_id`, and policies keep companies apart.
+  - Supabase Auth handles sign-in by Microsoft, Google, or a magic link to a company email.
+- **Payments:** Paystack (NGN), routed to a subaccount.
+- **Hosting:** Contabo VPS with PM2 and Nginx. See **[DEPLOY.md](DEPLOY.md)**.
+
+## Plans
+
+Both plans are priced per person per month.
+
+| | Basic ₦250 | Pro ₦500 |
+|---|---|---|
+| **Offices** | 1 | Unlimited |
+| **Check-in radius** | Fixed 200m | Custom per location |
+| **Schedules** | Company-wide | Per person |
+| **Manager role** | — | ✓ |
+| **History** | 30 days | Unlimited |
+
+Every company starts with a 14-day Pro trial.
+
+## How the rules work (`supabase/migrations/0001_init.sql`)
+
+- **Company email only.** Personal domains (Gmail, Yahoo, Outlook.com, etc.) can't create or join a company. The first admin's domain becomes the company domain.
+- **Joining.** Invited people become active on first sign-in. Anyone else with the company domain who signs in waits as *pending* until an admin approves them.
+- **Home location.** Staff pin it once, from home, and an admin approves it. Changing it needs approval again; the old home location stays valid until the new one is approved.
+- **Check-in rules.** `check_in()` runs on the database server, so the browser can't fake the result. It:
+  - finds the nearest office within its radius, otherwise the approved home within the home radius;
+  - compares that place with the day's schedule;
+  - sets flags: late, early exit, out of range, wrong location, weak GPS, non-working day;
+  - stores IP and device.
+- **Attendance rows are append-only from the client.** There are no insert or update policies, so rows are written only by `check_in()`.
+- **Plan limits are enforced in the database:** office count, radius, and the manager role.
+
+## Local development
 
 ```bash
+cp .env.example .env.local   # fill in Supabase keys
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**GPS needs HTTPS.** On localhost it works in desktop browsers. To test on a phone, deploy, or tunnel with HTTPS.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Known limits / v2
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Browser GPS can be spoofed by a determined user. 5ime reduces this with accuracy checks, IP and device logging, and flags. Planned stronger options: selfie check-in and native apps.
+- Planned features:
+  - Microsoft/Google directory sync
+  - leave management
+  - payroll export
+  - automatic recurring billing (Paystack authorization charge)
+  - daily email summaries
+  - Excel/PDF reports

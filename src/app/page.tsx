@@ -1,103 +1,115 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Logo } from "@/components/Logo";
+import { BRAND, PLANS, TRIAL_DAYS, naira } from "@/lib/constants";
+
+const steps = [
+  { n: "01", t: "Set your office", d: "Drop a pin on your office. Pro companies add every branch with its own radius." },
+  { n: "02", t: "Staff pin home once", d: "Each person pins their home from home. You approve it — it can’t be changed without you." },
+  { n: "03", t: "Check in from the right place", d: "One tap on the phone. 5ime checks they’re at the office or home on the right day." },
+];
+
+const features = [
+  ["Work email only", "Sign in with Microsoft, Google Workspace or a company email. No Gmail sign-ups."],
+  ["Office + home geofences", "Check-ins only count inside the approved office or approved home."],
+  ["Hybrid schedules", "Set office days and home days. Wrong place, wrong day gets flagged."],
+  ["Late & early flags", "Set work hours and grace time. Lateness and early exits are tracked automatically."],
+  ["Live dashboard", "See who’s in, where, right now — refreshed every minute."],
+  ["Excel-ready reports", "Days present, office vs home, late days and hours. Download as CSV."],
+];
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main>
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
+        <Logo />
+        <nav className="flex items-center gap-2">
+          <a href="#pricing" className="btn-ghost btn-sm hidden sm:inline-flex">Pricing</a>
+          <Link href="/login" className="btn-primary btn-sm">Sign in</Link>
+        </nav>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <section className="mx-auto max-w-6xl px-4 pb-20 pt-12 sm:pt-20">
+        <div className="max-w-3xl">
+          <p className="chip mb-5 bg-brand/15 text-brand-dark">Attendance for hybrid teams</p>
+          <h1 className="text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
+            Work from anywhere.
+            <br />
+            <span className="text-brand">5 days,</span> on time.
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-muted">
+            {BRAND.name} is the simple way to know your team is working — at the office on office days, at home on home
+            days. GPS check-in from any phone, no app store needed.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/login" className="btn-brand px-6 py-3 text-base">Start {TRIAL_DAYS}-day free trial</Link>
+            <a href="#how" className="btn-ghost px-6 py-3 text-base">How it works</a>
+          </div>
+          <p className="mt-3 text-sm text-muted">From {naira(PLANS.basic.pricePerSeat)} per person per month. No card to start.</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </section>
+
+      <section id="how" className="bg-ink py-20 text-white">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="text-3xl font-bold">Live in an afternoon</h2>
+          <div className="mt-10 grid gap-8 md:grid-cols-3">
+            {steps.map((s) => (
+              <div key={s.n}>
+                <div className="text-sm font-bold text-brand">{s.n}</div>
+                <h3 className="mt-2 text-xl font-bold">{s.t}</h3>
+                <p className="mt-2 text-white/70">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-20">
+        <h2 className="text-3xl font-bold">Everything a hybrid office needs. Nothing it doesn’t.</h2>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map(([t, d]) => (
+            <div key={t} className="card">
+              <h3 className="font-bold">{t}</h3>
+              <p className="mt-1 text-sm text-muted">{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="pricing" className="border-t border-line bg-white py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="text-3xl font-bold">Simple pricing, in naira</h2>
+          <p className="mt-2 text-muted">Per person, per month. Same price whether you have 5 people or 500.</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            {Object.values(PLANS).map((p) => (
+              <div key={p.id} className={`card ${p.id === "pro" ? "border-ink ring-1 ring-ink" : ""}`}>
+                <div className="flex items-baseline justify-between">
+                  <h3 className="text-2xl font-bold">{p.name}</h3>
+                  {p.id === "pro" && <span className="chip bg-brand text-white">Most popular</span>}
+                </div>
+                <p className="text-sm text-muted">{p.blurb}</p>
+                <div className="my-5">
+                  <span className="text-4xl font-extrabold">{naira(p.pricePerSeat)}</span>
+                  <span className="text-muted"> /person/month</span>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {p.features.map((f) => <li key={f}>✓ {f}</li>)}
+                </ul>
+                <Link href="/login" className={`${p.id === "pro" ? "btn-brand" : "btn-primary"} mt-6 w-full`}>
+                  Start free trial
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-sm text-muted">
+            Every company starts with a {TRIAL_DAYS}-day free trial of Pro. Pay monthly by card, transfer or USSD.
+          </p>
+        </div>
+      </section>
+
+      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-10 text-sm text-muted">
+        <Logo />
+        <span>© {new Date().getFullYear()} {BRAND.name}. {BRAND.tagline}</span>
       </footer>
-    </div>
+    </main>
   );
 }
