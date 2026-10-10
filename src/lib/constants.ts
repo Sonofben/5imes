@@ -1,7 +1,7 @@
 export const BRAND = {
   name: "5ime",
   altName: "fivetime",
-  tagline: "Your schedule. Your approved workplace. On time.",
+  tagline: "Work from anywhere, 5 days, on time.",
   supportEmail: "support@5ime.ng",
 };
 
@@ -32,10 +32,10 @@ export const PLANS = {
       "Unlimited office locations / branches",
       "Custom check-in radius per location",
       "Per-person office/home schedules",
-      "Manager role, departments & teams",
-      "Device, IP & GPS-accuracy anomaly flags",
+      "Manager role, with staff grouped by team",
+      "Weak-GPS flags, plus device & IP records for admins",
       "Unlimited history, attendance reporting & CSV export",
-      "Priority WhatsApp & email support",
+      "Faster support by WhatsApp & email",
     ],
   },
 } as const;
