@@ -12,12 +12,16 @@ const CYCLE_OPTIONS: { id: BillingCycleId; label: string }[] = [
 ];
 
 export function PlanCheckoutCard({
-  plan, minSeats, defaultCycle, enabled,
+  plan, minSeats, defaultCycle, enabled, allowAutoRenew = true, payAheadUntil,
 }: {
   plan: { id: PlanId; name: string; pricePerSeat: number; blurb: string; features: readonly string[] };
   minSeats: number;
   defaultCycle: BillingCycleId;
   enabled: boolean;
+  /** Auto-renew can only be chosen when no paid term is running. */
+  allowAutoRenew?: boolean;
+  /** When set, this checkout books the next term starting on this date. */
+  payAheadUntil?: string;
 }) {
   const [cycle, setCycle] = useState<BillingCycleId>(defaultCycle);
   const [seats, setSeats] = useState(minSeats);
@@ -37,6 +41,14 @@ export function PlanCheckoutCard({
           <div><label className="label" htmlFor={`${plan.id}-cycle`}>Billing period</label><select id={`${plan.id}-cycle`} name="cycle" className="input" value={cycle} onChange={(event) => setCycle(event.target.value as BillingCycleId)}>{CYCLE_OPTIONS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div>
           <div><label className="label" htmlFor={`${plan.id}-seats`}>Seats to purchase</label><input id={`${plan.id}-seats`} name="seats" type="number" min={minSeats} max={10000} required className="input tabular-nums" value={safeSeats} onChange={(event) => setSeats(Number(event.target.value))}/><p className="mt-1 text-[11px] text-muted">Minimum {minSeats} active + invited</p></div>
         </div>
+        {allowAutoRenew ? (
+          <label className="flex items-start gap-3 rounded-xl border border-line p-3 text-sm">
+            <input type="checkbox" name="auto_renew" className="mt-0.5 h-4 w-4" />
+            <span><b>Renew automatically</b> (optional). Paystack charges this card every {months === 1 ? "month" : `${months} months`} until you turn it off. Leave unticked to pay each term yourself — we&apos;ll remind you before it ends.</span>
+          </label>
+        ) : (
+          <p className="rounded-xl bg-paper p-3 text-xs leading-5 text-muted">One-off payment — nothing is charged automatically.{payAheadUntil ? ` This new term starts when your current term ends (${payAheadUntil}).` : ""}</p>
+        )}
         <div className="rounded-xl border border-line bg-[#fafbf9] p-4">
           <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
         </div>

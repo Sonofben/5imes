@@ -26,6 +26,8 @@ test("seat additions are prorated only for the exact remaining part of the curre
   assert.equal(proratedSeatAmountKobo(250, 1, "quarterly", "2026-01-01T00:00:00Z", "2026-04-01T00:00:00Z", "2026-03-02T00:00:00Z"), 25_000);
   assert.equal(proratedSeatAmountKobo(250, 2, "quarterly", "2026-01-01T00:00:00Z", "2026-04-01T00:00:00Z", "2026-03-02T00:00:00Z"), 50_000);
   assert.throws(() => proratedSeatAmountKobo(250, 1, "monthly", "2026-01-01T00:00:00Z", "2026-02-01T00:00:00Z", "2026-02-01T00:00:00Z"), /active billing period/);
+  // Pay-ahead term not started yet: the whole upcoming term is charged.
+  assert.equal(proratedSeatAmountKobo(250, 1, "quarterly", "2026-04-01T00:00:00Z", "2026-07-01T00:00:00Z", "2026-03-02T00:00:00Z"), 75_000);
 });
 
 test("CSV parser handles quoted commas, escaped quotes, CRLF and multiline names", () => {

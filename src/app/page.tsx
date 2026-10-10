@@ -97,7 +97,7 @@ export default function Home() {
             <div className="mt-5 border-t border-line pt-4"><p className="eyebrow">Upfront price per seat</p><div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">{cycles.map((cycle) => <div key={cycle.label} className="rounded-xl border border-line bg-white px-3 py-2.5"><p className="text-[10px] font-semibold uppercase tracking-wide text-muted">{cycle.label}</p><p className="mt-1 text-sm font-bold tabular-nums">{naira(plan.pricePerSeat * cycle.months)}</p><p className="text-[10px] text-muted">{cycle.months} month{cycle.months === 1 ? "" : "s"}</p></div>)}</div></div>
             <Link href="/login" className={`${plan.id === "pro" ? "btn-brand" : "btn-primary"} mt-5 w-full`}>{plan.id === "pro" ? "Start Pro trial" : "Start trial · choose Basic after"}</Link>
           </article>)}</div>
-          <p className="mt-5 text-xs leading-5 text-muted">For example, 10 Basic seats are ₦2,500 monthly or ₦7,500 quarterly. Biannually means 6 months (₦15,000 for 10 Basic seats); yearly means 12 months (₦30,000). Totals are seats × per-seat monthly price × months. Paystack handles recurring renewals after checkout; cancel any time and retain access through the paid term.</p>
+          <p className="mt-5 text-xs leading-5 text-muted">For example, 10 Basic seats are ₦2,500 monthly or ₦7,500 quarterly. Biannually means 6 months (₦15,000 for 10 Basic seats); yearly means 12 months (₦30,000). Totals are seats × per-seat monthly price × months. Pay per term with Paystack (card, bank transfer or USSD). Nothing renews automatically unless you choose to; we remind you before your term ends.</p>
         </div>
       </section>
 

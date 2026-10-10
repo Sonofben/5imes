@@ -92,6 +92,3 @@ select test.blocked($$select replace_schedule(current_setting('test.other_org'):
 select test.blocked($$select replace_schedule(null, null, '[{"weekday":1,"mode":"off"}]'::jsonb)$$,
                     'Only this company', 'Schedule change with no company is refused');
 
-\o
-\echo ''
-\echo '✅ ALL DATABASE TESTS PASSED'

@@ -23,7 +23,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       const days = Math.ceil((new Date(sub.trial_ends_at).getTime() - now) / 86400000);
       banner = days > 0 ? <>Your Pro trial has <b>{days} day{days === 1 ? "" : "s"}</b> left.</> : <>Your trial has ended. Choose a plan to restore check-ins.</>;
     } else if (sub.current_period_end && new Date(sub.current_period_end).getTime() < now) {
-      banner = <>Your subscription has expired. Renew to keep check-ins working.</>;
+      banner = <>Your paid term has ended. Pay for a new term to keep check-ins working.</>;
+    } else if (sub.status === "active" && sub.current_period_end && !(sub.paystack_subscription_code && !sub.cancel_at_period_end)) {
+      // Pay-per-term reminder: nothing renews automatically, so warn a week ahead.
+      const days = Math.ceil((new Date(sub.current_period_end).getTime() - now) / 86400000);
+      if (days <= 7) banner = <>Your paid term ends in <b>{days} day{days === 1 ? "" : "s"}</b>. Nothing is charged automatically — pay for the next term to avoid interruption.</>;
     }
   }
 

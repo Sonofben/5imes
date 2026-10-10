@@ -28,11 +28,13 @@ export function proratedSeatAmountKobo(
   const start = timestamp(periodStart);
   const end = timestamp(periodEnd);
   const now = timestamp(at);
-  if (![start, end, now].every(Number.isFinite) || end <= start || now < start || now >= end) {
+  if (![start, end, now].every(Number.isFinite) || end <= start || now >= end) {
     throw new Error("A valid active billing period is required.");
   }
+  // A term paid ahead has not started yet: added seats cost the whole upcoming term.
+  const from = Math.max(now, start);
   const fullTerm = billingAmountKobo(pricePerSeatNaira, addedSeats, cycle);
-  const prorated = Math.round(fullTerm * (end - now) / (end - start));
+  const prorated = Math.round(fullTerm * (end - from) / (end - start));
   return Math.max(1, prorated);
 }
 

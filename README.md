@@ -9,7 +9,7 @@
 - **App:** Next.js 16 App Router, installable on phones as a PWA.
 - **Styling:** Tailwind CSS v4.
 - **Data and sign-in:** Supabase Auth and Postgres with row-level security.
-- **Payments:** Paystack recurring plans in NGN.
+- **Payments:** Paystack in NGN. Pay per term by default (no automatic charge); automatic card renewal is opt-in.
 - **Hosting:** Docker container on the shared Contabo VPS, behind the host's Nginx. See [DEPLOY.md](DEPLOY.md).
 
 ## Plans and billing
@@ -26,7 +26,7 @@ Active and invited people share the paid-seat limit. An admin can add capacity d
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and enter the Supabase Project URL, public anon or `sb_publishable_` key, and server-only service-role key.
-2. In Supabase SQL Editor, apply `supabase/migrations/0001_init.sql`, then `0002_security_billing_attendance.sql`, then `0003_payment_history_attendance_corrections.sql`, then `0004_attendance_device_privacy.sql`, in that order. This repository currently uses direct SQL application and has no Supabase CLI project config or migration-history baseline. If you later adopt `supabase db push`, set up and reconcile the CLI migration history first; do not replay these files as unrecorded migrations. Migration 0002 includes tenant and seat enforcement, private location storage, overnight attendance, and payment ledgers; migration 0003 adds employee correction requests and audited manager decisions; migration 0004 restricts employees' IP/device details to admins.
+2. In Supabase SQL Editor, apply `supabase/migrations/0001_init.sql`, then `0002_security_billing_attendance.sql`, then `0003_payment_history_attendance_corrections.sql`, then `0004_attendance_device_privacy.sql`, then `0005_pay_per_term.sql`, in that order. This repository currently uses direct SQL application and has no Supabase CLI project config or migration-history baseline. If you later adopt `supabase db push`, set up and reconcile the CLI migration history first; do not replay these files as unrecorded migrations. Migration 0002 includes tenant and seat enforcement, private location storage, overnight attendance, and payment ledgers; migration 0003 adds employee correction requests and audited manager decisions; migration 0004 restricts employees' IP/device details to admins.
 3. Install and run:
 
    ```bash

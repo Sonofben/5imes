@@ -166,6 +166,8 @@ export async function applyPayment(tx: PaidTx): Promise<PaymentResult> {
   if (error) return { ok: false, reason: error.message };
   const result = (data ?? { ok: false, reason: "No payment result returned." }) as PaymentResult;
   if (!result.ok || payment?.kind !== "seat_increase" || tx.status !== "success") return result;
+  // Pay-per-term organizations have no Paystack plan to update.
+  if (!payment.paystack_plan_code) return { ok: true, reason: "paid seats are active" };
   if (payment.status === "applied" && payment.renewal_sync_status === "synced") return result;
 
   // Paid seat capacity is committed before this idempotent provider update. If Paystack is

@@ -37,11 +37,14 @@ export async function POST(request: Request) {
 
   const reference = `5ime-${me.org_id.slice(0, 8)}-${crypto.randomUUID()}`;
   const interval = BILLING_CYCLES[cycle];
+  // Default is a one-off payment for the chosen term; automatic card renewal is opt-in.
+  const autoRenew = form.get("auto_renew") === "on";
   const { data: reservation, error: reservationError } = await supabase.rpc("prepare_paystack_subscription", {
     p_reference: reference,
     p_plan: plan,
     p_seats: seats,
     p_months: interval.months,
+    p_auto_renew: autoRenew,
   });
   if (reservationError || !reservation?.ok) {
     return back({ error: reservationError?.message ?? reservation?.reason ?? "Could not reserve this subscription checkout." });
@@ -54,15 +57,19 @@ export async function POST(request: Request) {
 
   let transactionRequestStarted = false;
   try {
-    const name = `5ime ${PLANS[plan].name} · ${seats} seats · ${interval.label} · ${me.org_id.slice(0, 8)}`.slice(0, 90);
-    const paystackPlan = await paystack<{ plan_code: string }>("/plan", {
-      method: "POST",
-      body: JSON.stringify({ name, amount, interval: interval.paystackInterval, currency: "NGN" }),
-    });
-    if (!paystackPlan.plan_code) throw new Error("Paystack did not return a recurring plan code.");
-    const { error: savePlanError } = await admin.from("payments").update({ paystack_plan_code: paystackPlan.plan_code })
-      .eq("reference", reference).eq("status", "pending");
-    if (savePlanError) throw new Error(`Could not save the Paystack plan code: ${savePlanError.message}`);
+    let planCode: string | null = null;
+    if (autoRenew) {
+      const name = `5ime ${PLANS[plan].name} · ${seats} seats · ${interval.label} · ${me.org_id.slice(0, 8)}`.slice(0, 90);
+      const paystackPlan = await paystack<{ plan_code: string }>("/plan", {
+        method: "POST",
+        body: JSON.stringify({ name, amount, interval: interval.paystackInterval, currency: "NGN" }),
+      });
+      if (!paystackPlan.plan_code) throw new Error("Paystack did not return a recurring plan code.");
+      planCode = paystackPlan.plan_code;
+      const { error: savePlanError } = await admin.from("payments").update({ paystack_plan_code: planCode })
+        .eq("reference", reference).eq("status", "pending");
+      if (savePlanError) throw new Error(`Could not save the Paystack plan code: ${savePlanError.message}`);
+    }
 
     // From this point a network failure may occur after Paystack created the transaction.
     // Keep the reservation pending until the provider's verify endpoint resolves its status.
@@ -74,7 +81,7 @@ export async function POST(request: Request) {
         amount,
         currency: "NGN",
         reference,
-        plan: paystackPlan.plan_code,
+        ...(planCode ? { plan: planCode } : {}),
         callback_url: `${base}/api/paystack/verify`,
         // Optional: route the payment to a Paystack subaccount (ACCT_...). Empty = main account.
         ...(process.env.PAYSTACK_SUBACCOUNT ? { subaccount: process.env.PAYSTACK_SUBACCOUNT } : {}),
@@ -84,6 +91,7 @@ export async function POST(request: Request) {
             { display_name: "Plan", variable_name: "plan", value: PLANS[plan].name },
             { display_name: "Seats", variable_name: "seats", value: String(seats) },
             { display_name: "Billing period", variable_name: "billing_period", value: interval.label },
+            { display_name: "Renewal", variable_name: "renewal", value: autoRenew ? "Automatic" : "Manual (no auto-charge)" },
           ],
         },
       }),

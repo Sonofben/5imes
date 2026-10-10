@@ -64,23 +64,21 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const paidPeriodActive = !!sub?.current_period_end && new Date(sub.current_period_end).getTime() > Date.now();
   const providerRenewalStillOn = !!sub?.paystack_subscription_code && !sub.cancel_at_period_end;
   const checkoutPending = !!pendingSeatChange || !!pendingSubscription;
-  const canStartNewTerm = !checkoutPending && !(
-    (paidPeriodActive && ["active", "past_due"].includes(sub?.status ?? "")) || providerRenewalStillOn ||
-    (paidPeriodActive && !!sub?.cancel_at_period_end)
-  );
+  // Pay-per-term: admins can pay for the next term at any time unless Paystack auto-renew is on.
+  const termRunning = paidPeriodActive && ["active", "past_due"].includes(sub?.status ?? "");
+  const canStartNewTerm = !checkoutPending && !providerRenewalStillOn;
   const statusText = sub?.status === "trialing"
     ? `Pro trial · access until ${accessUntil}`
     : sub?.cancel_at_period_end
       ? `Auto-renewal off · access until ${accessUntil}`
       : sub?.status === "active"
-        ? `${PLANS[sub.plan].name} · renews every ${sub.billing_interval_months} month${sub.billing_interval_months === 1 ? "" : "s"}`
+        ? providerRenewalStillOn ? `${PLANS[sub.plan].name} · renews automatically every ${sub.billing_interval_months} month${sub.billing_interval_months === 1 ? "" : "s"}` : `${PLANS[sub.plan].name} · paid until ${accessUntil}`
         : sub?.status === "past_due"
           ? `Payment needs attention · access through ${accessUntil}`
           : sub?.status ?? "No active subscription";
   const renewalEnabled = checkoutEnabled && !pendingSubscription && !!sub?.paystack_subscription_code;
-  const seatIncreaseEnabled = checkoutEnabled && !pendingSubscription && !renewalSyncPending && sub?.status === "active" && !sub.cancel_at_period_end
-    && !!sub.paystack_plan_code && !!sub.paystack_subscription_code && !!sub.current_period_start
-    && !!sub.current_period_end && new Date(sub.current_period_end).getTime() > Date.now();
+  const seatIncreaseEnabled = checkoutEnabled && !pendingSubscription && !renewalSyncPending && sub?.status === "active"
+    && !!sub.current_period_start && !!sub.current_period_end && new Date(sub.current_period_end).getTime() > Date.now();
 
   return (
     <div className="space-y-6">
@@ -89,7 +87,8 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
       <section className="card grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div><p className="eyebrow">Current subscription</p><h2 className="mt-1 text-lg font-bold">{statusText}</h2><p className="mt-1 text-sm text-muted">{sub?.status === "trialing" ? `Trial ends ${fmt(sub.trial_ends_at)}.` : sub?.status === "active" ? `Current paid period ends ${accessUntil}.` : sub?.current_period_end ? `Current access ends ${accessUntil}.` : "Your subscription details will appear here."}</p>
-          {sub?.status === "active" && !sub.cancel_at_period_end && <p className="mt-2 text-xs text-muted">Next charge: {sub.seats_paid} paid seats × {naira(PLANS[sub.plan].pricePerSeat)} × {sub.billing_interval_months} months.</p>}
+          {sub?.status === "active" && providerRenewalStillOn && <p className="mt-2 text-xs text-muted">Next automatic charge: {sub.seats_paid} paid seats × {naira(PLANS[sub.plan].pricePerSeat)} × {sub.billing_interval_months} months.</p>}
+          {sub?.status === "active" && !providerRenewalStillOn && <p className="mt-2 text-xs text-muted">Pay-per-term · nothing is charged automatically. Pay for the next term below before {accessUntil}.</p>}
         </div>
         <div className="rounded-xl bg-paper px-5 py-4 lg:min-w-40 lg:text-right"><p className="eyebrow">Active + invited seats</p><p className="mt-1 text-3xl font-bold tabular-nums">{minSeats}</p>{sub?.status === "active" && <p className="text-xs text-muted">{sub.seats_paid} paid</p>}</div>
       </section>
@@ -107,8 +106,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
       {seatIncreaseEnabled && sub?.current_period_start && sub.current_period_end && <SeatIncreaseCard paidSeats={sub.seats_paid} assignedSeats={minSeats} pricePerSeat={PLANS[sub.plan].pricePerSeat} cycle={currentCycle} periodStart={sub.current_period_start} periodEnd={sub.current_period_end} enabled={!pendingSeatChange && checkoutEnabled} />}
 
-      {canStartNewTerm ? <div className="grid gap-4 xl:grid-cols-2">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} />)}</div> : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its verified Paystack status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same Paystack transaction before starting a new subscription." : paidPeriodActive ? `Your current plan remains active until ${accessUntil}. You can select a new plan after that date; an early checkout would create mismatched renewal dates. ${sub?.cancel_at_period_end ? "Renewal is off, so seat top-ups are unavailable for this term." : seatIncreaseEnabled ? "You can add seats now using the prorated checkout above." : "Seat top-ups are unavailable until the active Paystack subscription is linked."}` : "Automatic Paystack renewal is still active. Turn it off before creating another plan."}</p></section>}
-      <p className="text-xs leading-5 text-muted">Quarterly is 3 months; biannually is 6 months; yearly is 12 months. Total = seats × monthly price per seat × months, charged upfront in naira. Paystack will show the recurring-payment methods supported for this account.</p>
+      {canStartNewTerm ? (termRunning && sub
+        ? <div className="space-y-3"><div><p className="eyebrow">Pay ahead</p><h2 className="text-lg font-bold">Pay for your next term</h2><p className="mt-1 text-sm text-muted">Your current term runs until {accessUntil}. Paying now adds the next term right after it. To change plan, wait until this term ends.</p></div><div className="max-w-xl"><PlanCheckoutCard plan={PLANS[sub.plan]} minSeats={Math.max(minSeats, sub.seats_paid)} defaultCycle={currentCycle} enabled={checkoutEnabled} allowAutoRenew={false} payAheadUntil={accessUntil} /></div></div>
+        : <div className="grid gap-4 xl:grid-cols-2">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} />)}</div>) : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its verified Paystack status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same Paystack transaction before starting a new subscription." : "Automatic renewal is on, so Paystack will charge the next term for you. Turn automatic renewal off above if you would rather pay each term yourself."}</p></section>}
+      <p className="text-xs leading-5 text-muted">Quarterly is 3 months; biannually is 6 months; yearly is 12 months. Total = seats × monthly price per seat × months, paid upfront in naira. Nothing is charged automatically unless you tick “Renew automatically”.</p>
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2"><div><p className="eyebrow">Billing records</p><h2 className="text-lg font-bold">Payment history</h2><p className="mt-1 text-sm text-muted">Latest 50 recorded payment attempts. Receipts are available for confirmed payments.</p></div></div>
