@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/site";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const base = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+  const base = siteUrl(request);
   const code = searchParams.get("code");
   const errorDesc = searchParams.get("error_description");
 

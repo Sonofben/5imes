@@ -1,42 +1,76 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #f6f4ee;
-  --color-ink: #12141a;
-  --color-muted: #6b6f78;
-  --color-line: #e3e0d6;
-  --color-brand: #ff5a1f;
-  --color-brand-dark: #e14710;
-  --color-ok: #15803d;
-  --color-warn: #b45309;
-  --color-bad: #b91c1c;
+  --color-paper: #f4f3ef;
+  --color-ink: #182126;
+  --color-muted: #68737a;
+  --color-line: #e1e5e2;
+  --color-brand: #e65b35;
+  --color-brand-dark: #bd4528;
+  --color-ok: #18794e;
+  --color-warn: #9a5b05;
+  --color-bad: #b42318;
+  --color-surface: #ffffff;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
+:root {
+  color-scheme: light;
+  --shadow-card: 0 1px 2px rgb(24 33 38 / 4%), 0 8px 24px rgb(24 33 38 / 3%);
+}
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+::selection { background: rgb(230 91 53 / 18%); }
+:focus-visible { outline: 3px solid rgb(230 91 53 / 70%); outline-offset: 2px; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; }
+
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55;
 }
 
 @layer components {
-  .btn-primary { @apply btn bg-ink text-white hover:bg-black; }
-  .btn-brand { @apply btn bg-brand text-white hover:bg-brand-dark; }
-  .btn-ghost { @apply btn border border-line bg-white text-ink hover:bg-paper; }
-  .btn-sm { @apply px-3 py-1.5 text-xs rounded-lg; }
-  .card { @apply rounded-2xl border border-line bg-white p-5; }
+  .btn-primary { @apply btn bg-ink text-white hover:bg-[#26343b]; }
+  .btn-brand { @apply btn bg-brand-dark text-white hover:bg-[#a23a22]; }
+  .btn-ghost { @apply btn border border-line bg-white text-ink hover:border-[#cbd3cf] hover:bg-[#fafbf9]; }
+  .btn-sm { @apply min-h-9 rounded-lg px-3 py-1.5 text-xs; }
+  .card { @apply rounded-2xl border border-line bg-white p-5; box-shadow: var(--shadow-card); }
   .input {
-    @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm outline-none focus:border-ink focus:ring-2 focus:ring-ink/10;
+    @apply min-h-11 w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm outline-none transition;
+    @apply focus:border-brand focus:ring-4 focus:ring-brand/10;
   }
-  .label { @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted; }
-  .chip { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
-  .table { @apply w-full text-left text-sm; }
-  .table th { @apply border-b border-line px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted; }
-  .table td { @apply border-b border-line px-3 py-2.5 align-top; }
+  .label { @apply mb-1.5 block text-xs font-semibold tracking-wide text-muted; }
+  .chip { @apply inline-flex min-h-6 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .table { @apply w-full border-separate border-spacing-0 text-left text-sm; }
+  .table th { @apply sticky top-0 border-b border-line bg-[#fafbf9] px-3 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted; }
+  .table td { @apply border-b border-line px-3 py-3 align-middle; }
+  .table tbody tr:last-child td { @apply border-b-0; }
+  .table tbody tr:hover { @apply bg-[#fbfcfa]; }
+  .page-heading { @apply text-2xl font-bold tracking-tight sm:text-[1.75rem]; }
+  .page-description { @apply mt-1 max-w-3xl text-sm leading-6 text-muted; }
+  .eyebrow { @apply text-[11px] font-bold uppercase tracking-[0.12em] text-muted; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+@media print {
+  body * { visibility: hidden !important; }
+  .receipt-sheet, .receipt-sheet * { visibility: visible !important; }
+  .receipt-sheet { position: absolute; inset: 0; width: 100%; border: 0 !important; box-shadow: none !important; }
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
 }

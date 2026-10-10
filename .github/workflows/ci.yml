@@ -6,7 +6,7 @@ on:
 
 jobs:
   database-tests:
-    name: Database rules (37 checks)
+    name: Database rules (migrations 0001-0004 + security tests)
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -22,16 +22,15 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
-      - name: Apply schema and run tests
+      - name: Apply all migrations and run tests
         working-directory: supabase
         run: |
-          psql -q -v ON_ERROR_STOP=1 \
-            -f tests/00_supabase_stub.sql \
-            -f migrations/0001_init.sql \
-            -f tests/10_attendance_rules.sql
+          args="-f tests/00_supabase_stub.sql"
+          for f in migrations/*.sql tests/[1-9]*.sql; do args="$args -f $f"; done
+          psql -q -v ON_ERROR_STOP=1 $args
 
-  build:
-    name: Lint, type-check & build
+  app:
+    name: Lint, unit tests & build
     runs-on: ubuntu-latest
     env:
       NEXT_PUBLIC_SITE_URL: https://example.test
@@ -45,4 +44,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build

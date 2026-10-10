@@ -1,6 +1,6 @@
 -- 5ime database rule tests.
 -- Each check prints "PASS: …". The first failure stops the run with "FAIL: …".
--- Run against a THROWAWAY Postgres (CI does this automatically), never your real Supabase project:
+-- Run after all migrations, against a THROWAWAY Postgres (CI does this automatically), never your real Supabase project:
 --   psql -v ON_ERROR_STOP=1 -f 00_supabase_stub.sql -f ../migrations/0001_init.sql -f 10_attendance_rules.sql
 \set ON_ERROR_STOP 1
 \set QUIET 1
@@ -86,7 +86,7 @@ do $$ declare n int; begin
 end $$;
 select test.blocked($$select request_home_location(6.5, 3.3, 500)$$, 'accuracy is too low', 'Home pin with weak GPS is refused');
 select request_home_location(6.5, 3.3, 15);
-select test.ok((select home_req_lat is not null and home_lat is null from members), 'Home pin is saved as pending, not usable yet');
+select test.ok((select home_req_lat is not null and home_lat is null from member_private_locations), 'Home pin is saved as pending, not usable yet');
 
 \echo '--- Walk-in from the company domain'
 select test.as_user('00000000-0000-0000-0000-00000000000c', 'kemi@acme.ng');
@@ -97,7 +97,7 @@ select test.blocked($$select check_in('in', 6.6018, 3.3515, 10)$$, 'not active',
 select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
 select test.ok((select count(*) from members) = 3, 'Admin sees everyone in the company');
 select review_home_location((select id from members where email = 'tunde@acme.ng'), true);
-select test.ok((select home_lat = 6.5 and home_status = 'approved' from members where email = 'tunde@acme.ng'), 'Admin approves a home location');
+select test.ok((select p.home_lat = 6.5 and m.home_status = 'approved' from members m join member_private_locations p on p.member_id = m.id where m.email = 'tunde@acme.ng'), 'Admin approves a home location');
 update members set status = 'active' where email = 'kemi@acme.ng';
 select test.ok((select status from members where email = 'kemi@acme.ng') = 'active', 'Admin approves a pending person');
 select test.blocked($$update members set role = 'staff' where role = 'owner'$$, 'owner cannot be demoted', 'Owner cannot be demoted');
@@ -141,5 +141,3 @@ set role authenticated;
 select test.as_user('00000000-0000-0000-0000-00000000000c', 'kemi@acme.ng');
 select test.blocked($$select check_in('in', 6.6018, 3.3515, 10)$$, 'subscription has expired', 'Check-in stops when the trial has ended');
 
-\echo ''
-\echo '✅ ALL DATABASE TESTS PASSED'

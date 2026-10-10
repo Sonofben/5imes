@@ -1,7 +1,7 @@
 export const BRAND = {
   name: "5ime",
   altName: "fivetime",
-  tagline: "Work from anywhere, 5 days, on time.",
+  tagline: "Your schedule. Your approved workplace. On time.",
   supportEmail: "support@5ime.ng",
 };
 
@@ -34,7 +34,7 @@ export const PLANS = {
       "Per-person office/home schedules",
       "Manager role, departments & teams",
       "Device, IP & GPS-accuracy anomaly flags",
-      "Unlimited history, overtime, Excel/PDF reports",
+      "Unlimited history, attendance reporting & CSV export",
       "Priority WhatsApp & email support",
     ],
   },
@@ -54,6 +54,7 @@ export const FLAG_LABELS: Record<string, string> = {
   low_accuracy: "Weak GPS signal",
   off_day: "Non-working day",
   home_not_set: "Home location not approved",
+  corrected: "Time corrected after manager approval",
 };
 
 const PUBLIC_DOMAINS = new Set([

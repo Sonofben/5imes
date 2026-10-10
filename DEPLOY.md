@@ -42,9 +42,13 @@ bash ~/vps-check.sh
 ## 1. Supabase (≈15 min, one-time)
 
 1. **Create the project.** Go to <https://supabase.com>, create a new project, and pick the region closest to Nigeria that's offered.
-2. **Run the schema.** Open **SQL Editor**, paste in all of `supabase/migrations/0001_init.sql` and click **Run**.
-   - Run only that file.
-   - Never run the files in `supabase/tests/` there. They are for throwaway test databases.
+2. **Run the schema.** Open **SQL Editor** and run these four files **in order**, one at a time, waiting for "Success" each time:
+   1. `supabase/migrations/0001_init.sql`
+   2. `supabase/migrations/0002_security_billing_attendance.sql`
+   3. `supabase/migrations/0003_payment_history_attendance_corrections.sql`
+   4. `supabase/migrations/0004_attendance_device_privacy.sql`
+
+   Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
    - `Project URL`
    - the `anon public` key
@@ -96,7 +100,7 @@ nano .env
 Fill in `.env` with:
 - **Site address:** `NEXT_PUBLIC_SITE_URL=https://<ip-with-dashes>.sslip.io`
 - **Supabase:** the three values from step 1
-- **Paystack:** leave empty for now (demo mode)
+- **Paystack:** leave `PAYSTACK_SECRET_KEY` and `PAYSTACK_SUBACCOUNT` empty for now (billing shows as not connected)
 
 ```bash
 chmod 600 .env

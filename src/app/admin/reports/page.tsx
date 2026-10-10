@@ -30,17 +30,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Reports</h1>
+          <p className="eyebrow">Attendance analytics</p>
+          <h1 className="page-heading">Reports</h1>
           <p className="text-sm text-muted">{events.length} check-ins/outs between {from} and {to}</p>
         </div>
         <form className="flex flex-wrap items-end gap-2">
           <div>
-            <label className="label">From</label>
-            <input type="date" name="from" defaultValue={from} min={minDate} className="input py-1.5" />
+            <label className="label" htmlFor="report-from">From</label>
+            <input id="report-from" type="date" name="from" defaultValue={from} min={minDate} className="input py-1.5" />
           </div>
           <div>
-            <label className="label">To</label>
-            <input type="date" name="to" defaultValue={to} className="input py-1.5" />
+            <label className="label" htmlFor="report-to">To</label>
+            <input id="report-to" type="date" name="to" defaultValue={to} className="input py-1.5" />
           </div>
           <button className="btn-primary">Show</button>
           <a href={`/admin/reports/export?from=${from}&to=${to}`} className="btn-ghost">Download CSV</a>
@@ -84,7 +85,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       </div>
 
       <details className="card">
-        <summary className="cursor-pointer font-bold">All check-ins ({events.length})</summary>
+        <summary className="cursor-pointer font-bold">Attendance events ({events.length})</summary>
+        <p className="mt-2 text-xs text-muted">Showing the latest 500 events on screen. Download CSV to get the complete selected range.</p>
         <div className="mt-3 overflow-x-auto">
           <table className="table">
             <thead>

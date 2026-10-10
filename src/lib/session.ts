@@ -20,6 +20,10 @@ export type Member = {
   created_at: string;
 };
 
+type MemberRow = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at">;
+
+type PrivateLocation = Pick<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at">;
+
 export type Org = {
   id: string;
   name: string;
@@ -37,7 +41,13 @@ export type Subscription = {
   status: "trialing" | "active" | "past_due" | "cancelled";
   trial_ends_at: string | null;
   current_period_end: string | null;
+  current_period_start: string | null;
   seats_paid: number;
+  billing_interval_months: 1 | 3 | 6 | 12;
+  cancel_at_period_end: boolean;
+  paystack_customer?: string | null;
+  paystack_plan_code?: string | null;
+  paystack_subscription_code?: string | null;
 };
 
 /** Signed-in active member + their company. Redirects otherwise. */
@@ -48,36 +58,46 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean } 
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: me } = await supabase
+  const { data: memberRow } = await supabase
     .from("members")
-    .select("*")
+    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at")
     .eq("user_id", user.id)
-    .maybeSingle<Member>();
-  if (!me) redirect("/start");
-  if (me.status === "pending") redirect("/pending");
-  if (me.status !== "active") redirect("/pending?disabled=1");
+    .maybeSingle<MemberRow>();
+  if (!memberRow) redirect("/start");
+  if (memberRow.status === "pending") redirect("/pending");
+  if (memberRow.status !== "active") redirect("/pending?disabled=1");
 
-  const isAdmin = me.role === "owner" || me.role === "admin";
-  const isViewer = isAdmin || me.role === "manager";
+  const isAdmin = memberRow.role === "owner" || memberRow.role === "admin";
+  const isViewer = isAdmin || memberRow.role === "manager";
   if (opts.admin && !isAdmin) redirect(isViewer ? "/admin" : "/app");
   if (opts.viewer && !isViewer) redirect("/app");
 
-  const { data: org } = await supabase.from("organizations").select("*").eq("id", me.org_id).single<Org>();
+  const [{ data: org }, { data: privateLocation }] = await Promise.all([
+    supabase.from("organizations").select("*").eq("id", memberRow.org_id).single<Org>(),
+    supabase.from("member_private_locations")
+      .select("home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_req_at")
+      .eq("member_id", memberRow.id).maybeSingle<PrivateLocation>(),
+  ]);
 
+  const me: Member = {
+    ...memberRow,
+    home_lat: privateLocation?.home_lat ?? null,
+    home_lng: privateLocation?.home_lng ?? null,
+    home_req_lat: privateLocation?.home_req_lat ?? null,
+    home_req_lng: privateLocation?.home_req_lng ?? null,
+    home_req_acc: privateLocation?.home_req_acc ?? null,
+    home_req_at: privateLocation?.home_req_at ?? null,
+  };
   return { supabase, user, me, org: org!, isAdmin, isViewer };
 }
 
 /** Today's date (YYYY-MM-DD) in the company's time zone. */
 export function todayIn(tz: string) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(
-    new Date()
-  );
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 
 export function timeIn(iso: string, tz: string) {
-  return new Intl.DateTimeFormat("en-NG", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: true }).format(
-    new Date(iso)
-  );
+  return new Intl.DateTimeFormat("en-NG", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: true }).format(new Date(iso));
 }
 
 /** ISO weekday (1 = Monday … 7 = Sunday) in the company's time zone. */
