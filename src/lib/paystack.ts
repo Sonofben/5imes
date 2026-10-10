@@ -149,7 +149,7 @@ export async function applyPayment(tx: PaidTx): Promise<PaymentResult> {
     if (!(["pending", "applied"] as string[]).includes(payment.status)) return { ok: false, reason: "seat payment is no longer pending" };
     if (tx.currency !== "NGN" || Number(tx.amount) !== Number(payment.amount_kobo)) {
       if (payment.status === "pending") await admin.from("payments").update({ status: "failed" }).eq("reference", tx.reference).eq("status", "pending");
-      return { ok: false, reason: "verified seat-proration amount or currency does not match the pending checkout" };
+      return { ok: false, reason: "verified seat amount or currency does not match the pending checkout" };
     }
   }
 

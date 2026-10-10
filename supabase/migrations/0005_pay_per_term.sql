@@ -3,7 +3,8 @@
 --    before the term ends books the next term starting at the current end date (or trial end).
 --  * Auto-renew (opt-in): Paystack plan + subscription, as before. Only offered when no
 --    paid term is running, so provider and local renewal dates stay aligned.
---  * Seat top-ups no longer require an auto-renew subscription.
+--  * Seat top-ups no longer require an auto-renew subscription and are charged in full
+--    (seats × monthly price × term months), never prorated.
 -- Apply after 0004.
 begin;
 
@@ -50,11 +51,11 @@ begin
   return jsonb_build_object('ok',true,'reference',p_reference,'amount_kobo',v_amount,'seats',p_seats,'months',p_months,'auto_renew',p_auto_renew);
 end $$;
 
--- Seat top-ups: any active paid term (manual or auto-renew) can add prorated seats.
+-- Seat top-ups: any active paid term (manual or auto-renew) can add seats at the full per-seat price.
 create or replace function public.prepare_paystack_seat_increase(p_reference text, p_seats integer)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare v_org uuid := public.my_org_id(); v_sub public.subscriptions%rowtype; v_used integer;
-  v_now timestamptz := clock_timestamp(); v_duration numeric; v_remaining numeric;
+  v_now timestamptz := clock_timestamp();
   v_amount bigint; v_price integer;
 begin
   if auth.uid() is null or not public.is_org_admin() or v_org is null then raise exception 'Only this company''s admins can add seats.'; end if;
@@ -64,7 +65,7 @@ begin
   select * into v_sub from public.subscriptions where org_id=v_org for update;
   if not found or v_sub.status<>'active' or v_sub.current_period_start is null
     or v_sub.current_period_end is null or v_sub.current_period_end<=v_now then
-    raise exception 'An active paid term is required to add prorated seats.';
+    raise exception 'An active paid term is required to add seats.';
   end if;
   if p_seats<=v_sub.seats_paid then raise exception 'Choose more seats than the current paid limit.'; end if;
   select count(*)::integer into v_used from public.members where org_id=v_org and status in ('active','invited');
@@ -75,12 +76,9 @@ begin
   if exists(select 1 from public.payments where org_id=v_org and kind='seat_increase' and status='pending') then
     raise exception 'A seat-increase payment is already pending. Complete it or check its status before starting another.';
   end if;
-  -- Prorate over the paid time still ahead (a pay-ahead term counts too).
-  v_duration := extract(epoch from (v_sub.current_period_end-v_sub.current_period_start));
-  v_remaining := extract(epoch from (v_sub.current_period_end-greatest(v_now, v_sub.current_period_start)));
-  if v_duration<=0 or v_remaining<=0 then raise exception 'The current billing period cannot be prorated.'; end if;
+  -- No proration: each added seat costs the full per-seat monthly price for the term's months.
   v_price := case v_sub.plan when 'basic' then 250 else 500 end;
-  v_amount := greatest(1,round((p_seats-v_sub.seats_paid)::numeric*v_price*v_sub.billing_interval_months*100*v_remaining/v_duration)::bigint);
+  v_amount := (p_seats-v_sub.seats_paid)::bigint*v_price*v_sub.billing_interval_months*100;
   insert into public.payments(reference,org_id,plan,seats,billing_interval_months,amount_kobo,currency,status,kind,paystack_plan_code)
     values(p_reference,v_org,v_sub.plan,p_seats,v_sub.billing_interval_months,v_amount,'NGN','pending','seat_increase',v_sub.paystack_plan_code);
   return jsonb_build_object('ok',true,'reference',p_reference,'amount_kobo',v_amount,'added_seats',p_seats-v_sub.seats_paid);
@@ -155,7 +153,7 @@ begin
         renewal_sync_error=null
       where reference=p_reference and status='pending';
     return jsonb_build_object('ok',true,
-      'reason',case when v_payment.paystack_plan_code is null then 'prorated seats applied' else 'prorated seats applied; renewal price sync pending' end,
+      'reason',case when v_payment.paystack_plan_code is null then 'added seats applied' else 'added seats applied; renewal price sync pending' end,
       'kind','seat_increase','seats',v_seats);
   end if;
 

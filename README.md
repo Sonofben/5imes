@@ -21,12 +21,12 @@
 
 The 14-day Pro trial remains available. Customers can pay monthly, quarterly (3 months), biannually (6 months), or yearly (12 months). **There are no multi-month discounts**: the term charge is seats × monthly price × months. For example, 10 Basic seats cost ₦2,500 monthly or ₦7,500 quarterly.
 
-Active and invited people share the paid-seat limit. An admin can add capacity during an active term: the added seats’ charge is prorated by the exact remaining time in the term, rounded to the nearest kobo. Once Paystack verifies payment, the added seats are activated first; the organization’s recurring plan is then updated to the full new seat count for the next renewal. If that provider update temporarily fails, the payment stays recorded, the admin sees a retry action, and retrying does not charge again. The existing renewal date is unchanged. Cancellation stops future renewal while access continues to the end of the paid term. Only one unresolved checkout is allowed per organization; admins resume or verify that attempt before another charge can be started.
+Active and invited people share the paid-seat limit. An admin can add seats during a paid term; each added seat costs the full per-seat monthly price × the term's months (no proration), and the term end date is unchanged. Payment is per term by default and nothing is charged automatically unless the admin ticks “Renew automatically”. Only one unresolved checkout is allowed per organization.
 
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and enter the Supabase Project URL, public anon or `sb_publishable_` key, and server-only service-role key.
-2. In Supabase SQL Editor, apply `supabase/migrations/0001_init.sql`, then `0002_security_billing_attendance.sql`, then `0003_payment_history_attendance_corrections.sql`, then `0004_attendance_device_privacy.sql`, then `0005_pay_per_term.sql`, in that order. This repository currently uses direct SQL application and has no Supabase CLI project config or migration-history baseline. If you later adopt `supabase db push`, set up and reconcile the CLI migration history first; do not replay these files as unrecorded migrations. Migration 0002 includes tenant and seat enforcement, private location storage, overnight attendance, and payment ledgers; migration 0003 adds employee correction requests and audited manager decisions; migration 0004 restricts employees' IP/device details to admins.
+2. In Supabase SQL Editor, apply `supabase/migrations/0001_init.sql`, then `0002_security_billing_attendance.sql`, then `0003_payment_history_attendance_corrections.sql`, then `0004_attendance_device_privacy.sql`, then `0005_pay_per_term.sql`, then `0006_bank_transfer.sql`, in that order. This repository currently uses direct SQL application and has no Supabase CLI project config or migration-history baseline. If you later adopt `supabase db push`, set up and reconcile the CLI migration history first; do not replay these files as unrecorded migrations. Migration 0002 includes tenant and seat enforcement, private location storage, overnight attendance, and payment ledgers; migration 0003 adds employee correction requests and audited manager decisions; migration 0004 restricts employees' IP/device details to admins.
 3. Install and run:
 
    ```bash
@@ -57,10 +57,21 @@ The included deployment guide runs 5ime in a Docker container on a shared Contab
 
 ## Verification
 
-The core test suite covers billing totals, exact remaining-term proration, calendar renewals, CSV parsing, and spreadsheet formula injection. `npm audit` should be reviewed on every dependency update; Next.js 16.4.0 is currently used to address the available upstream Next.js security fixes.
+The core test suite covers billing totals, calendar renewals, CSV parsing, and spreadsheet formula injection. `npm audit` should be reviewed on every dependency update; Next.js 16.4.0 is currently used to address the available upstream Next.js security fixes.
 
 ## Tests
 
 GitHub runs these on every push (repo **Actions** tab):
 - **Database rules:** applies migrations 0001–0004 to a throwaway Postgres and runs `supabase/tests/` (sign-up rules, tenant isolation, manager privacy, payment ledger lock-down, seat limits, attendance corrections).
 - **App:** lint, unit tests (`npm test`) and production build.
+
+## Bank-transfer payments (no gateway needed)
+
+Set `BANK_TRANSFER_BANK`, `BANK_TRANSFER_ACCOUNT_NUMBER`, `BANK_TRANSFER_ACCOUNT_NAME` and `BANK_TRANSFER_CONTACT` in `.env`; admins then see transfer details and exact amounts on the Billing page. When money arrives, Kora Forge staff record it in the Supabase SQL Editor:
+
+```sql
+select record_bank_transfer('acme.ng', 'basic', 10, 3, 7500, 'FBN-123456');   -- domain, plan, seats, months, amount (₦), bank reference
+select record_bank_transfer_seats('acme.ng', 12, 1500, 'FBN-123999');         -- add seats: new total, amount (₦), bank reference
+```
+
+The amount must match exactly (seats × ₦250/₦500 × months); the term activates immediately and a receipt appears in the company's payment history.

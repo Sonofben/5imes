@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const amount = Number(data.amount_kobo);
   if (!Number.isSafeInteger(amount) || amount < 1) {
     await admin.from("payments").update({ status: "failed" }).eq("reference", reference).eq("status", "pending");
-    return back({ error: "The prorated amount is invalid." });
+    return back({ error: "The seat amount is invalid." });
   }
 
   let transactionRequestStarted = false;

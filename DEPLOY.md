@@ -48,6 +48,7 @@ bash ~/vps-check.sh
    3. `supabase/migrations/0003_payment_history_attendance_corrections.sql`
    4. `supabase/migrations/0004_attendance_device_privacy.sql`
    5. `supabase/migrations/0005_pay_per_term.sql`
+   6. `supabase/migrations/0006_bank_transfer.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
