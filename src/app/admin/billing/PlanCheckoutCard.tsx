@@ -52,8 +52,8 @@ export function PlanCheckoutCard({
         <div className="rounded-xl border border-line bg-[#fafbf9] p-4">
           <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
         </div>
-        <button disabled={!enabled || submitting} className={`${plan.id === "pro" ? "btn-brand" : "btn-primary"} w-full`}>{submitting ? "Starting secure checkout…" : enabled ? `Continue to Paystack · ${naira(amountNaira)}` : "Card payment coming soon"}</button>
-        {!enabled && <p className="text-xs leading-5 text-muted">Online card payment isn&apos;t switched on yet. You can pay by bank transfer below.</p>}
+        <button disabled={!enabled || submitting} className={`${plan.id === "pro" ? "btn-brand" : "btn-primary"} w-full`}>{submitting ? "Starting secure checkout…" : enabled ? `Continue to Paystack · ${naira(amountNaira)}` : "Online payment coming soon"}</button>
+        {!enabled && <p className="text-xs leading-5 text-muted">Online payment isn&apos;t switched on yet. Your trial keeps running in the meantime.</p>}
       </div>
     </form>
   );

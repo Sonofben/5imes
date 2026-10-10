@@ -7,7 +7,6 @@ import { Flash } from "@/components/Flash";
 import { PlanCheckoutCard } from "./PlanCheckoutCard";
 import { BillingSubscriptionActions } from "./BillingSubscriptionActions";
 import { SeatIncreaseCard } from "./SeatIncreaseCard";
-import { BankTransferCard } from "./BankTransferCard";
 import { retrySeatRenewalPrice } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -111,8 +110,6 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         ? <div className="space-y-3"><div><p className="eyebrow">Pay ahead</p><h2 className="text-lg font-bold">Pay for your next term</h2><p className="mt-1 text-sm text-muted">Your current term runs until {accessUntil}. Paying now adds the next term right after it. To change plan, wait until this term ends.</p></div><div className="max-w-xl"><PlanCheckoutCard plan={PLANS[sub.plan]} minSeats={Math.max(minSeats, sub.seats_paid)} defaultCycle={currentCycle} enabled={checkoutEnabled} allowAutoRenew={false} payAheadUntil={accessUntil} /></div></div>
         : <div className="grid gap-4 xl:grid-cols-2">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} />)}</div>) : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its verified Paystack status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same Paystack transaction before starting a new subscription." : "Automatic renewal is on, so Paystack will charge the next term for you. Turn automatic renewal off above if you would rather pay each term yourself."}</p></section>}
       <p className="text-xs leading-5 text-muted">Quarterly is 3 months; biannually is 6 months; yearly is 12 months. Total = seats × monthly price per seat × months, paid upfront in naira. Nothing is charged automatically unless you tick “Renew automatically”.</p>
-
-      {!providerRenewalStillOn && <BankTransferCard seats={termRunning && sub ? Math.max(minSeats, sub.seats_paid) : minSeats} domain={org.domain} plan={termRunning && sub ? sub.plan : undefined} />}
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2"><div><p className="eyebrow">Billing records</p><h2 className="text-lg font-bold">Payment history</h2><p className="mt-1 text-sm text-muted">Latest 50 recorded payment attempts. Receipts are available for confirmed payments.</p></div></div>
