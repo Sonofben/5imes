@@ -46,7 +46,9 @@ export function SignupForm() {
       email: normalisedEmail,
       password,
       options: {
-        emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/onboarding")}`,
+        // Route through /start so the post-signin dispatcher handles whether
+        // this user already has a membership or needs to create a company.
+        emailRedirectTo: `${siteUrl()}/auth/callback`,
         data: { full_name: fullName.trim() },
       },
     });

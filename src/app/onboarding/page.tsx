@@ -12,13 +12,27 @@ async function createCompany(formData: FormData) {
   redirect("/admin/locations?welcome=1");
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const domain = user?.email?.split("@")[1];
+  if (!user) redirect("/login");
+
+  // If the user already belongs to a company (or is pending approval), the
+  // post-signin dispatcher knows where to send them. Bouncing through /start
+  // avoids showing an onboarding form that will reject their submission.
+  const { data: existingMember } = await supabase
+    .from("members")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (existingMember) redirect("/start");
+
+  const domain = user.email?.split("@")[1];
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
