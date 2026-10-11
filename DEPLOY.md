@@ -48,6 +48,7 @@ bash ~/vps-check.sh
    3. `supabase/migrations/0003_payment_history_attendance_corrections.sql`
    4. `supabase/migrations/0004_attendance_device_privacy.sql`
    5. `supabase/migrations/0005_pay_per_term.sql`
+   6. `supabase/migrations/0006_console_branding_support.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
@@ -148,6 +149,19 @@ Then open `https://<ip-with-dashes>.sslip.io`. You should see the 5ime landing p
 5. **Staff signs in on a phone.** They open the site, sign in, allow location, and tap **Check in**.
 6. **Check it on the dashboard.** The admin should see it on **Today**, and in **Reports → Download CSV**.
 7. **Pin a home location.** From home, staff tap **pin this location**, and the admin approves it under **Staff**.
+
+
+## 7. Give yourself access to the Kora Forge console (one-time)
+
+1. Sign in to 5ime once at `https://<host>/login` with your Kora Forge email (this creates your user).
+2. In the Supabase SQL Editor run (use your email):
+   ```sql
+   insert into public.platform_staff (user_id, email, role)
+   select id, email, 'owner' from auth.users where email = 'you@koraforge.com';
+   ```
+   Roles: `owner` (everything), `support` (help companies, no money), `finance` (complimentary terms), `viewer` (read-only). Add teammates the same way.
+3. Open `https://<host>/console`. The first time, scan the QR code with an authenticator app (Google/Microsoft Authenticator) and enter the 6-digit code. Two-factor is required every sign-in.
+4. Logo uploads use Supabase Storage: the app creates a public `logos` bucket automatically on the first upload (needs `SUPABASE_SERVICE_ROLE_KEY`).
 
 ## Everyday operations
 

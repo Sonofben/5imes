@@ -26,7 +26,7 @@ Active and invited people share the paid-seat limit. An admin can add seats duri
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and enter the Supabase Project URL, public anon or `sb_publishable_` key, and server-only service-role key.
-2. In Supabase SQL Editor, apply `supabase/migrations/0001_init.sql`, then `0002_security_billing_attendance.sql`, then `0003_payment_history_attendance_corrections.sql`, then `0004_attendance_device_privacy.sql`, then `0005_pay_per_term.sql`, in that order. This repository currently uses direct SQL application and has no Supabase CLI project config or migration-history baseline. If you later adopt `supabase db push`, set up and reconcile the CLI migration history first; do not replay these files as unrecorded migrations. Migration 0002 includes tenant and seat enforcement, private location storage, overnight attendance, and payment ledgers; migration 0003 adds employee correction requests and audited manager decisions; migration 0004 restricts employees' IP/device details to admins.
+2. In Supabase SQL Editor, apply `supabase/migrations/0001_init.sql`, then `0002_security_billing_attendance.sql`, then `0003_payment_history_attendance_corrections.sql`, then `0004_attendance_device_privacy.sql`, then `0005_pay_per_term.sql`, then `0006_console_branding_support.sql`, in that order. This repository currently uses direct SQL application and has no Supabase CLI project config or migration-history baseline. If you later adopt `supabase db push`, set up and reconcile the CLI migration history first; do not replay these files as unrecorded migrations. Migration 0002 includes tenant and seat enforcement, private location storage, overnight attendance, and payment ledgers; migration 0003 adds employee correction requests and audited manager decisions; migration 0004 restricts employees' IP/device details to admins.
 3. Install and run:
 
    ```bash
@@ -65,3 +65,11 @@ GitHub runs these on every push (repo **Actions** tab):
 - **Database rules:** applies migrations 0001–0004 to a throwaway Postgres and runs `supabase/tests/` (sign-up rules, tenant isolation, manager privacy, payment ledger lock-down, seat limits, attendance corrections).
 - **App:** lint, unit tests (`npm test`) and production build.
 
+
+## Kora Forge console (`/console`)
+
+Platform staff only (listed in `platform_staff`, two-factor sign-in required). Shows company-level facts — plan, seats, counts, payments, health warnings — never staff attendance or locations. Actions (each logged with a reason): extend trial, complimentary term, add a person for a company, suspend/reactivate, transfer ownership, change email domain. A company's staff list is visible only while that company's admin has granted temporary support access (24 or 72 hours) in Settings; the admin sees a log of what support did.
+
+## Company branding
+
+Admins set a logo, brand colour and company link in Settings. Staff sign in at `https://<host>/<company-link>` (e.g. `/abc`), which shows the company's logo; the staff and admin portals also show it.

@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Self-contained server bundle for the Docker image
   output: "standalone",
   poweredByHeader: false,
+  experimental: { serverActions: { bodySizeLimit: "2mb" } },
   ...(process.env.NEXT_DEV_ALLOWED_ORIGINS
     ? { allowedDevOrigins: process.env.NEXT_DEV_ALLOWED_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean) }
     : {}),

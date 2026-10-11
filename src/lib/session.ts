@@ -18,6 +18,7 @@ export type Member = {
   home_req_acc: number | null;
   home_req_at: string | null;
   created_at: string;
+  onboarded_at?: string | null;
 };
 
 type MemberRow = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at">;
@@ -33,6 +34,10 @@ export type Org = {
   work_end: string;
   grace_minutes: number;
   home_radius_m: number;
+  slug: string;
+  logo_url: string | null;
+  brand_color: string | null;
+  suspended_at: string | null;
 };
 
 export type Subscription = {
@@ -60,7 +65,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean } 
 
   const { data: memberRow } = await supabase
     .from("members")
-    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at")
+    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,onboarded_at")
     .eq("user_id", user.id)
     .maybeSingle<MemberRow>();
   if (!memberRow) redirect("/start");

@@ -72,6 +72,3 @@ select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
 select test.blocked($$select prepare_paystack_subscription('5ime-ppt-9', 'basic', (select seats from test.snap) + 2, 1)$$,
                     'Automatic renewal is on', 'No manual payment while automatic renewal is on (prevents double charging)');
 
-\o
-\echo ''
-\echo '✅ ALL DATABASE TESTS PASSED'

@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { requireMember } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { Flash } from "@/components/Flash";
+import { siteUrl } from "@/lib/site";
+import { BrandingCard } from "./BrandingCard";
+import { SupportAccessCard } from "./SupportAccessCard";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +40,11 @@ const ZONES = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johanne
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
-  const { org } = await requireMember({ admin: true });
+  const { org, supabase } = await requireMember({ admin: true });
+  const [{ data: grants }, { data: supportLog }] = await Promise.all([
+    supabase.from("support_access_grants").select("expires_at").is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("expires_at", { ascending: false }).limit(1),
+    supabase.rpc("my_support_log"),
+  ]);
   const zones = ZONES.includes(org.timezone) ? ZONES : [...ZONES, org.timezone].sort();
 
   return (
@@ -56,6 +63,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <div><label className="label" htmlFor="timezone">Company time zone</label><select id="timezone" name="timezone" defaultValue={org.timezone} className="input">{zones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}</select><p className="mt-1 text-xs text-muted">Dates, overnight shifts, and renewal periods are handled using this organization’s time zone.</p></div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"><p className="max-w-sm text-xs leading-5 text-muted">Changes apply to future check-ins. Existing attendance records are not rewritten.</p><button className="btn-primary">Save settings</button></div>
       </form>
+      <BrandingCard slug={org.slug} logoUrl={org.logo_url} brandColor={org.brand_color} siteUrl={siteUrl()} />
+      <SupportAccessCard until={grants?.[0]?.expires_at ?? null} log={(supportLog ?? []) as { at: string; action: string; actor_email: string | null; reason: string | null }[]} timezone={org.timezone} />
     </div>
   );
 }

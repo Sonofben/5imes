@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { requireMember, todayIn, timeIn, isoWeekdayIn, expectedMode } from "@/lib/session";
-import { Logo } from "@/components/Logo";
+import { CompanyMark } from "@/components/CompanyMark";
 import { CheckInPanel } from "./CheckInPanel";
 import { HomeLocationPanel } from "./HomeLocationPanel";
+import { HomeMap } from "./HomeMap";
+import { WelcomeSteps } from "./WelcomeSteps";
 import { FLAG_LABELS, WEEKDAYS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +35,7 @@ export default async function StaffApp() {
   return (
     <main className="mx-auto max-w-lg px-4 pb-12 sm:px-6">
       <header className="flex items-center justify-between gap-3 border-b border-line py-4">
-        <Logo href="/app" />
+        <CompanyMark name={org.name} logoUrl={org.logo_url} href="/app" />
         <div className="flex items-center gap-2">
           {isViewer && <Link href="/admin" className="btn-ghost btn-sm">Admin</Link>}
           <form action="/auth/signout" method="post"><button className="btn-ghost btn-sm">Sign out</button></form>
@@ -45,6 +47,9 @@ export default async function StaffApp() {
         <h1 className="mt-1 text-2xl font-bold tracking-tight">Good {greeting()}, {me.full_name?.split(" ")[0] || me.email.split("@")[0]}</h1>
         <p className="mt-1 text-sm text-muted">{new Intl.DateTimeFormat("en-NG", { timeZone: org.timezone, weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p>
       </section>
+
+      {org.suspended_at && <p role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-bad">Check-ins are paused because {org.name}&apos;s 5ime account is suspended. Please contact your admin.</p>}
+      {!me.onboarded_at && <WelcomeSteps companyName={org.name} logoUrl={org.logo_url} hasHomeDays={week.some((d) => d.mode === "home")} homeDone={me.home_lat !== null || me.home_req_lat !== null} />}
 
       <section aria-label="Attendance check-in" className="card mb-4 p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -81,6 +86,9 @@ export default async function StaffApp() {
       </section>
 
       <HomeLocationPanel status={me.home_status} hasApproved={me.home_lat !== null} hasPending={me.home_req_lat !== null} />
+      {(me.home_lat !== null || me.home_req_lat !== null) && <div className="mt-3">
+        <HomeMap lat={(me.home_lat ?? me.home_req_lat)!} lng={(me.home_lng ?? me.home_req_lng)!} label={me.home_lat !== null ? "Your approved home location" : "Your home pin (waiting for approval)"} />
+      </div>}
       <p className="mt-5 text-center text-xs leading-5 text-muted">Check in only at a manager-approved office or your approved home on days scheduled for that place. This is not unrestricted “work from anywhere” tracking.</p>
     </main>
   );

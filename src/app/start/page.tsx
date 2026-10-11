@@ -8,6 +8,10 @@ export const dynamic = "force-dynamic";
 export default async function StartPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("join_organization");
+  // Kora Forge console staff without a company membership go straight to the console.
+  const { data: isConsoleStaff } = await supabase.rpc("is_console_staff");
+  const joined = (data ?? {}) as { status?: string };
+  if (isConsoleStaff && !["active", "pending", "disabled"].includes(joined.status ?? "")) redirect("/console");
   const res = (data ?? {}) as { status?: string; role?: string; domain?: string };
 
   if (!error) {
