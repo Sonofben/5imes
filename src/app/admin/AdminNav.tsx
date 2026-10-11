@@ -21,6 +21,7 @@ export function AdminNav({ isAdmin, pendingPeople, pendingCorrections }: { isAdm
       ] },
       { label: "Organization", items: [
         { href: "/admin/settings", label: "Settings" },
+        { href: "/admin/security", label: "Security" },
         { href: "/admin/billing", label: "Billing" },
       ] },
     ] : []),
