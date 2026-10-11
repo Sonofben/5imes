@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
+import { PasswordField } from "@/components/PasswordField";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { BRAND, isPublicEmail } from "@/lib/constants";
-import { passwordIssues } from "@/lib/password";
+import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 const authConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -81,15 +83,26 @@ export function SignupForm() {
             <input id="su-email" className="input" type="email" required autoComplete="email" placeholder="you@yourcompany.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
             <p className="mt-1 text-xs text-muted">Your company’s email domain becomes its workspace domain.</p>
           </div>
-          <div>
-            <label className="label" htmlFor="su-pass">Password</label>
-            <input id="su-pass" className="input" type="password" required minLength={10} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)}/>
-            <p className="mt-1 text-xs text-muted">At least 10 characters, with a letter and a number.</p>
+          <div className="space-y-1">
+            <PasswordField
+              id="su-pass"
+              label="Password"
+              autoComplete="new-password"
+              minLength={MIN_PASSWORD_LENGTH}
+              value={password}
+              onChange={setPassword}
+              hint={PASSWORD_HINT}
+            />
+            <PasswordStrengthMeter password={password} />
           </div>
-          <div>
-            <label className="label" htmlFor="su-confirm">Confirm password</label>
-            <input id="su-confirm" className="input" type="password" required minLength={10} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)}/>
-          </div>
+          <PasswordField
+            id="su-confirm"
+            label="Confirm password"
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            value={confirm}
+            onChange={setConfirm}
+          />
           {notice && !error && <p role="status" className="rounded-xl border border-[#c8dfd1] bg-[#f1f8f3] p-3 text-sm leading-5 text-[#245c3e]">{notice}</p>}
           {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2.5 text-sm leading-5 text-bad">{error}</p>}
           <button className="btn-brand w-full" disabled={busy || !authConfigured}>{busy ? "Creating…" : "Create workspace"}</button>

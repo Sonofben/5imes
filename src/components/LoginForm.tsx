@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
+import { PasswordField } from "@/components/PasswordField";
 import { BRAND, isPublicEmail } from "@/lib/constants";
 
 const authConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -144,13 +145,15 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
                 <label className="label" htmlFor="work-email">Work email</label>
                 <input id="work-email" className="input" type="email" autoComplete="email" required placeholder={brand ? `you@${brand.domain}` : "you@yourcompany.com"} value={email} onChange={(e) => setEmail(e.target.value)}/>
               </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <label className="label" htmlFor="work-password">Password</label>
-                  <Link href={`/auth/forgot?email=${encodeURIComponent(email)}`} className="text-xs text-brand underline">Forgot password?</Link>
-                </div>
-                <input id="work-password" className="input" type="password" autoComplete="current-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}/>
-              </div>
+              <PasswordField
+                id="work-password"
+                label="Password"
+                autoComplete="current-password"
+                minLength={8}
+                value={password}
+                onChange={setPassword}
+                rightLink={<Link href={`/auth/forgot?email=${encodeURIComponent(email)}`} className="text-xs text-brand underline">Forgot password?</Link>}
+              />
               <button className="btn-primary w-full" disabled={busy || !authConfigured}>{busy ? "Signing in…" : "Sign in"}</button>
               <button type="button" onClick={() => { setError(null); setNotice(null); setMode("code-request"); }} className="w-full text-xs text-muted underline">
                 Can’t sign in? Use a one-time code instead

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { passwordIssues } from "@/lib/password";
+import { PasswordField } from "@/components/PasswordField";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 type Props = {
   role: "owner" | "admin" | "manager" | "staff";
@@ -63,9 +65,27 @@ function ChangePasswordCard({ onDone }: { onDone: () => void }) {
         <p className="text-sm text-muted">You’ll stay signed in on this device.</p>
       </div>
       <form onSubmit={submit} className="space-y-3">
-        <div><label className="label" htmlFor="cp-current">Current password</label><input id="cp-current" type="password" required autoComplete="current-password" className="input" value={current} onChange={(e) => setCurrent(e.target.value)} /></div>
-        <div><label className="label" htmlFor="cp-next">New password</label><input id="cp-next" type="password" required minLength={10} autoComplete="new-password" className="input" value={next} onChange={(e) => setNext(e.target.value)} /><p className="mt-1 text-xs text-muted">At least 10 characters, with a letter and a number.</p></div>
-        <div><label className="label" htmlFor="cp-confirm">Confirm new password</label><input id="cp-confirm" type="password" required minLength={10} autoComplete="new-password" className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
+        <PasswordField id="cp-current" label="Current password" autoComplete="current-password" value={current} onChange={setCurrent} />
+        <div className="space-y-1">
+          <PasswordField
+            id="cp-next"
+            label="New password"
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            value={next}
+            onChange={setNext}
+            hint={PASSWORD_HINT}
+          />
+          <PasswordStrengthMeter password={next} />
+        </div>
+        <PasswordField
+          id="cp-confirm"
+          label="Confirm new password"
+          autoComplete="new-password"
+          minLength={MIN_PASSWORD_LENGTH}
+          value={confirm}
+          onChange={setConfirm}
+        />
         {msg && <p role="status" className="rounded-lg bg-[#f1f8f3] px-3 py-2 text-sm text-[#245c3e]">{msg}</p>}
         {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2 text-sm text-bad">{error}</p>}
         <button className="btn-primary" disabled={busy}>{busy ? "Saving…" : "Save new password"}</button>
