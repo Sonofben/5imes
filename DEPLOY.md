@@ -42,13 +42,14 @@ bash ~/vps-check.sh
 ## 1. Supabase (≈15 min, one-time)
 
 1. **Create the project.** Go to <https://supabase.com>, create a new project, and pick the region closest to Nigeria that's offered.
-2. **Run the schema.** Open **SQL Editor** and run these four files **in order**, one at a time, waiting for "Success" each time:
+2. **Run the schema.** Open **SQL Editor** and run these files **in order**, one at a time, waiting for "Success" each time:
    1. `supabase/migrations/0001_init.sql`
    2. `supabase/migrations/0002_security_billing_attendance.sql`
    3. `supabase/migrations/0003_payment_history_attendance_corrections.sql`
    4. `supabase/migrations/0004_attendance_device_privacy.sql`
    5. `supabase/migrations/0005_pay_per_term.sql`
    6. `supabase/migrations/0006_console_branding_support.sql`
+   7. `supabase/migrations/0007_passwords_mfa_recovery.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
@@ -56,11 +57,21 @@ bash ~/vps-check.sh
    - the `anon public` key
    - the `service_role` key
 4. **Set the auth URLs.** In **Authentication → URL Configuration**:
-   - **Site URL:** `https://<ip-with-dashes>.sslip.io`. Example: IP `203.0.113.5` becomes `203-0-113-5.sslip.io`.
-   - **Redirect URLs:** add `https://<ip-with-dashes>.sslip.io/auth/callback`
-5. **Email sign-in** stays enabled.
-   - The built-in mailer only sends a few emails per hour, which is enough for the demo.
-   - Before real staff onboard, set custom SMTP under **Authentication → Emails → SMTP Settings**.
+   - **Site URL:** your canonical HTTPS address, e.g. `https://5imes.koraforge.com.ng` (no trailing slash). Or, for a demo on a bare IP, `https://<ip-with-dashes>.sslip.io`.
+   - **Redirect URLs:** add `<Site URL>/auth/callback`
+5. **Email + password sign-in** is now the normal route.
+   - In **Authentication → Providers**, make sure *Email* is enabled with *Confirm email* ON. The signup page sends a verification link; invites use `inviteUserByEmail` and land on `/auth/invite` for the staff member to pick their own password.
+   - *Multi-Factor Authentication* (TOTP) must be enabled under **Authentication → Providers → Multi-Factor Authentication** — turn on *TOTP*. Admins and owners are required by the server guard to enrol before they can reach admin tools.
+   - **Use Resend for email delivery.** The built-in Supabase mailer caps at a few per hour and ends up in spam. Under **Authentication → Emails → SMTP Settings**:
+     - *Enable Custom SMTP:* on
+     - *Host:* `smtp.resend.com`
+     - *Port:* `465`
+     - *Username:* `resend`
+     - *Password:* your Resend API key (starts with `re_`)
+     - *Sender email:* a verified address on your Resend domain (e.g. `no-reply@koraforge.com.ng`)
+     - *Sender name:* `5ime`
+   - **Email templates.** Still under *Emails*, open each template and make sure the `{{ .ConfirmationURL }}` link uses your Site URL. The confirmation, magic-link, invite, and recovery templates all route through `/auth/callback` and work as-is.
+6. **Session policy.** The app relies on Supabase's standard session: a 1-hour JWT with a refresh token rotated on use. In **Authentication → Policies** (or *Sessions*) you can tighten this: `Access token lifetime` 3600s is a sensible default; `Refresh token lifetime` 2592000s (30 days) means a device that goes two inactive weeks still refreshes silently. Admins additionally must satisfy TOTP (aal2) before `/admin/*` server-side; aal2 is a session-level fact, so it persists until the user signs out or Supabase rotates the session.
 
 ## 2. Install Docker (≈5 min, skip if `vps-check` shows Docker)
 

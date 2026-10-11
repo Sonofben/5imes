@@ -15,7 +15,10 @@ async function sendInviteEmail(email: string) {
   const admin = createAdminClient();
   if (!admin) return false;
   const site = process.env.NEXT_PUBLIC_SITE_URL;
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo: site ? `${site}/auth/callback` : undefined });
+  // Invitees land on /auth/callback?type=invite, which routes them to
+  // /auth/invite to pick their own password.
+  const redirectTo = site ? `${site}/auth/callback?type=invite` : undefined;
+  const { error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
   return !error;
 }
 

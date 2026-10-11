@@ -55,8 +55,22 @@ export type Subscription = {
   paystack_subscription_code?: string | null;
 };
 
-/** Signed-in active member + their company. Redirects otherwise. */
-export async function requireMember(opts: { admin?: boolean; viewer?: boolean } = {}) {
+/**
+ * Signed-in active member + their company. Redirects otherwise.
+ *
+ * MFA behaviour (default): if `admin: true` and the member's role is owner or
+ * admin, the server requires an aal2 session (TOTP already proved for this
+ * sign-in). If the user hasn't enrolled TOTP yet, they go to /admin/security.
+ * If they're enrolled but on aal1 (just signed in with password), they go to
+ * /auth/challenge. A recent `recovery_used` event (within RECOVERY_GRACE_MINUTES)
+ * lets them through on aal1 so an admin who lost their phone can still work.
+ *
+ * Pass `allowAal1: true` for the security page and the challenge page itself,
+ * which must be reachable without MFA by design.
+ */
+const RECOVERY_GRACE_MINUTES = 10;
+
+export async function requireMember(opts: { admin?: boolean; viewer?: boolean; allowAal1?: boolean } = {}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -77,6 +91,27 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean } 
   if (opts.admin && !isAdmin) redirect(isViewer ? "/admin" : "/app");
   if (opts.viewer && !isViewer) redirect("/app");
 
+  // Enforce two-factor for admin pages, unless the caller explicitly opts out
+  // (the enrolment / challenge pages have to be reachable without aal2).
+  if (opts.admin && !opts.allowAal1) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel !== "aal2") {
+      const { data: status } = await supabase.from("my_security_status").select("totp_enrolled").maybeSingle<{ totp_enrolled: boolean }>();
+      if (!status?.totp_enrolled) {
+        // Not enrolled yet. Admin pages are gated; send them to Security to set up.
+        redirect("/admin/security?setup=1");
+      }
+      // Enrolled but current session is aal1. Allow a short recovery window.
+      const since = new Date(Date.now() - RECOVERY_GRACE_MINUTES * 60_000).toISOString();
+      const { data: recent } = await supabase
+        .from("member_security_events")
+        .select("id")
+        .eq("user_id", user.id).eq("kind", "recovery_used")
+        .gte("created_at", since).limit(1);
+      if (!recent?.length) redirect("/auth/challenge");
+    }
+  }
+
   const [{ data: org }, { data: privateLocation }] = await Promise.all([
     supabase.from("organizations").select("*").eq("id", memberRow.org_id).single<Org>(),
     supabase.from("member_private_locations")
@@ -93,7 +128,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean } 
     home_req_acc: privateLocation?.home_req_acc ?? null,
     home_req_at: privateLocation?.home_req_at ?? null,
   };
-  return { supabase, user, me, org: org!, isAdmin, isViewer };
+  return { supabase, user, me, member: me, org: org!, isAdmin, isViewer };
 }
 
 /** Today's date (YYYY-MM-DD) in the company's time zone. */
