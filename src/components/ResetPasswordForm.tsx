@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
-import { passwordIssues } from "@/lib/password";
+import { PasswordField } from "@/components/PasswordField";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 /**
  * Reset flow (`mode="reset"`): user arrived from an email link. Supabase has
@@ -78,15 +80,26 @@ export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
             </>
           ) : (
             <form onSubmit={submit} className="space-y-3">
-              <div>
-                <label className="label" htmlFor="np-pass">New password</label>
-                <input id="np-pass" className="input" type="password" required minLength={10} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                <p className="mt-1 text-xs text-muted">At least 10 characters, with a letter and a number.</p>
+              <div className="space-y-1">
+                <PasswordField
+                  id="np-pass"
+                  label="New password"
+                  autoComplete="new-password"
+                  minLength={MIN_PASSWORD_LENGTH}
+                  value={password}
+                  onChange={setPassword}
+                  hint={PASSWORD_HINT}
+                />
+                <PasswordStrengthMeter password={password} />
               </div>
-              <div>
-                <label className="label" htmlFor="np-confirm">Confirm new password</label>
-                <input id="np-confirm" className="input" type="password" required minLength={10} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-              </div>
+              <PasswordField
+                id="np-confirm"
+                label="Confirm new password"
+                autoComplete="new-password"
+                minLength={MIN_PASSWORD_LENGTH}
+                value={confirm}
+                onChange={setConfirm}
+              />
               {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2.5 text-sm leading-5 text-bad">{error}</p>}
               <button className="btn-primary w-full" disabled={busy}>{busy ? "Saving…" : "Save new password"}</button>
             </form>

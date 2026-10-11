@@ -35,13 +35,13 @@ test("formatCode groups a 10-char code as XXXXX-XXXXX", () => {
 });
 
 test("passwordIssues enforces length, letter, number", () => {
-  assert.deepEqual(passwordIssues("Aa1!Aa1!A1"), []); // 10 chars with letter + digit
-  const short = passwordIssues("Aa1!Aa1!");
+  assert.deepEqual(passwordIssues("abcdef12"), []); // 8 chars with letter + digit
+  const short = passwordIssues("ab12cd");
   assert.ok(short.some((m) => m.includes(`${MIN_PASSWORD_LENGTH}`)));
-  const noDigit = passwordIssues("abcdefghij");
+  const noDigit = passwordIssues("abcdefgh");
   assert.ok(noDigit.some((m) => m.toLowerCase().includes("number")));
-  const noLetter = passwordIssues("1234567890");
+  const noLetter = passwordIssues("12345678");
   assert.ok(noLetter.some((m) => m.toLowerCase().includes("letter")));
-  const spaces = passwordIssues(" strongenough1");
+  const spaces = passwordIssues(" strong1!");
   assert.ok(spaces.some((m) => m.toLowerCase().includes("space")));
 });
