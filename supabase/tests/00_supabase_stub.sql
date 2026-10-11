@@ -3,6 +3,14 @@
 create role anon; create role authenticated; create role service_role bypassrls;
 create schema auth;
 create table auth.users (id uuid primary key);
+-- Supabase's own MFA factors table; only the columns our views and policies look at.
+create table auth.mfa_factors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  status text not null,
+  factor_type text not null,
+  created_at timestamptz not null default now()
+);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true),'')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('test.jwt', true),''),'{}')::jsonb $$;
 grant usage on schema public, auth to authenticated, anon;
