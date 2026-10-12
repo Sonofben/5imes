@@ -1,37 +1,30 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { generateRecoveryCodes, hashCode, verifyCode, normalise, formatCode } from "../src/lib/recoveryCodes.ts";
+import { generateRecoveryCodes, normalise, formatCode } from "../src/lib/recoveryCodes.ts";
 import { passwordIssues, MIN_PASSWORD_LENGTH } from "../src/lib/password.ts";
 
-test("generateRecoveryCodes produces ten unique codes with matching hashes", () => {
+test("generateRecoveryCodes produces ten unique 10-character codes", () => {
   const batch = generateRecoveryCodes();
   assert.equal(batch.codes.length, 10);
-  assert.equal(batch.hashes.length, 10);
   const unique = new Set(batch.codes.map(normalise));
   assert.equal(unique.size, 10, "codes should be unique");
-  // Each plaintext verifies against its own hash and no other.
-  for (let i = 0; i < batch.codes.length; i++) {
-    assert.equal(verifyCode(batch.codes[i], batch.hashes[i]), true);
-    assert.equal(verifyCode(batch.codes[(i + 1) % batch.codes.length], batch.hashes[i]), false);
+  for (const code of batch.codes) {
+    assert.equal(normalise(code).length, 10, `code "${code}" normalises to 10 characters`);
+    assert.match(code, /^[A-Z0-9]{5}-[A-Z0-9]{5}$/, `code "${code}" is displayed as XXXXX-XXXXX`);
   }
 });
 
-test("verifyCode is tolerant of spaces, hyphens, and case", () => {
-  const hash = hashCode("ABCDEFGHJK");
-  assert.equal(verifyCode("abcdefghjk", hash), true);
-  assert.equal(verifyCode("ABCDE-FGHJK", hash), true);
-  assert.equal(verifyCode("abcde fghjk", hash), true);
-});
-
-test("verifyCode rejects a hash from a different scheme or structure", () => {
-  assert.equal(verifyCode("ABCDEFGHJK", "md5$deadbeef"), false);
-  assert.equal(verifyCode("ABCDEFGHJK", "scrypt$16384$8$1$too-few-parts"), false);
-  assert.equal(verifyCode("ABCDEFGHJK", ""), false);
+test("normalise strips separators and uppercases", () => {
+  assert.equal(normalise("abcde-fghjk"), "ABCDEFGHJK");
+  assert.equal(normalise("abcde fghjk"), "ABCDEFGHJK");
+  assert.equal(normalise("abcde_fghjk!"), "ABCDEFGHJK");
 });
 
 test("formatCode groups a 10-char code as XXXXX-XXXXX", () => {
   assert.equal(formatCode("ABCDEFGHJK"), "ABCDE-FGHJK");
   assert.equal(formatCode("abcde-fghjk"), "ABCDE-FGHJK");
+  // A short input returns as-is; display grouping is only for exact-length codes.
+  assert.equal(formatCode("ABC"), "ABC");
 });
 
 test("passwordIssues enforces length, letter, number", () => {

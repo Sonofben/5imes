@@ -70,6 +70,19 @@ export type Subscription = {
  */
 const RECOVERY_GRACE_MINUTES = 10;
 
+/** Read the `session_id` claim from a Supabase JWT. Returns null on parse failure. */
+function decodeJwtPayload(token: string): { session_id?: string } | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const padded = parts[1] + "==".slice((parts[1].length + 2) % 4);
+    const json = Buffer.from(padded.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 export async function requireMember(opts: { admin?: boolean; viewer?: boolean; allowAal1?: boolean } = {}) {
   const supabase = await createClient();
   const {
@@ -94,6 +107,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
   // Enforce two-factor for admin pages, unless the caller explicitly opts out
   // (the enrolment / challenge pages have to be reachable without aal2).
   if (opts.admin && !opts.allowAal1) {
+    const { data: session } = await supabase.auth.getSession();
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.currentLevel !== "aal2") {
       const { data: status } = await supabase.from("my_security_status").select("totp_enrolled").maybeSingle<{ totp_enrolled: boolean }>();
@@ -101,13 +115,21 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
         // Not enrolled yet. Admin pages are gated; send them to Security to set up.
         redirect("/admin/security?setup=1");
       }
-      // Enrolled but current session is aal1. Allow a short recovery window.
+      // Enrolled but current session is aal1. Allow a short recovery window
+      // ONLY if a recovery_used event exists for THIS session (bound by
+      // session_id in the DB). A recovery event from an older session doesn't
+      // revive it — the lost-phone grace is single-use per sign-in.
+      const sessionId = session?.session?.access_token
+        ? decodeJwtPayload(session.session.access_token)?.session_id
+        : null;
       const since = new Date(Date.now() - RECOVERY_GRACE_MINUTES * 60_000).toISOString();
-      const { data: recent } = await supabase
-        .from("member_security_events")
-        .select("id")
-        .eq("user_id", user.id).eq("kind", "recovery_used")
-        .gte("created_at", since).limit(1);
+      const { data: recent } = sessionId
+        ? await supabase
+            .from("member_security_events")
+            .select("id")
+            .eq("user_id", user.id).eq("kind", "recovery_used").eq("session_id", sessionId)
+            .gte("created_at", since).limit(1)
+        : { data: null as { id: string }[] | null };
       if (!recent?.length) redirect("/auth/challenge");
     }
   }
