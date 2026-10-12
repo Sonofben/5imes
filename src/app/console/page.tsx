@@ -8,13 +8,29 @@ type Row = { id: string; name: string; domain: string; status: string; trial_end
 
 export default async function ConsoleOverview() {
   const { supabase, role } = await requireConsole();
-  const [{ data: o, error }, { data: companies }] = await Promise.all([
+  const [overviewRes, companiesRes] = await Promise.all([
     supabase.rpc("console_overview"),
     supabase.rpc("console_companies", { p_search: null }),
   ]);
-  if (error) return <p className="card text-bad">{error.message}</p>;
-  const ov = o as Overview;
-  const soon = ((companies ?? []) as Row[]).map((c) => ({ ...c, ends: c.status === "trialing" ? c.trial_ends_at : c.current_period_end }))
+  // One visible failure state covers either RPC failing; a thrown error here
+  // would turn into a 502 from nginx when the Next.js dev/standalone server
+  // bails out mid-render.
+  if (overviewRes.error || companiesRes.error || !overviewRes.data) {
+    return (
+      <div className="space-y-4">
+        <div><p className="eyebrow">Signed in as {role}</p><h1 className="page-heading">Overview</h1></div>
+        <p className="card text-bad">
+          Console data lookup failed. {overviewRes.error?.message ?? companiesRes.error?.message ?? "No overview rows were returned."}
+        </p>
+        <p className="text-sm text-muted">
+          If you just applied a migration, re-run <code>docker compose up -d --build</code> on the VPS so the running
+          container picks up the new schema. Otherwise ask Kora Forge engineering with the time this failed.
+        </p>
+      </div>
+    );
+  }
+  const ov = overviewRes.data as Overview;
+  const soon = ((companiesRes.data ?? []) as Row[]).map((c) => ({ ...c, ends: c.status === "trialing" ? c.trial_ends_at : c.current_period_end }))
     .filter((c) => c.ends && new Date(c.ends).getTime() > Date.now() && new Date(c.ends).getTime() < Date.now() + 7 * 86400000)
     .sort((a, b) => new Date(a.ends!).getTime() - new Date(b.ends!).getTime());
   const tiles = [

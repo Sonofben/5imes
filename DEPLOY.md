@@ -50,6 +50,7 @@ bash ~/vps-check.sh
    5. `supabase/migrations/0005_pay_per_term.sql`
    6. `supabase/migrations/0006_console_branding_support.sql`
    7. `supabase/migrations/0007_passwords_mfa_recovery.sql`
+   8. `supabase/migrations/0008_auth_routing_and_recovery_hardening.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
@@ -72,6 +73,40 @@ bash ~/vps-check.sh
      - *Sender name:* `5ime`
    - **Email templates.** Still under *Emails*, open each template and make sure the `{{ .ConfirmationURL }}` link uses your Site URL. The confirmation, magic-link, invite, and recovery templates all route through `/auth/callback` and work as-is.
 6. **Session policy.** The app relies on Supabase's standard session: a 1-hour JWT with a refresh token rotated on use. In **Authentication → Policies** (or *Sessions*) you can tighten this: `Access token lifetime` 3600s is a sensible default; `Refresh token lifetime` 2592000s (30 days) means a device that goes two inactive weeks still refreshes silently. Admins additionally must satisfy TOTP (aal2) before `/admin/*` server-side; aal2 is a session-level fact, so it persists until the user signs out or Supabase rotates the session.
+
+### Role routing and MFA grace (from 0008 onward)
+
+The post-login redirect is driven by **one SQL function**,
+`public.post_auth_destination()`, which `/start` reads and obeys. Precedence:
+
+1. **Platform staff** (`platform_staff` row) → `/console`, no matter what their
+   company role is. A Kora Forge operator is a platform operator first.
+2. **Active company admin** (`owner` / `admin` / `manager`, status `active`) → `/admin`.
+3. **Active member** → `/app`.
+4. **Pending / disabled** → `/pending` (with `?disabled=1` suffix when disabled).
+5. **No org yet** (company domain, no `organizations` row) → `/onboarding`.
+6. **Public email** (gmail, yahoo, …) → `/start` with a "use your company email" message.
+7. **Signed out** → `/login`.
+
+The mapping is deliberately in the database and runs as `SECURITY DEFINER` so a
+client cannot flip their destination by editing `user_metadata` or cookies.
+`post_auth_destination()` and its upstream `my_primary_role()` ship in
+migration 0008.
+
+**Recovery-code grace window.** When an admin on an `aal1` session consumes
+a one-time recovery code via `/api/security/recovery-signin`, the DB writes
+a `recovery_used` event tagged with the current `session_id` from the JWT.
+`requireMember()` then allows that one session into `/admin/*` on `aal1` for
+10 minutes so the admin can re-enrol TOTP. The event is bound to the exact
+session that proved the code; a different session (or the same user signing
+in again later) cannot ride a stale event through.
+
+**Direct-RPC safety.** `log_security_event()` rejects any attempt by an
+authenticated client to post `recovery_used` or `recovery_regenerated`
+events — those kinds are only written by the trusted
+`verify_and_consume_recovery_code()` and `replace_recovery_codes()` RPCs.
+`replace_recovery_codes()` additionally refuses an `aal1` caller inside the
+database, not only in the API route.
 
 ## 2. Install Docker (≈5 min, skip if `vps-check` shows Docker)
 
