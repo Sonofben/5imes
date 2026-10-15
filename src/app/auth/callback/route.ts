@@ -35,6 +35,13 @@ export async function GET(request: Request) {
     if (error) return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(linkError(error.message))}`);
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error && isMissingVerifier(error.message) && type !== "recovery") {
+      // The link was opened on a different device or browser from the one that
+      // signed up. Supabase has already confirmed the email before sending the
+      // person here; only the automatic sign-in can't happen on this device.
+      // So treat it as success and let them sign in with their password.
+      return NextResponse.redirect(`${base}/login?notice=${encodeURIComponent("Your email is confirmed. Sign in with your email and password to continue.")}`);
+    }
     if (error) return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(linkError(error.message))}`);
   } else {
     return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(errorDesc || "That sign-in link is invalid or has expired.")}`);
@@ -47,9 +54,13 @@ export async function GET(request: Request) {
 
 const OTP_TYPES = new Set(["signup", "invite", "magiclink", "recovery", "email_change", "email"]);
 
+function isMissingVerifier(message: string) {
+  return /code verifier|code_verifier|both auth code and code verifier/i.test(message);
+}
+
 function linkError(message: string) {
-  return /code verifier|both auth code and code verifier/i.test(message)
-    ? "Open the link on the same device and browser you used to request it, or ask for a new one."
+  return isMissingVerifier(message)
+    ? "This password-reset link was opened on a different device. Request a new link from this device under “Forgot password?”."
     : /expired|invalid/i.test(message)
       ? "That link has expired or was already used. Request a new one."
       : message;

@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { PasswordField } from "@/components/PasswordField";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { BRAND, isPublicEmail } from "@/lib/constants";
+import { suggestWorkspaceName, emailDomain } from "@/lib/workspace";
 import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
 
 const authConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -18,6 +19,9 @@ function siteUrl() {
 export function SignupForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  // Workspace name is suggested from the email domain until the person edits it.
+  const [company, setCompany] = useState("");
+  const [companyEdited, setCompanyEdited] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,6 +37,7 @@ export function SignupForm() {
     setError(null); setNotice(null);
     const normalisedEmail = email.trim().toLowerCase();
     if (!fullName.trim()) { setError("Enter your full name."); return; }
+    if (company.trim().length < 2) { setError("Enter your company or workspace name."); return; }
     if (isPublicEmail(normalisedEmail)) { setError("Use your company email, not a personal one (Gmail, Yahoo, etc.)."); return; }
     if (password !== confirm) { setError("Passwords don’t match."); return; }
     const issues = passwordIssues(password);
@@ -47,7 +52,7 @@ export function SignupForm() {
         // Route through /start so the post-signin dispatcher handles whether
         // this user already has a membership or needs to create a company.
         emailRedirectTo: `${siteUrl()}/auth/callback`,
-        data: { full_name: fullName.trim() },
+        data: { full_name: fullName.trim(), company_name: company.trim() },
       },
     });
     setBusy(false);
@@ -79,8 +84,20 @@ export function SignupForm() {
           </div>
           <div>
             <label className="label" htmlFor="su-email">Work email</label>
-            <input id="su-email" className="input" type="email" required autoComplete="email" placeholder="you@yourcompany.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
-            <p className="mt-1 text-xs text-muted">Your company’s email domain becomes its workspace domain.</p>
+            <input id="su-email" className="input" type="email" required autoComplete="email" placeholder="you@yourcompany.com" value={email} onChange={(e) => {
+              const value = e.target.value;
+              setEmail(value);
+              if (!companyEdited) setCompany(emailDomain(value).includes(".") ? suggestWorkspaceName(value) : "");
+            }}/>
+          </div>
+          <div>
+            <label className="label" htmlFor="su-company">Company / workspace name</label>
+            <input id="su-company" className="input" required minLength={2} maxLength={80} autoComplete="organization" placeholder="Filled in from your email" value={company} onChange={(e) => { setCompany(e.target.value); setCompanyEdited(true); }}/>
+            <p className="mt-1 text-xs text-muted">
+              {emailDomain(email).includes(".")
+                ? <>Everyone with an <b>@{emailDomain(email)}</b> email belongs to this workspace. Check the name; you’ll confirm it once more before starting.</>
+                : "We fill this in from your work email. You can change it."}
+            </p>
           </div>
           <div className="space-y-1">
             <PasswordField

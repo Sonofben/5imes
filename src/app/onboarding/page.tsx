@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { TRIAL_DAYS } from "@/lib/constants";
+import { suggestWorkspaceName } from "@/lib/workspace";
 
 async function createCompany(formData: FormData) {
   "use server";
@@ -9,7 +10,8 @@ async function createCompany(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const { error } = await supabase.rpc("create_organization", { p_name: name });
   if (error) redirect(`/onboarding?error=${encodeURIComponent(error.message)}`);
-  redirect("/admin/locations?welcome=1");
+  // The workspace owner always lands on the admin home, which shows the setup checklist.
+  redirect("/admin?welcome=1");
 }
 
 export const dynamic = "force-dynamic";
@@ -32,7 +34,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     .maybeSingle();
   if (existingMember) redirect("/start");
 
-  const domain = user.email?.split("@")[1];
+  const domain = user.email?.split("@")[1] ?? "";
+  const suggested = String(user.user_metadata?.company_name ?? "").trim() || suggestWorkspaceName(domain);
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -42,19 +45,25 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
         </div>
         <form action={createCompany} className="card space-y-5">
           <div>
-            <h1 className="text-xl font-bold">Set up your company</h1>
+            <p className="eyebrow">Step 2 of 2</p>
+            <h1 className="mt-1 text-xl font-bold">Confirm your workspace</h1>
             <p className="mt-1 text-sm text-muted">
-              Anyone signing in with an <b>@{domain}</b> email will be able to request access. You stay in control —
-              you approve every person.
+              This workspace is for everyone with an <b>@{domain}</b> email. You’ll be its admin, and you approve
+              every person who joins.
             </p>
           </div>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-xl bg-paper px-4 py-3 text-sm">
+            <dt className="text-muted">Company email</dt><dd className="font-medium">@{domain}</dd>
+            <dt className="text-muted">Your role</dt><dd className="font-medium">Workspace admin (owner)</dd>
+            <dt className="text-muted">Plan</dt><dd className="font-medium">{TRIAL_DAYS}-day Pro trial, no card</dd>
+          </dl>
           <div>
-            <label className="label" htmlFor="name">Company name</label>
-            <input id="name" name="name" className="input" required minLength={2} placeholder="Acme Nigeria Ltd" />
+            <label className="label" htmlFor="name">Workspace name</label>
+            <input id="name" name="name" className="input" required minLength={2} maxLength={80} defaultValue={suggested} />
+            <p className="mt-1 text-xs text-muted">We filled this in from your email. Correct it if it isn’t your company’s name; staff will see it.</p>
           </div>
-          {error && <p className="text-sm text-bad">{error}</p>}
-          <button className="btn-brand w-full">Start {TRIAL_DAYS}-day free trial</button>
-          <p className="text-center text-xs text-muted">No card needed. Full Pro features during the trial.</p>
+          {error && <p role="alert" className="text-sm text-bad">{error}</p>}
+          <button className="btn-brand w-full">Confirm and start my {TRIAL_DAYS}-day trial</button>
         </form>
       </div>
     </main>

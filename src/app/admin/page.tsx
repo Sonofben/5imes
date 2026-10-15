@@ -4,15 +4,16 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { FLAG_LABELS } from "@/lib/constants";
 import { shiftDate } from "@/lib/reports";
 import { AttendanceAlerts } from "./AttendanceAlerts";
+import { SetupChecklist } from "./SetupChecklist";
 
 export const dynamic = "force-dynamic";
 
 type Event = { member_id: string; kind: "in" | "out"; at: string; local_date: string; location_type: string; location_id: string | null; flags: string[] };
 type Latest = Event;
 
-export default async function TodayPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function TodayPage({ searchParams }: { searchParams: Promise<{ q?: string; welcome?: string }> }) {
   const sp = await searchParams;
-  const { supabase, org } = await requireMember({ viewer: true });
+  const { supabase, org, isAdmin } = await requireMember({ viewer: true });
   const today = todayIn(org.timezone);
   const weekday = isoWeekdayIn(org.timezone);
   const [{ data: members }, { data: events }, { data: schedules }, { data: locations }, { data: latestEvents }, { data: alertEvents }] = await Promise.all([
@@ -23,6 +24,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date,location_type,location_id,flags,expected_mode").eq("org_id", org.id),
     supabase.from("attendance").select("member_id,kind,at,local_date,flags").eq("org_id", org.id).gte("local_date", shiftDate(today, -1)).lte("local_date", today).order("at"),
   ]);
+
+  const { count: invitedOrActive } = await supabase.from("members").select("id", { count: "exact", head: true })
+    .eq("org_id", org.id).in("status", ["invited", "active", "pending"]);
+  const { data: factors } = isAdmin ? await supabase.auth.mfa.listFactors() : { data: null };
+  const mfaOn = !!factors?.totp?.some((factor) => factor.status === "verified");
 
   const locName = new Map((locations ?? []).map((location) => [location.id, location.name]));
   const latestByMember = new Map(((latestEvents ?? []) as Latest[]).map((event) => [event.member_id, event]));
@@ -60,6 +66,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         <Link href={`/admin/reports?from=${today}&to=${today}`} className="btn-ghost">View today’s report</Link>
       </div>
 
+      {isAdmin && <SetupChecklist companyName={org.name} welcome={sp.welcome === "1"} mfaOn={mfaOn} hasOffice={(locations ?? []).length > 0} hasStaff={(invitedOrActive ?? 0) > 1} />}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{stats.map((stat) => <article key={stat.label} className="card p-4 sm:p-5">
         <p className="eyebrow">{stat.label}</p><p className={`mt-2 text-3xl font-bold tabular-nums tracking-tight ${stat.tone}`}>{stat.value}</p>
       </article>)}</div>
@@ -76,7 +83,6 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         now={now}
       />
 
-      {rows.length <= 1 && <div className="card border-dashed bg-[#fafbf9] text-sm leading-6"><b>Set up your workspace.</b> Add an office in <Link className="font-semibold underline underline-offset-2" href="/admin/locations">Locations</Link>, then invite your team from <Link className="font-semibold underline underline-offset-2" href="/admin/staff">People</Link>.</div>}
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
