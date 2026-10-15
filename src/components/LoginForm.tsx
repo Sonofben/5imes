@@ -25,7 +25,8 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [providers, setProviders] = useState({ azure: true, google: true });
+  // Hidden until Supabase confirms which providers are switched on (no flash of dead buttons).
+  const [providers, setProviders] = useState({ azure: false, google: false });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
