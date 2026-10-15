@@ -61,7 +61,10 @@ select test.ok((select count(*) from schedules) = 7, 'Default weekly schedule is
 
 -- make check-in results independent of the day/time the tests run
 update organizations set work_start = '23:59', work_end = '00:00', grace_minutes = 0;
+-- Test fixture only (the app changes schedules through replace_schedule()).
+reset role;
 update schedules set mode = 'office';
+set role authenticated;
 insert into locations (org_id, name, lat, lng, radius_m) values (my_org_id(), 'HQ Ikeja', 6.6018, 3.3515, 150);
 select test.ok((select count(*) from locations) = 1, 'Admin adds an office');
 
@@ -79,7 +82,7 @@ select test.ok((select location_type = 'office' and flags = '{}' and distance_m 
 select test.blocked($$select check_in('in', 6.6019, 3.3516, 20)$$, 'already checked in', 'Double check-in is refused');
 select test.blocked($$insert into attendance (org_id, member_id, kind, local_date, location_type)
                       select org_id, id, 'in', current_date, 'office' from members$$,
-                    'row-level security', 'Staff cannot write attendance directly');
+                    'permission denied', 'Staff cannot write attendance directly');
 do $$ declare n int; begin
   update members set role = 'admin'; get diagnostics n = row_count;
   perform test.ok(n = 0, 'Staff cannot promote themselves');
@@ -102,10 +105,8 @@ update members set status = 'active' where email = 'kemi@acme.ng';
 select test.ok((select status from members where email = 'kemi@acme.ng') = 'active', 'Admin approves a pending person');
 select test.blocked($$update members set role = 'staff' where role = 'owner'$$, 'owner cannot be demoted', 'Owner cannot be demoted');
 select test.blocked($$update organizations set domain = 'evil.com'$$, 'permission denied', 'Company domain cannot be changed');
-do $$ declare n int; begin
-  update subscriptions set status = 'active', current_period_end = now() + interval '1 year'; get diagnostics n = row_count;
-  perform test.ok(n = 0, 'Admin cannot mark their own subscription as paid');
-end $$;
+select test.blocked($$update subscriptions set status = 'active', current_period_end = now() + interval '1 year'$$,
+  'permission denied', 'Admin cannot mark their own subscription as paid');
 
 \echo '--- Home check-out and flags'
 select test.as_user('00000000-0000-0000-0000-00000000000b', 'tunde@acme.ng');

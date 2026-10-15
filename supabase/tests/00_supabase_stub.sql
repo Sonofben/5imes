@@ -14,4 +14,6 @@ create table auth.mfa_factors (
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true),'')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('test.jwt', true),''),'{}')::jsonb $$;
 grant usage on schema public, auth to authenticated, anon;
-alter default privileges in schema public grant all on tables to authenticated, anon;
+-- Like newer Supabase projects: new tables are NOT automatically granted to API roles.
+-- Every grant the app needs must be explicit in the migrations (see 0010).
+alter default privileges in schema public grant all on tables to service_role;
