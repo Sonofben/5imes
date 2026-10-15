@@ -174,6 +174,27 @@ Use a **separate incognito window**. Fake GPS per section 0.
 
 ---
 
+## 10b. Maps, line managers and working somewhere else
+
+| ID | Steps | Expected |
+|---|---|---|
+| M1 | Admin `/admin/locations` → Add an office: search “Adeola Odeku, Victoria Island” → pick a result | Map moves there, pin + radius circle shown, Address filled |
+| M2 | Drag the radius slider; tap elsewhere on the map | Circle resizes; pin moves; address updates |
+| M3 | Save the office | Office card shows the address and a small map; overview map shows all offices |
+| M4 | Staff pins home (E4) → Admin People → Home location requests | Request shows a map (requested pin amber, current home green if any) and the street address |
+| M5 | Staff `/app` after home approved | “Your approved home” map with the home circle and address |
+| M6 | Admin `/admin` (Today) with someone checked in | “Where people checked in” map: dots for office / home / approved other place / outside |
+| L1 | Admin → People → set Staff 1’s Line manager = Staff 2 (Manager) → Save | “Line manager saved.” |
+| W1 | Staff 1 checked in at the office → GPS = Ikeja (6.6018, 3.3515) → “Ask to work somewhere else” → reason “Client meeting” → Send | Card “Waiting for Tester Two” with a map of the requested place |
+| W2 | Staff 2 (line manager) → `/admin/requests` | Request listed with map, address, reason; nav badge on “Location requests” |
+| W3 | Staff 2 approves | Staff 1 card “Approved”; Staff 1 is **still checked in** (no break); check-out at Ikeja shows “approved other place” |
+| W4 | New session: Staff 1 asks again → Staff 2 rejects with reason “Not agreed” | Staff 1 is checked out at the **time they asked** (not the decision time); flag “Moved without approval” |
+| W5 | Reject without a reason | Refused: “Give a short reason for rejecting.” |
+| W6 | A manager who is not Staff 1’s line manager opens `/admin/requests` | Does not see Staff 1’s request (admins see all) |
+| W7 | Staff 1 checked in at the office, 5ime open, GPS moved to Ikeja; switch away and back after 15 min | Amber banner “You seem to be away from your approved place (since …)”; line manager sees “Left their approved place without asking” |
+| W8 | Line manager clicks “End session at …” | Staff 1 checked out at the time they left, flagged |
+| W9 | Staff 1 has a waiting request → Cancel request | Cancelled; can ask again |
+
 ## 11. Isolation and security spot-checks
 
 | ID | Steps | Expected |

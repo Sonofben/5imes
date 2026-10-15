@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getBestPosition } from "@/lib/geo";
+import { reverseGeocode } from "@/lib/geocode";
 
 /** First-time welcome for staff: allow location → pin home (if they have home days) → add to home screen. */
 export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { companyName: string; logoUrl: string | null; hasHomeDays: boolean; homeDone: boolean }) {
@@ -35,7 +36,8 @@ export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { 
     setBusy(true); setNote(null);
     try {
       const fix = await getBestPosition(15000, 20);
-      const { error } = await createClient().rpc("request_home_location", { p_lat: fix.lat, p_lng: fix.lng, p_accuracy: fix.accuracy });
+      const address = await reverseGeocode(fix.lat, fix.lng);
+      const { error } = await createClient().rpc("request_home_location", { p_lat: fix.lat, p_lng: fix.lng, p_accuracy: fix.accuracy, p_address: address ?? "" });
       if (error) throw new Error(error.message);
       setNote({ ok: true, text: "Home location sent to your admin for approval." });
     } catch (e) { setNote({ ok: false, text: e instanceof Error ? e.message : "Could not pin your home." }); }

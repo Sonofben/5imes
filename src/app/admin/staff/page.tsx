@@ -1,6 +1,7 @@
 import { requireMember, type Member, type Subscription } from "@/lib/session";
 import { mapsLink } from "@/lib/geo";
-import { inviteOne, inviteBulk, setStatus, setRole, removeMember, reviewHome } from "./actions";
+import { inviteOne, inviteBulk, setStatus, setRole, removeMember, reviewHome, setLineManager } from "./actions";
+import { MapView } from "@/components/maps/MapView";
 import { Flash } from "@/components/Flash";
 import { ConfirmAction } from "./ConfirmAction";
 
@@ -13,20 +14,23 @@ type PrivateLocationRow = {
   home_req_lat: number | null;
   home_req_lng: number | null;
   home_req_acc: number | null;
+  home_address: string | null;
+  home_req_address: string | null;
 };
 
 export default async function StaffPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, org, isAdmin, me } = await requireMember({ viewer: true });
   const [{ data }, { data: privateRows }, { data: sub }] = await Promise.all([
-    supabase.from("members").select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at").eq("org_id", org.id).order("created_at"),
+    supabase.from("members").select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,line_manager_id").eq("org_id", org.id).order("created_at"),
     isAdmin
-      ? supabase.from("member_private_locations").select("member_id,home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc").eq("org_id", org.id)
+      ? supabase.from("member_private_locations").select("member_id,home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_address,home_req_address").eq("org_id", org.id)
       : Promise.resolve({ data: [] as PrivateLocationRow[] }),
     isAdmin ? supabase.from("subscriptions").select("plan").eq("org_id", org.id).maybeSingle<Pick<Subscription, "plan">>() : Promise.resolve({ data: null }),
   ]);
   const privateByMember = new Map(((privateRows ?? []) as PrivateLocationRow[]).map((row) => [row.member_id, row]));
-  const members = ((data ?? []) as Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at">[]).map((m) => {
+  type Row = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at"> & { line_manager_id: string | null };
+  const members = ((data ?? []) as Row[]).map((m) => {
     const location = privateByMember.get(m.id);
     return {
       ...m,
@@ -36,9 +40,13 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
       home_req_lng: location?.home_req_lng ?? null,
       home_req_acc: location?.home_req_acc ?? null,
       home_req_at: null,
-    } as Member;
+      home_address: location?.home_address ?? null,
+      home_req_address: location?.home_req_address ?? null,
+    } as Member & { line_manager_id: string | null };
   });
   const pending = members.filter((m) => m.status === "pending");
+  const managers = members.filter((m) => m.status === "active" && ["owner", "admin", "manager"].includes(m.role));
+  const nameOf = (id: string | null) => { const p = members.find((m) => m.id === id); return p ? p.full_name || p.email : null; };
   const homeRequests = isAdmin ? members.filter((m) => m.home_req_lat !== null) : [];
   const isPro = sub?.plan !== "basic";
   const activeCount = members.filter((m) => m.status === "active").length;
@@ -77,6 +85,18 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
             <p className="mb-3 text-xs leading-5 text-muted">Only admins can open precise home-location pins.</p>
             <ul className="divide-y divide-line">
               {homeRequests.map((m) => <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div className="w-full space-y-2">
+                  <MapView
+                    height={170}
+                    label={`Home pin requested by ${m.full_name || m.email}`}
+                    markers={[
+                      { lat: m.home_req_lat!, lng: m.home_req_lng!, tone: "warn", label: "Requested" },
+                      ...(m.home_lat !== null ? [{ lat: m.home_lat, lng: m.home_lng!, tone: "ok" as const, label: "Current" }] : []),
+                    ]}
+                    circles={[{ lat: m.home_req_lat!, lng: m.home_req_lng!, radius: org.home_radius_m, tone: "warn" }]}
+                  />
+                  {m.home_req_address && <p className="text-xs text-muted">{m.home_req_address}</p>}
+                </div>
                 <div className="min-w-0">
                   <div className="font-semibold">{m.full_name || m.email}{m.home_lat !== null && <span className="chip ml-2 bg-paper text-muted">Address change</span>}</div>
                   <div className="mt-1 text-xs text-muted">±{Math.round(m.home_req_acc ?? 0)}m accuracy · <a className="font-semibold underline underline-offset-2" target="_blank" rel="noreferrer" href={mapsLink(m.home_req_lat!, m.home_req_lng!)}>Review requested pin</a>
@@ -117,12 +137,13 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">All people</h2><span className="text-xs text-muted">{members.length} records</span></div>
         <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-sm md:block">
           <div className="overflow-x-auto"><table className="table">
-            <thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Home location</th>{isAdmin && <th className="text-right">Actions</th>}</tr></thead>
+            <thead><tr><th>Person</th><th>Role</th><th>Line manager</th><th>Status</th><th>Home location</th>{isAdmin && <th className="text-right">Actions</th>}</tr></thead>
             <tbody>{members.filter((m) => m.status !== "pending").map((m) => <tr key={m.id}>
               <td><div className="font-semibold">{m.full_name || "—"}</div><div className="text-xs text-muted">{m.email}{m.team ? ` · ${m.team}` : ""}</div></td>
               <td>{isAdmin && m.role !== "owner" && m.id !== me.id ? <form action={setRole.bind(null, m.id)} className="flex items-center gap-1"><select name="role" aria-label={`Role for ${m.full_name || m.email}`} defaultValue={m.role} className="input min-h-9 max-w-36 py-1 text-xs"><option value="staff">Staff</option>{(isPro || m.role === "manager") && <option value="manager">Manager</option>}<option value="admin">Admin</option></select><button className="btn-ghost btn-sm">Save</button></form> : <span className="capitalize">{m.role}</span>}</td>
+              <td>{isAdmin && m.role !== "owner" ? <LineManagerForm memberId={m.id} current={m.line_manager_id} options={managers.filter((x) => x.id !== m.id)} /> : <span className="text-xs text-muted">{nameOf(m.line_manager_id) ?? "—"}</span>}</td>
               <td><span className={`chip ${m.status === "active" ? "bg-green-50 text-ok" : m.status === "invited" ? "bg-amber-50 text-warn" : "bg-red-50 text-bad"}`}>{m.status === "invited" ? "Invited" : m.status}</span></td>
-              <td className="text-xs">{isAdmin && m.home_lat !== null ? <a className="font-semibold underline underline-offset-2" target="_blank" rel="noreferrer" href={mapsLink(m.home_lat,m.home_lng!)}>Approved · view pin</a> : m.home_status === "approved" ? "Approved" : m.home_req_lat !== null && isAdmin ? "Request pending" : <span className="text-muted">{m.home_status === "rejected" ? "Rejected" : "Not set"}</span>}</td>
+              <td className="text-xs">{isAdmin && m.home_lat !== null ? <a className="font-semibold underline underline-offset-2" title={m.home_address ?? undefined} target="_blank" rel="noreferrer" href={mapsLink(m.home_lat,m.home_lng!)}>Approved{m.home_address ? ` · ${m.home_address.split(",")[0]}` : " · view pin"}</a> : m.home_status === "approved" ? "Approved" : m.home_req_lat !== null && isAdmin ? "Request pending" : <span className="text-muted">{m.home_status === "rejected" ? "Rejected" : "Not set"}</span>}</td>
               {isAdmin && <td><div className="flex justify-end gap-1">{m.role !== "owner" && m.id !== me.id && <>
                 {m.status === "disabled" ? <form action={setStatus.bind(null,m.id,"active")}><button className="btn-ghost btn-sm">Enable</button></form> : m.status === "active" ? <ConfirmAction action={setStatus.bind(null,m.id,"disabled")} prompt={`Disable ${m.full_name || m.email}? They will lose workspace access until an admin enables the membership again.`} label="Disable" className="btn-ghost btn-sm text-warn" /> : null}
                 <ConfirmAction action={removeMember.bind(null,m.id)} prompt={`Remove ${m.full_name || m.email} from this organization? This permanently removes their membership and access.`} label="Remove" className="btn-ghost btn-sm text-bad" />
@@ -133,6 +154,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         <ul className="space-y-3 md:hidden">{members.filter((m) => m.status !== "pending").map((m) => <li key={m.id} className="card space-y-3 p-4">
           <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate font-semibold">{m.full_name || "—"}</div><div className="break-all text-xs text-muted">{m.email}</div>{m.team && <div className="mt-1 text-xs text-muted">{m.team}</div>}</div><span className={`chip shrink-0 capitalize ${m.status === "active" ? "bg-green-50 text-ok" : m.status === "invited" ? "bg-amber-50 text-warn" : "bg-paper text-muted"}`}>{m.status}</span></div>
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-sm"><span className="capitalize text-muted">{m.role}</span><span className="text-xs text-muted">{isAdmin ? m.home_lat !== null ? "Home approved" : m.home_req_lat !== null ? "Home request pending" : m.home_status === "rejected" ? "Home rejected" : "Home not set" : m.home_status === "approved" ? "Home approved" : "Home not set"}</span></div>
+          {isAdmin && m.role !== "owner" && <div className="border-t border-line pt-3"><p className="mb-1 text-xs text-muted">Line manager</p><LineManagerForm memberId={m.id} current={m.line_manager_id} options={managers.filter((x) => x.id !== m.id)} /></div>}
           {isAdmin && m.role !== "owner" && m.id !== me.id && <div className="flex flex-wrap gap-2 border-t border-line pt-3">
             {m.status === "disabled" ? <form action={setStatus.bind(null,m.id,"active")}><button className="btn-ghost btn-sm">Enable</button></form> : m.status === "active" ? <ConfirmAction action={setStatus.bind(null,m.id,"disabled")} prompt={`Disable ${m.full_name || m.email}? They will lose workspace access until an admin enables the membership again.`} label="Disable" className="btn-ghost btn-sm text-warn" /> : null}
             <ConfirmAction action={removeMember.bind(null,m.id)} prompt={`Remove ${m.full_name || m.email} from this organization? This permanently removes their membership and access.`} label="Remove" className="btn-ghost btn-sm text-bad" />
@@ -140,5 +162,17 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         </li>)}</ul>
       </section>
     </div>
+  );
+}
+
+function LineManagerForm({ memberId, current, options }: { memberId: string; current: string | null; options: { id: string; full_name: string | null; email: string }[] }) {
+  return (
+    <form action={setLineManager.bind(null, memberId)} className="flex items-center gap-1">
+      <select name="line_manager" defaultValue={current ?? ""} aria-label="Line manager" className="input min-h-9 max-w-44 py-1 text-xs">
+        <option value="">Admins decide</option>
+        {options.map((o) => <option key={o.id} value={o.id}>{o.full_name || o.email}</option>)}
+      </select>
+      <button className="btn-ghost btn-sm">Save</button>
+    </form>
   );
 }

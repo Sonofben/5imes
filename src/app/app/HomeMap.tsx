@@ -1,14 +1,16 @@
-/** Small map of the staff member's own approved (or requested) home pin. OpenStreetMap, no API key. */
-export function HomeMap({ lat, lng, label }: { lat: number; lng: number; label: string }) {
-  const d = 0.004; // ≈ 400 m around the pin
-  const bbox = [lng - d, lat - d * 0.75, lng + d, lat + d * 0.75].map((n) => n.toFixed(5)).join(",");
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat.toFixed(6)},${lng.toFixed(6)}`;
+import { MapView } from "@/components/maps/MapView";
+import { mapsLink } from "@/lib/geo";
+
+/** Map of the staff member's own approved (or requested) home pin, with the check-in circle. */
+export function HomeMap({ lat, lng, label, radius, address, pending }: {
+  lat: number; lng: number; label: string; radius: number; address?: string | null; pending?: boolean;
+}) {
   return (
-    <figure className="overflow-hidden rounded-xl border border-line">
-      <iframe title={label} src={src} className="block h-44 w-full" loading="lazy" referrerPolicy="no-referrer" />
-      <figcaption className="flex items-center justify-between bg-paper px-3 py-2 text-xs text-muted">
-        <span>{label}</span>
-        <a className="underline" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`}>Open larger map</a>
+    <figure className="space-y-2">
+      <MapView height={190} label={label} markers={[{ lat, lng, tone: pending ? "warn" : "ok" }]} circles={[{ lat, lng, radius, tone: pending ? "warn" : "ok" }]} />
+      <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+        <span>{label}{address ? ` · ${address}` : ""}</span>
+        <a className="underline" target="_blank" rel="noreferrer" href={mapsLink(lat, lng)}>Open in Google Maps</a>
       </figcaption>
     </figure>
   );

@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         person?.email,
         person?.team,
         event.kind === "in" ? "Check in" : "Check out",
-        event.location_type === "office" ? locName.get(event.location_id ?? "") ?? "Office" : event.location_type === "home" ? "Home" : "Outside",
+        event.location_type === "office" ? locName.get(event.location_id ?? "") ?? "Office" : event.location_type === "home" ? "Home" : event.location_type === "elsewhere" ? "Approved other place" : "Outside",
         event.expected_mode,
         event.distance_m != null ? Math.round(event.distance_m) : "",
         event.accuracy_m != null ? Math.round(event.accuracy_m) : "",

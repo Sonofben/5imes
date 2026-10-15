@@ -17,13 +17,15 @@ export type Member = {
   home_req_lng: number | null;
   home_req_acc: number | null;
   home_req_at: string | null;
+  home_address?: string | null;
+  home_req_address?: string | null;
   created_at: string;
   onboarded_at?: string | null;
 };
 
-type MemberRow = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at">;
+type MemberRow = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at" | "home_address" | "home_req_address">;
 
-type PrivateLocation = Pick<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at">;
+type PrivateLocation = Pick<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at" | "home_address" | "home_req_address">;
 
 export type Org = {
   id: string;
@@ -142,7 +144,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
   const [{ data: org, error: orgError }, { data: privateLocation }] = await Promise.all([
     supabase.from("organizations").select("*").eq("id", memberRow.org_id).single<Org>(),
     supabase.from("member_private_locations")
-      .select("home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_req_at")
+      .select("home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_req_at,home_address,home_req_address")
       .eq("member_id", memberRow.id).maybeSingle<PrivateLocation>(),
   ]);
 
@@ -156,13 +158,15 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
     home_req_lng: privateLocation?.home_req_lng ?? null,
     home_req_acc: privateLocation?.home_req_acc ?? null,
     home_req_at: privateLocation?.home_req_at ?? null,
+    home_address: privateLocation?.home_address ?? null,
+    home_req_address: privateLocation?.home_req_address ?? null,
   };
   return { supabase, user, me, member: me, org, isAdmin, isViewer };
 }
 
 /** Today's date (YYYY-MM-DD) in the company's time zone. */
-export function todayIn(tz: string) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+export function todayIn(tz: string, at: Date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
 }
 
 export function timeIn(iso: string, tz: string) {

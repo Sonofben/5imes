@@ -101,7 +101,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                     <td>{timeIn(e.at, org.timezone)}</td>
                     <td>{p?.full_name || p?.email}</td>
                     <td>{e.kind === "in" ? "In" : "Out"}</td>
-                    <td>{e.location_type === "office" ? locName.get(e.location_id ?? "") ?? "Office" : e.location_type === "home" ? "Home" : "Outside"}</td>
+                    <td>{e.location_type === "office" ? locName.get(e.location_id ?? "") ?? "Office" : e.location_type === "home" ? "Home" : e.location_type === "elsewhere" ? "Approved other place" : "Outside"}</td>
                     <td>{e.distance_m != null ? `${Math.round(e.distance_m)}m` : "—"}</td>
                     <td>{e.accuracy_m != null ? `${Math.round(e.accuracy_m)}m` : "—"}</td>
                     <td className="text-xs text-warn">{e.flags.map((f) => FLAG_LABELS[f] ?? f).join(", ")}</td>

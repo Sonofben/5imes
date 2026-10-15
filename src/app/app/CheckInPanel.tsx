@@ -56,7 +56,7 @@ export function CheckInPanel({ checkedIn, expected, sessionLabel }: { checkedIn:
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-bad">{error}</p>}
       {result && <div role="status" aria-live="polite" className={`rounded-xl border p-3 text-sm ${result.flags.length ? "border-amber-200 bg-amber-50 text-warn" : "border-green-200 bg-green-50 text-ok"}`}>
         <b>{result.kind === "in" ? "Check-in recorded" : "Check-out recorded"}</b>{" "}
-        {result.location_type === "none" ? "— outside approved locations" : `at ${result.location_type === "office" ? "an office" : "home"}`}
+        {result.location_type === "none" ? "— outside approved locations" : `at ${result.location_type === "office" ? "an office" : result.location_type === "elsewhere" ? "your approved place for today" : "home"}`}
         {result.flags.length > 0 && <div className="mt-1">{result.flags.map((flag) => FLAG_LABELS[flag] ?? flag).join(" · ")}</div>}
       </div>}
       <p className="text-center text-xs leading-5 text-muted">A fresh GPS reading is checked against your organization’s approved locations.</p>

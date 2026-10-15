@@ -5,6 +5,8 @@ import { CheckInPanel } from "./CheckInPanel";
 import { HomeLocationPanel } from "./HomeLocationPanel";
 import { HomeMap } from "./HomeMap";
 import { WelcomeSteps } from "./WelcomeSteps";
+import { WorkElsewhere, type ElsewhereRequest } from "./WorkElsewhere";
+import { PresenceWatcher } from "./PresenceWatcher";
 import { FLAG_LABELS, WEEKDAYS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +18,17 @@ export default async function StaffApp() {
   const today = todayIn(org.timezone);
   const weekday = isoWeekdayIn(org.timezone);
 
-  const [{ data: schedules }, { data: events }, { data: latestEvent }] = await Promise.all([
+  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }] = await Promise.all([
     supabase.from("schedules").select("member_id,weekday,mode").eq("org_id", org.id),
     supabase.from("attendance").select("id,kind,at,location_type,flags,distance_m").eq("member_id", me.id).eq("local_date", today).order("at", { ascending: true }),
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date").eq("member_id", me.id).maybeSingle<LatestAttendance>(),
+    supabase.from("work_location_requests")
+      .select("id,status,requested_at,effective_from,lat,lng,radius_m,place_name,address,reason,decision_note,decided_at")
+      .eq("member_id", me.id).eq("local_date", today).neq("status", "cancelled")
+      .order("requested_at", { ascending: false }).limit(1).maybeSingle<ElsewhereRequest>(),
+    supabase.rpc("my_line_manager").maybeSingle<{ id: string; full_name: string | null; email: string }>(),
   ]);
+  const approverName = lineManager ? lineManager.full_name || lineManager.email : "your admin";
 
   const expected = expectedMode(schedules ?? [], me.id, weekday);
   const openSession = latestEvent?.kind === "in" ? latestEvent : null;
@@ -59,12 +67,15 @@ export default async function StaffApp() {
         <CheckInPanel checkedIn={!!openSession} expected={expected} sessionLabel={sessionLabel} />
       </section>
 
+      {openSession && <PresenceWatcher timezone={org.timezone} />}
+      {expected !== "off" && <WorkElsewhere request={elsewhere ?? null} approverName={approverName} timezone={org.timezone} />}
+
       <section className="card mb-4">
         <div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Today’s activity</h2><span className="text-xs text-muted">{currentEvents.length} event{currentEvents.length === 1 ? "" : "s"}</span></div>
         {currentEvents.length > 0 ? <ol className="space-y-0">{currentEvents.map((event, index) => <li key={event.id} className="relative flex items-start gap-3 pb-4 last:pb-0">
           <div className="flex w-4 shrink-0 flex-col items-center"><span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${event.kind === "in" ? "bg-ok" : "bg-ink/35"}`} />{index < currentEvents.length - 1 && <span className="mt-1 min-h-7 w-px flex-1 bg-line" />}</div>
           <div className="flex min-w-0 flex-1 items-start justify-between gap-3 text-sm">
-            <div><b>{event.kind === "in" ? "Checked in" : "Checked out"}</b><span className="text-muted"> · {event.location_type === "none" ? event.flags.includes("corrected") ? "time correction (no GPS supplied)" : "outside approved locations" : event.location_type}</span>{event.flags.length > 0 && <div className="mt-1 text-xs text-warn">{event.flags.map((f: string) => FLAG_LABELS[f] ?? f).join(" · ")}</div>}</div>
+            <div><b>{event.kind === "in" ? "Checked in" : "Checked out"}</b><span className="text-muted"> · {event.location_type === "none" ? event.flags.includes("corrected") ? "time correction (no GPS supplied)" : event.flags.includes("left_unapproved") ? "ended: moved without approval" : "outside approved locations" : event.location_type === "elsewhere" ? "approved other place" : event.location_type}</span>{event.flags.length > 0 && <div className="mt-1 text-xs text-warn">{event.flags.map((f: string) => FLAG_LABELS[f] ?? f).join(" · ")}</div>}</div>
             <time className="shrink-0 tabular-nums text-muted">{timeIn(event.at, org.timezone)}</time>
           </div>
         </li>)}</ol> : <p className="text-sm text-muted">No attendance events today.</p>}
@@ -87,7 +98,14 @@ export default async function StaffApp() {
 
       <HomeLocationPanel status={me.home_status} hasApproved={me.home_lat !== null} hasPending={me.home_req_lat !== null} />
       {(me.home_lat !== null || me.home_req_lat !== null) && <div className="mt-3">
-        <HomeMap lat={(me.home_lat ?? me.home_req_lat)!} lng={(me.home_lng ?? me.home_req_lng)!} label={me.home_lat !== null ? "Your approved home location" : "Your home pin (waiting for approval)"} />
+        <HomeMap
+          lat={(me.home_lat ?? me.home_req_lat)!}
+          lng={(me.home_lng ?? me.home_req_lng)!}
+          radius={org.home_radius_m}
+          pending={me.home_lat === null}
+          address={me.home_lat !== null ? me.home_address : me.home_req_address}
+          label={me.home_lat !== null ? "Your approved home" : "Your home pin (waiting for approval)"}
+        />
       </div>}
       <p className="mt-5 text-center text-xs leading-5 text-muted">Check in only at a manager-approved office or your approved home on days scheduled for that place. This is not unrestricted “work from anywhere” tracking.</p>
     </main>

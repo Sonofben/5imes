@@ -55,6 +55,7 @@ export const FLAG_LABELS: Record<string, string> = {
   off_day: "Non-working day",
   home_not_set: "Home location not approved",
   corrected: "Time corrected after manager approval",
+  left_unapproved: "Moved without approval (session ended)",
 };
 
 const PUBLIC_DOMAINS = new Set([

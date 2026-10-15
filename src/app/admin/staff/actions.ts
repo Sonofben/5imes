@@ -101,3 +101,11 @@ export async function reviewHome(id: string, approve: boolean) {
   if (error) back({ error: error.message });
   back({ msg: approve ? "Home location approved." : "Home location rejected." });
 }
+
+export async function setLineManager(id: string, formData: FormData) {
+  const supabase = await createClient();
+  const manager = String(formData.get("line_manager") || "");
+  const { error } = await supabase.rpc("set_line_manager", { p_member: id, p_manager: manager || null });
+  if (error) back({ error: error.message });
+  back({ msg: manager ? "Line manager saved." : "Line manager cleared. Their requests go to admins." });
+}

@@ -14,14 +14,17 @@ export async function addLocation(orgId: string, formData: FormData) {
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) {
-    back({ error: "Set the location first — tap “Use my current location” while at the office, or paste coordinates." });
+    back({ error: "Set the location first: search the address, use your current location, or tap the map." });
   }
+  const radius = Number(formData.get("radius_m") || 200);
+  if (!Number.isFinite(radius) || radius < 50 || radius > 1000) back({ error: "Radius must be between 50 and 1000 metres." });
   const { error } = await supabase.from("locations").insert({
     org_id: orgId,
     name: String(formData.get("name") || "Office").trim(),
     lat,
     lng,
-    radius_m: Number(formData.get("radius_m") || 200),
+    radius_m: radius,
+    address: String(formData.get("address") || "").trim().slice(0, 300) || null,
   });
   if (error) back({ error: error.message });
   back({ msg: "Office added." });
@@ -29,7 +32,9 @@ export async function addLocation(orgId: string, formData: FormData) {
 
 export async function updateRadius(id: string, formData: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.from("locations").update({ radius_m: Number(formData.get("radius_m")) }).eq("id", id);
+  const radius = Number(formData.get("radius_m"));
+  if (!Number.isFinite(radius) || radius < 50 || radius > 1000) back({ error: "Radius must be between 50 and 1000 metres." });
+  const { error } = await supabase.from("locations").update({ radius_m: radius }).eq("id", id);
   if (error) back({ error: error.message });
   back({ msg: "Radius updated." });
 }

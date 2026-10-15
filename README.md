@@ -73,3 +73,23 @@ Platform staff only (listed in `platform_staff`, two-factor sign-in required). S
 ## Company branding
 
 Admins set a logo, brand colour and company link in Settings. Staff sign in at `https://<host>/<company-link>` (e.g. `/abc`), which shows the company's logo; the staff and admin portals also show it.
+
+## Working somewhere else (line-manager approval)
+
+Admins set each person's **line manager** in People (people without one are decided by admins).
+A person who needs to work from another place taps **Ask to work somewhere else**: their GPS position,
+address, place name and reason go to their line manager (**Location requests** in the admin menu).
+
+- While waiting, the workday runs normally.
+- **Approved** → the session continues without a break; that place counts as approved for the rest of that company day.
+- **Rejected** (a reason is required) → the person is checked out at the time they asked to move (or when the app
+  first saw them outside, if earlier), and the day is flagged “Moved without approval”.
+- While someone is checked in and 5ime is open on their phone, it re-checks GPS every 15 minutes. Leaving the
+  approved place is recorded once per session; the person is prompted to ask, and their line manager can end the
+  session at the time they left. Web apps (including the installed 5ime app) cannot check location while closed.
+
+## Maps
+
+Maps use OpenStreetMap (Leaflet, no API key). Admins pick offices on a map with address search and a radius circle;
+home pins, home-approval requests, work-location requests and the admin “Where people checked in” view all show maps
+with street addresses (OpenStreetMap Nominatim, fair-use limits apply).

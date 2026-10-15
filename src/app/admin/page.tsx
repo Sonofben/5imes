@@ -5,6 +5,7 @@ import { FLAG_LABELS } from "@/lib/constants";
 import { shiftDate } from "@/lib/reports";
 import { AttendanceAlerts } from "./AttendanceAlerts";
 import { SetupChecklist } from "./SetupChecklist";
+import { MapView, type MapMarker } from "@/components/maps/MapView";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +21,29 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     supabase.from("members").select("id,full_name,email,team,status").eq("org_id", org.id).eq("status", "active").order("full_name"),
     supabase.from("attendance").select("member_id,kind,at,local_date,location_type,location_id,flags").eq("org_id", org.id).eq("local_date", today).order("at"),
     supabase.from("schedules").select("member_id,weekday,mode").eq("org_id", org.id),
-    supabase.from("locations").select("id,name").eq("org_id", org.id),
+    supabase.from("locations").select("id,name,lat,lng,radius_m").eq("org_id", org.id),
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date,location_type,location_id,flags,expected_mode").eq("org_id", org.id),
     supabase.from("attendance").select("member_id,kind,at,local_date,flags").eq("org_id", org.id).gte("local_date", shiftDate(today, -1)).lte("local_date", today).order("at"),
   ]);
+
+  // Admin-only live map: where each checked-in person checked in (coordinates are admin-only by RLS).
+  let liveMarkers: MapMarker[] = [];
+  if (isAdmin) {
+    const { data: recent } = await supabase.from("attendance").select("id,member_id,kind,at,location_type")
+      .eq("org_id", org.id).gte("local_date", shiftDate(today, -1)).order("at", { ascending: false }).limit(1000);
+    const latest = new Map<string, { id: string; kind: string; location_type: string }>();
+    for (const row of recent ?? []) if (!latest.has(row.member_id)) latest.set(row.member_id, row);
+    const openIns = [...latest.entries()].filter(([, row]) => row.kind === "in");
+    if (openIns.length) {
+      const { data: coords } = await supabase.from("private_attendance_locations").select("attendance_id,member_id,lat,lng")
+        .in("attendance_id", openIns.map(([, row]) => row.id));
+      const nameById = new Map((members ?? []).map((m) => [m.id as string, (m.full_name || m.email) as string]));
+      liveMarkers = (coords ?? []).map((c) => {
+        const type = latest.get(c.member_id)?.location_type;
+        return { lat: c.lat, lng: c.lng, label: nameById.get(c.member_id) ?? "Staff", tone: type === "none" ? "bad" as const : type === "home" ? "ok" as const : type === "elsewhere" ? "warn" as const : "brand" as const };
+      });
+    }
+  }
 
   const { count: invitedOrActive } = await supabase.from("members").select("id", { count: "exact", head: true })
     .eq("org_id", org.id).in("status", ["invited", "active", "pending"]);
@@ -71,6 +91,17 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         <p className="eyebrow">{stat.label}</p><p className={`mt-2 text-3xl font-bold tabular-nums tracking-tight ${stat.tone}`}>{stat.value}</p>
       </article>)}</div>
 
+      {isAdmin && (liveMarkers.length > 0 || (locations ?? []).length > 0) && (
+        <section aria-labelledby="live-map-heading" className="card space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div><h2 id="live-map-heading" className="font-bold">Where people checked in</h2><p className="text-xs text-muted">People checked in now, at the place they checked in. Offices show their check-in circle.</p></div>
+            <p className="flex flex-wrap gap-3 text-xs text-muted"><span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-brand" />Office</span><span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-ok" />Home</span><span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-warn" />Approved other place</span><span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-bad" />Outside approved places</span></p>
+          </div>
+          <MapView height={300} label="Map of today’s check-ins" markers={liveMarkers}
+            circles={(locations ?? []).map((l) => ({ lat: l.lat, lng: l.lng, radius: l.radius_m, tone: "ink" as const, label: l.name }))} />
+        </section>
+      )}
+
       <AttendanceAlerts
         members={(members ?? []) as Pick<Member, "id" | "full_name" | "email" | "team">[]}
         schedules={schedules ?? []}
@@ -97,7 +128,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             <tbody>{orderedRows.map(({ member, first, lastOut, latest, flags, expected, inNow }) => <tr key={member.id}>
               <td><div className="font-semibold">{member.full_name || member.email}</div><div className="text-xs text-muted">{member.team || member.email}</div></td>
               <td className="capitalize">{expected}</td>
-              <td>{inNow ? <span className="chip bg-green-50 text-ok">In · {latest?.location_type === "office" ? locName.get(latest.location_id ?? "") ?? "Office" : latest?.location_type === "home" ? "Home" : "Location pending"}</span> : first ? <span className="chip bg-paper text-muted">Checked out</span> : expected === "off" ? <span className="chip bg-paper text-muted">Day off</span> : <span className="chip bg-amber-50 text-warn">Not in</span>}{inNow && latest && latest.local_date !== today && <div className="mt-1 text-xs text-muted">Since {latest.local_date} · {timeIn(latest.at,org.timezone)}</div>}</td>
+              <td>{inNow ? <span className="chip bg-green-50 text-ok">In · {latest?.location_type === "office" ? locName.get(latest.location_id ?? "") ?? "Office" : latest?.location_type === "home" ? "Home" : latest?.location_type === "elsewhere" ? "Approved other place" : "Outside approved places"}</span> : first ? <span className="chip bg-paper text-muted">Checked out</span> : expected === "off" ? <span className="chip bg-paper text-muted">Day off</span> : <span className="chip bg-amber-50 text-warn">Not in</span>}{inNow && latest && latest.local_date !== today && <div className="mt-1 text-xs text-muted">Since {latest.local_date} · {timeIn(latest.at,org.timezone)}</div>}</td>
               <td className="tabular-nums">{first ? timeIn(first.at,org.timezone) : inNow && latest?.local_date !== today ? "Overnight" : "—"}</td>
               <td className="tabular-nums">{lastOut ? timeIn(lastOut.at,org.timezone) : "—"}</td>
               <td className="text-xs text-warn">{flags.map((flag) => FLAG_LABELS[flag] ?? flag).join(" · ") || "—"}</td>
@@ -107,7 +138,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         </div>
 
         <ul className="space-y-3 md:hidden">{orderedRows.map(({ member, first, lastOut, latest, flags, expected, inNow }) => <li key={member.id} className="card space-y-3 p-4">
-          <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{member.full_name || member.email}</p><p className="truncate text-xs text-muted">{member.team || member.email}</p></div>{inNow ? <span className="chip shrink-0 bg-green-50 text-ok">In · {latest?.location_type === "office" ? locName.get(latest.location_id ?? "") ?? "Office" : latest?.location_type === "home" ? "Home" : "Location pending"}</span> : first ? <span className="chip shrink-0 bg-paper text-muted">Checked out</span> : expected === "off" ? <span className="chip shrink-0 bg-paper text-muted">Day off</span> : <span className="chip shrink-0 bg-amber-50 text-warn">Not in</span>}</div>
+          <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{member.full_name || member.email}</p><p className="truncate text-xs text-muted">{member.team || member.email}</p></div>{inNow ? <span className="chip shrink-0 bg-green-50 text-ok">In · {latest?.location_type === "office" ? locName.get(latest.location_id ?? "") ?? "Office" : latest?.location_type === "home" ? "Home" : latest?.location_type === "elsewhere" ? "Approved other place" : "Outside approved places"}</span> : first ? <span className="chip shrink-0 bg-paper text-muted">Checked out</span> : expected === "off" ? <span className="chip shrink-0 bg-paper text-muted">Day off</span> : <span className="chip shrink-0 bg-amber-50 text-warn">Not in</span>}</div>
           <div className="grid grid-cols-2 gap-3 border-t border-line pt-3 text-xs"><div><p className="eyebrow">Schedule</p><p className="mt-1 capitalize">{expected}</p></div><div><p className="eyebrow">First in</p><p className="mt-1 tabular-nums">{first ? timeIn(first.at,org.timezone) : inNow && latest?.local_date !== today ? `Overnight · ${latest ? timeIn(latest.at,org.timezone) : ""}` : "—"}</p></div><div><p className="eyebrow">Last out</p><p className="mt-1 tabular-nums">{lastOut ? timeIn(lastOut.at,org.timezone) : "—"}</p></div><div><p className="eyebrow">Exceptions</p><p className={`mt-1 ${flags.length ? "text-warn" : "text-muted"}`}>{flags.map((flag) => FLAG_LABELS[flag] ?? flag).join(" · ") || "None"}</p></div></div>
         </li>)}</ul>
       </section>
