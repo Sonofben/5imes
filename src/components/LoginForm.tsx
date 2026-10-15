@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { PasswordField } from "@/components/PasswordField";
@@ -19,7 +18,6 @@ export type LoginBrand = { name: string; slug: string; logo_url: string | null; 
 type Mode = "password" | "code-request" | "code-verify";
 
 export function LoginForm({ brand }: { brand?: LoginBrand }) {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +25,7 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [providers, setProviders] = useState({ azure: true, google: true });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -34,7 +33,15 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
     const queryNotice = params.get("notice");
     if (queryError) setError(queryError);
     if (queryNotice) setNotice(queryNotice);
-    if (!authConfigured) setError("Supabase is not connected yet. Add the project URL and anon key to enable sign-in.");
+    if (!authConfigured) { setError("Supabase is not connected yet. Add the project URL and anon key to enable sign-in."); return; }
+    // Only offer Microsoft / Google when they are switched on in Supabase Auth;
+    // otherwise the button lands on a raw "provider is not enabled" error page.
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s: { external?: Record<string, boolean> } | null) => {
+        if (s?.external) setProviders({ azure: !!s.external.azure, google: !!s.external.google });
+      })
+      .catch(() => undefined);
   }, []);
 
   function validateCompanyEmail() {
@@ -58,8 +65,7 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
     // If the account requires a second factor, Supabase returns a session with aal1
     // and the admin pages will redirect to the challenge page. We just push forward.
     if (!data.session) { setError("Sign-in failed."); return; }
-    router.replace("/start");
-    router.refresh();
+    window.location.assign("/start"); // full load so the server sees the new session cookie
   }
 
   async function requestCode(e: React.FormEvent) {
@@ -89,8 +95,7 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
     setBusy(false);
     if (error) { setError(mapAuthError(error.message)); return; }
     if (!data.session) { setError("Could not sign you in. Try again."); return; }
-    router.replace("/start");
-    router.refresh();
+    window.location.assign("/start"); // full load so the server sees the new session cookie
   }
 
   async function oauth(provider: "google" | "azure") {
@@ -135,9 +140,9 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
         <div className="mb-5"><p className="eyebrow">{brand ? brand.name : "Your team workspace"}</p><h1 className="mt-2 text-2xl font-bold tracking-tight">{brand ? "Sign in to your staff portal" : "Sign in to 5ime"}</h1><p className="mt-2 text-sm leading-6 text-muted">{brand ? `Use your @${brand.domain} work account.` : "Use your work email and password. New here? Create a workspace or wait for your admin’s invitation."}</p></div>
 
         <div className="card space-y-4 p-5 sm:p-6">
-          <button type="button" onClick={() => oauth("azure")} disabled={!authConfigured || busy} className="btn-ghost w-full"><MicrosoftIcon/> Continue with Microsoft</button>
-          <button type="button" onClick={() => oauth("google")} disabled={!authConfigured || busy} className="btn-ghost w-full"><GoogleIcon/> Continue with Google Workspace</button>
-          <div className="flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line"/><span>or use work email</span><span className="h-px flex-1 bg-line"/></div>
+          {providers.azure && <button type="button" onClick={() => oauth("azure")} disabled={!authConfigured || busy} className="btn-ghost w-full"><MicrosoftIcon/> Continue with Microsoft</button>}
+          {providers.google && <button type="button" onClick={() => oauth("google")} disabled={!authConfigured || busy} className="btn-ghost w-full"><GoogleIcon/> Continue with Google Workspace</button>}
+          {(providers.azure || providers.google) && <div className="flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line"/><span>or use work email</span><span className="h-px flex-1 bg-line"/></div>}
 
           {mode === "password" && (
             <form onSubmit={signInWithPassword} className="space-y-3">

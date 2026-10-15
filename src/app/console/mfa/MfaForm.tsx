@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 /** Two-factor sign-in for the console: enrol an authenticator app once, then enter a 6-digit code. */
 export function MfaForm() {
-  const router = useRouter();
   const [factorId, setFactorId] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
@@ -35,7 +33,7 @@ export function MfaForm() {
     const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
     setBusy(false);
     if (error) { setError(error.message); return; }
-    router.replace("/console"); router.refresh();
+    window.location.assign("/console"); // full load so the server sees the new session cookie
   }
 
   return (

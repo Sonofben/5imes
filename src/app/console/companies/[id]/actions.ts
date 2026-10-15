@@ -32,7 +32,7 @@ export async function invitePerson(id: string, f: FormData) {
   const { error } = await supabase.rpc("console_invite_member", { p_org: id, p_email: email, p_name: String(f.get("name") ?? ""), p_reason: reasonOf(f) });
   if (error) back(id, { error: error.message });
   const admin = createAdminClient();
-  const sent = admin ? !(await admin.auth.admin.inviteUserByEmail(email, { redirectTo: `${siteUrl()}/auth/callback` })).error : false;
+  const sent = admin ? !(await admin.auth.admin.inviteUserByEmail(email, { redirectTo: `${siteUrl()}/auth/callback?type=invite` })).error : false;
   back(id, { msg: sent ? `${email} added and invite email sent.` : `${email} added. Ask them to sign in with that email.` });
 }
 

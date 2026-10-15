@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { BRAND, PLANS, TRIAL_DAYS, naira } from "@/lib/constants";
@@ -30,9 +31,28 @@ const team = [
   { initials: "FA", name: "Fiyin A.", mode: "On an overnight shift", time: "11:40 pm", tone: "bg-[#e7e8f2] text-[#4d527f]" },
 ];
 
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: BRAND.name,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web, Android, iOS",
+  description: "GPS attendance for hybrid teams: check in only at an approved office or approved home on scheduled days.",
+  offers: Object.values(PLANS).map((plan) => ({
+    "@type": "Offer",
+    name: plan.name,
+    price: plan.pricePerSeat,
+    priceCurrency: "NGN",
+    description: "Per employee per month",
+  })),
+};
+
 export default function Home() {
   return (
     <main className="overflow-hidden bg-[#faf9f6]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
         <Logo />
         <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4">

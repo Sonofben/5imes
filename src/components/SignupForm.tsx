@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { PasswordField } from "@/components/PasswordField";
@@ -17,7 +16,6 @@ function siteUrl() {
 }
 
 export function SignupForm() {
-  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,8 +57,7 @@ export function SignupForm() {
     // immediately. Push forward. If confirmation is ON (prod), no session yet
     // and the user must click the email link.
     if (data.session) {
-      router.replace("/onboarding");
-      router.refresh();
+      window.location.assign("/onboarding"); // full load so the server sees the new session cookie
       return;
     }
     setNotice(`We’ve emailed a verification link to ${normalisedEmail}. Open it to finish creating your workspace.`);

@@ -10,3 +10,8 @@ export function siteUrl(request?: Request) {
   }
   return request ? new URL(request.url).origin : "http://localhost:3000";
 }
+
+/** Public origin for SEO metadata (robots, sitemap, canonical). Never throws. */
+export function publicOrigin() {
+  return process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "") || "http://localhost:3000";
+}

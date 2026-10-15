@@ -51,6 +51,7 @@ bash ~/vps-check.sh
    6. `supabase/migrations/0006_console_branding_support.sql`
    7. `supabase/migrations/0007_passwords_mfa_recovery.sql`
    8. `supabase/migrations/0008_auth_routing_and_recovery_hardening.sql`
+   9. `supabase/migrations/0009_security_status_fix.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:

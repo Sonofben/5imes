@@ -90,11 +90,14 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: memberRow } = await supabase
+  const { data: memberRow, error: memberError } = await supabase
     .from("members")
     .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,onboarded_at")
     .eq("user_id", user.id)
     .maybeSingle<MemberRow>();
+  // A failed lookup must not bounce to /start: /start would send an owner straight
+  // back here and the two pages would redirect forever. Show the real error instead.
+  if (memberError) throw new Error(`Could not load your membership: ${memberError.message}`);
   if (!memberRow) redirect("/start");
   if (memberRow.status === "pending") redirect("/pending");
   if (memberRow.status !== "active") redirect("/pending?disabled=1");
@@ -110,8 +113,10 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
     const { data: session } = await supabase.auth.getSession();
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.currentLevel !== "aal2") {
-      const { data: status } = await supabase.from("my_security_status").select("totp_enrolled").maybeSingle<{ totp_enrolled: boolean }>();
-      if (!status?.totp_enrolled) {
+      // Ask Supabase Auth directly: the authenticated role cannot read auth.mfa_factors.
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totpEnrolled = !!factors?.totp?.some((f) => f.status === "verified");
+      if (!totpEnrolled) {
         // Not enrolled yet. Admin pages are gated; send them to Security to set up.
         redirect("/admin/security?setup=1");
       }
@@ -134,12 +139,14 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
     }
   }
 
-  const [{ data: org }, { data: privateLocation }] = await Promise.all([
+  const [{ data: org, error: orgError }, { data: privateLocation }] = await Promise.all([
     supabase.from("organizations").select("*").eq("id", memberRow.org_id).single<Org>(),
     supabase.from("member_private_locations")
       .select("home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_req_at")
       .eq("member_id", memberRow.id).maybeSingle<PrivateLocation>(),
   ]);
+
+  if (!org) throw new Error(`Could not load your company: ${orgError?.message ?? "not found"}`);
 
   const me: Member = {
     ...memberRow,
@@ -150,7 +157,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
     home_req_acc: privateLocation?.home_req_acc ?? null,
     home_req_at: privateLocation?.home_req_at ?? null,
   };
-  return { supabase, user, me, member: me, org: org!, isAdmin, isViewer };
+  return { supabase, user, me, member: me, org, isAdmin, isViewer };
 }
 
 /** Today's date (YYYY-MM-DD) in the company's time zone. */

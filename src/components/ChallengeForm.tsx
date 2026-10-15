@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 
 export function ChallengeForm({ factorId, next }: { factorId: string; next: string }) {
-  const router = useRouter();
   const [mode, setMode] = useState<"totp" | "recovery">("totp");
   const [code, setCode] = useState("");
   const [recovery, setRecovery] = useState("");
@@ -19,7 +17,7 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
     const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
     setBusy(false);
     if (error) { setError(error.message); return; }
-    router.replace(next); router.refresh();
+    window.location.assign(next); // full load so the server sees the new session cookie
   }
 
   async function submitRecovery(e: React.FormEvent) {
@@ -31,8 +29,7 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
     if (!result?.ok) { setError(result?.error ?? "Could not verify that recovery code."); return; }
     // The server has logged a `recovery_used` event; requireMember's grace
     // window will let the user through on aal1 while they re-enroll TOTP.
-    router.replace("/admin/security?msg=" + encodeURIComponent("Recovery code accepted. Please re-enrol your authenticator app — the grace window is 10 minutes."));
-    router.refresh();
+    window.location.assign("/admin/security?msg=" + encodeURIComponent("Recovery code accepted. Please re-enrol your authenticator app — the grace window is 10 minutes.")); // full load so the server sees the new session cookie
   }
 
   return (

@@ -21,5 +21,10 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
   const totp = factors?.totp?.find((f) => f.status === "verified");
   if (!totp) redirect("/admin/security?setup=1");
   const sp = await searchParams;
-  return <ChallengeForm factorId={totp.id} next={sp.next ?? "/admin"} />;
+  return <ChallengeForm factorId={totp.id} next={safeNext(sp.next)} />;
+}
+
+/** Only same-site paths; never "//host" or absolute URLs (open-redirect guard). */
+function safeNext(next?: string) {
+  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/admin";
 }

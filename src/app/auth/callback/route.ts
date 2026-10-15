@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/site";
 
@@ -23,17 +24,33 @@ export async function GET(request: Request) {
   const next = url.searchParams.get("next");
   const errorDesc = url.searchParams.get("error_description");
 
-  if (!code) {
-    return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(errorDesc || "Sign-in failed")}`);
-  }
-
+  const tokenHash = url.searchParams.get("token_hash");
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(error.message)}`);
+
+  if (tokenHash && type && OTP_TYPES.has(type)) {
+    // Email links built from {{ .TokenHash }} work on any device: unlike ?code=,
+    // they don't need the PKCE verifier cookie from the browser that asked.
+    // Admin invitations have no verifier at all, so they must use this path.
+    const { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
+    if (error) return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(linkError(error.message))}`);
+  } else if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(linkError(error.message))}`);
+  } else {
+    return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(errorDesc || "That sign-in link is invalid or has expired.")}`);
   }
 
   if (type === "recovery") return NextResponse.redirect(`${base}/auth/reset`);
   if (type === "invite") return NextResponse.redirect(`${base}/auth/invite`);
   return NextResponse.redirect(`${base}${next || "/start"}`);
+}
+
+const OTP_TYPES = new Set(["signup", "invite", "magiclink", "recovery", "email_change", "email"]);
+
+function linkError(message: string) {
+  return /code verifier|both auth code and code verifier/i.test(message)
+    ? "Open the link on the same device and browser you used to request it, or ask for a new one."
+    : /expired|invalid/i.test(message)
+      ? "That link has expired or was already used. Request a new one."
+      : message;
 }

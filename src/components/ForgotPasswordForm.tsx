@@ -20,7 +20,7 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
     // Deliberately fire-and-forget: we always show the same success state so
     // the response does not reveal whether an account exists for that email.
     await createClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${siteUrl()}/auth/reset`,
+      redirectTo: `${siteUrl()}/auth/callback?type=recovery`,
     }).catch(() => undefined);
     setBusy(false);
     setSent(true);

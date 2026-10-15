@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
@@ -19,7 +18,6 @@ import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/passwo
  * Same mechanics — pick a password, then they're signed in.
  */
 export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,8 +50,7 @@ export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
       p_kind: mode === "invite" ? "password_set" : "password_reset",
       p_detail: {},
     }).then(() => undefined, () => undefined);
-    router.replace(mode === "invite" ? "/start" : "/start?reset=1");
-    router.refresh();
+    window.location.assign(mode === "invite" ? "/start" : "/start?reset=1"); // full load so the server sees the new session cookie
   }
 
   const headline = mode === "invite" ? "Welcome — set your password" : "Choose a new password";
