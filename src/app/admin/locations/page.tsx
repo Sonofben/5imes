@@ -1,4 +1,5 @@
 import { requireMember, type Subscription } from "@/lib/session";
+import { loadPlans } from "@/lib/plans";
 import { mapsLink } from "@/lib/geo";
 import { Flash } from "@/components/Flash";
 import { LocationPicker } from "@/components/maps/LocationPicker";
@@ -19,7 +20,9 @@ export default async function LocationsPage({
     supabase.from("subscriptions").select("plan").eq("org_id", org.id).maybeSingle<Pick<Subscription, "plan">>(),
   ]);
   const isBasic = sub?.plan === "basic";
-  const canAdd = !isBasic || (locations?.length ?? 0) < 1;
+  const { plans } = await loadPlans(supabase);
+  const maxLocations = plans[sub?.plan ?? "pro"].maxLocations ?? null;
+  const canAdd = maxLocations === null || (locations?.length ?? 0) < maxLocations;
 
   return (
     <div className="space-y-6">
@@ -82,7 +85,7 @@ export default async function LocationsPage({
           </form>
         ) : (
           <div className="card text-sm">
-            The Basic plan includes one office. <a href="/admin/billing" className="underline">Upgrade to Pro</a> for branches.
+            Your {plans[sub?.plan ?? "pro"].name} plan includes {maxLocations} office{maxLocations === 1 ? "" : "s"}. <a href="/admin/billing" className="underline">Change plan</a> to add more.
           </div>
         )}
       </div>

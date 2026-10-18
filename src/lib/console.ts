@@ -19,12 +19,34 @@ export async function requireConsole(opts: { allowAal1?: boolean } = {}) {
   return { supabase, user, role: (role ?? null) as ConsoleRole | null };
 }
 
+/** What each Global Admin role is called on screen. */
+export const ROLE_LABELS: Record<ConsoleRole, string> = {
+  owner: "Global admin",
+  support: "Support admin",
+  finance: "Billing admin",
+  viewer: "Read-only admin",
+};
+export const ROLE_HELP: Record<ConsoleRole, string> = {
+  owner: "Everything, including prices, the team and deleting companies.",
+  support: "Companies, people, security and announcements.",
+  finance: "Revenue, payments, plans and seats, complimentary terms.",
+  viewer: "Can look at everything, change nothing.",
+};
+
+const any = (...roles: ConsoleRole[]) => (r: ConsoleRole | null) => !!r && roles.includes(r);
 export const can = {
-  trial: (r: ConsoleRole | null) => r === "owner" || r === "support",
-  invite: (r: ConsoleRole | null) => r === "owner" || r === "support",
-  staff: (r: ConsoleRole | null) => r === "owner" || r === "support",
-  complimentary: (r: ConsoleRole | null) => r === "owner" || r === "finance",
-  ownerOnly: (r: ConsoleRole | null) => r === "owner",
+  trial: any("owner", "support"),
+  invite: any("owner", "support"),
+  staff: any("owner", "support"),
+  viewAs: any("owner", "support"),
+  complimentary: any("owner", "finance"),
+  setPlan: any("owner", "finance"),
+  createCompany: any("owner", "support"),
+  archive: any("owner", "support"),
+  export: any("owner", "support", "finance"),
+  people: any("owner", "support"),
+  announce: any("owner", "support"),
+  ownerOnly: any("owner"),
 };
 
 export const naira = (kobo: number | string) => "₦" + (Number(kobo) / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 });

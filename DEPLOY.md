@@ -54,6 +54,7 @@ bash ~/vps-check.sh
    9. `supabase/migrations/0009_security_status_fix.sql`
    10. `supabase/migrations/0010_explicit_api_grants.sql`
    11. `supabase/migrations/0011_work_elsewhere_line_managers_maps.sql`
+   12. `supabase/migrations/0012_global_admin.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
@@ -200,17 +201,18 @@ Then open `https://<ip-with-dashes>.sslip.io`. You should see the 5ime landing p
 7. **Pin a home location.** From home, staff tap **pin this location**, and the admin approves it under **Staff**.
 
 
-## 7. Give yourself access to the Kora Forge console (one-time)
+## 7. Make yourself the first Global admin (one-time)
 
-1. Sign in to 5ime once at `https://<host>/login` with your Kora Forge email (this creates your user).
+1. Supabase → **Authentication → Users → Add user → Create new user**: your Kora Forge email and a strong password, tick **Auto confirm user**.
+   (Don't use the 5ime sign-up page for this — that creates a company workspace.)
 2. In the Supabase SQL Editor run (use your email):
    ```sql
    insert into public.platform_staff (user_id, email, role)
    select id, email, 'owner' from auth.users where email = 'you@koraforge.com';
    ```
-   Roles: `owner` (everything), `support` (help companies, no money), `finance` (complimentary terms), `viewer` (read-only). Add teammates the same way.
-3. Open `https://<host>/console`. The first time, scan the QR code with an authenticator app (Google/Microsoft Authenticator) and enter the 6-digit code. Two-factor is required every sign-in.
-4. Logo uploads use Supabase Storage: the app creates a public `logos` bucket automatically on the first upload (needs `SUPABASE_SERVICE_ROLE_KEY`).
+3. Sign in at `https://<host>/login` and open `https://<host>/console`. The first time, scan the QR code with an authenticator app and enter the 6-digit code. Two-factor is required every sign-in.
+4. Add the rest of the team from **Global Admin → Team** (no more SQL). Roles: Global admin, Support admin, Billing admin, Read-only admin.
+5. Logo uploads use Supabase Storage: the app creates a public `logos` bucket automatically on the first upload (needs `SUPABASE_SERVICE_ROLE_KEY`).
 
 ## Everyday operations
 

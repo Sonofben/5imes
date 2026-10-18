@@ -39,7 +39,7 @@ export function MfaForm() {
   return (
     <div className="mx-auto max-w-md">
       <form onSubmit={verify} className="card space-y-4">
-        <div><p className="eyebrow">Kora Forge console</p><h1 className="mt-1 text-xl font-bold">Two-factor sign-in</h1>
+        <div><p className="eyebrow">5ime Global Admin</p><h1 className="mt-1 text-xl font-bold">Two-factor sign-in</h1>
           <p className="mt-1 text-sm text-muted">{qr ? "First time: scan this with Google Authenticator, Microsoft Authenticator or similar, then enter the 6-digit code." : "Enter the 6-digit code from your authenticator app."}</p></div>
         {qr && <div className="flex flex-col items-center gap-2 rounded-xl bg-white p-3"><img src={qr} alt="Authenticator QR code" className="h-48 w-48" /><code className="break-all text-xs text-muted">{secret}</code></div>}
         <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value)} className="input text-center text-lg tracking-[0.4em]" placeholder="000000" />

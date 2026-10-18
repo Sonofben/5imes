@@ -2,7 +2,8 @@
 -- NEVER run this on your real Supabase project.
 create role anon; create role authenticated; create role service_role bypassrls;
 create schema auth;
-create table auth.users (id uuid primary key);
+create table auth.users (id uuid primary key, email text, last_sign_in_at timestamptz, banned_until timestamptz);
+create table auth.sessions (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users on delete cascade, created_at timestamptz default now());
 -- Supabase's own MFA factors table; only the columns our views and policies look at.
 create table auth.mfa_factors (
   id uuid primary key default gen_random_uuid(),

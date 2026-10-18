@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
-import { TRIAL_DAYS } from "@/lib/constants";
+import { loadPlans } from "@/lib/plans";
 import { suggestWorkspaceName } from "@/lib/workspace";
 
 async function createCompany(formData: FormData) {
@@ -34,6 +34,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     .maybeSingle();
   if (existingMember) redirect("/start");
 
+  const { trialDays: TRIAL_DAYS } = await loadPlans(supabase);
   const domain = user.email?.split("@")[1] ?? "";
   const suggested = String(user.user_metadata?.company_name ?? "").trim() || suggestWorkspaceName(domain);
 

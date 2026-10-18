@@ -6,7 +6,7 @@ on:
 
 jobs:
   database-tests:
-    name: Database rules (migrations 0001-0011 + security tests)
+    name: Database rules (migrations 0001-0012 + security tests)
     runs-on: ubuntu-latest
     services:
       postgres:

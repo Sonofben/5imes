@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isDefinitivePaystackRejection, paystack, paystackEnabled } from "@/lib/paystack";
-import { PLANS, type PlanId } from "@/lib/constants";
+import { PLANS as DEFAULT_PLANS, type PlanId } from "@/lib/constants";
+import { loadPlans } from "@/lib/plans";
 import { BILLING_CYCLES, type BillingCycleId } from "@/lib/billing";
 import { siteUrl } from "@/lib/site";
 
@@ -19,7 +20,8 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const plan = String(form.get("plan") || "") as PlanId;
   const cycle = String(form.get("cycle") || "monthly") as BillingCycleId;
-  if (!Object.hasOwn(PLANS, plan)) return back({ error: "Choose a valid plan." });
+  if (!Object.hasOwn(DEFAULT_PLANS, plan)) return back({ error: "Choose a valid plan." });
+  const { plans: PLANS } = await loadPlans(supabase);
   if (!Object.hasOwn(BILLING_CYCLES, cycle)) return back({ error: "Choose a valid billing period." });
 
   const [{ count: assignedSeats }, admin] = await Promise.all([

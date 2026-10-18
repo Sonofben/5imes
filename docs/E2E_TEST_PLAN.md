@@ -195,6 +195,32 @@ Use a **separate incognito window**. Fake GPS per section 0.
 | W8 | Line manager clicks “End session at …” | Staff 1 checked out at the time they left, flagged |
 | W9 | Staff 1 has a waiting request → Cancel request | Cancelled; can ask again |
 
+## 10c. Global Admin (`/console`, Kora Forge team only)
+
+Needs an account on the Global Admin team (first one added with the SQL in DEPLOY.md) and two-factor.
+
+| ID | Steps | Expected |
+|---|---|---|
+| GA1 | Open `/console` as a normal company admin | 404 page |
+| GA2 | Open `/console` as Global admin → complete two-factor | “Platform overview” with tiles, two bar charts and “Companies that need attention” |
+| GA3 | Plans & pricing → Basic price 300, reason “Test price” → Save | Saved; landing page and company Billing show ₦300 within 5 minutes; set it back to 250 after |
+| GA4 | Plans & pricing → trial 21 days → Save; create a new workspace by sign-up | New company’s trial ends in 21 days |
+| GA5 | Announcements → “Test banner”, Information, all companies, 1 day → Publish | Banner on company `/admin` and staff `/app`; “End now” removes it |
+| GA6 | Maintenance mode on with a message | Staff check-in shows the message and is refused; turn it off → check-in works |
+| GA7 | Companies → Create a company (name, domain, owner email, 14 days, reason) | Company page opens; owner receives invitation; after setting password owner lands on `/admin` |
+| GA8 | Company page → Change plan and seats (Basic, 10) | Plan/seats updated; audit shows it |
+| GA9 | “View as company admin” before the company grants support access | Refused with a clear message |
+| GA10 | Company admin grants 24 h support access → View as company admin | Read-only view of people, today’s attendance, offices map, work week; the company’s support log shows the view |
+| GA11 | Export company data (with reason) | JSON downloads; staff included only while support access is on |
+| GA12 | Archive company → appears under “Show archived”; Delete with wrong domain → refused; with right domain → deleted | Audit log keeps a “company.delete” entry |
+| GA13 | Revenue → filter Confirmed → Download CSV | CSV opens in Excel/Sheets |
+| GA14 | People → search part of an email | Refused (“full email”) |
+| GA15 | People → full email of Staff 1 → Sign out everywhere | Staff 1’s session ends (next page load asks to sign in) |
+| GA16 | Lock Staff 1 → Staff 1 tries to sign in | Refused; Security center lists them; Unlock restores access |
+| GA17 | Reset two-factor for a company admin | Their next admin page asks them to set up two-factor again |
+| GA18 | Team → add a Kora Forge email as Read-only admin | Invitation (if no login) or added; that person can view but every change button is hidden/refused |
+| GA19 | Team → try to demote/remove the only Global admin | Refused |
+
 ## 11. Isolation and security spot-checks
 
 | ID | Steps | Expected |

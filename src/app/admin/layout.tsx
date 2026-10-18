@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMember, type Subscription } from "@/lib/session";
 import { CompanyMark } from "@/components/CompanyMark";
 import { AdminNav } from "./AdminNav";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <form action="/auth/signout" method="post"><button className="btn-ghost btn-sm">Sign out</button></form>
         </div>
       </header>
+      <AnnouncementBanner supabase={supabase} />
       {banner && (
         <div role="status" className="my-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ead8c0] bg-[#fff9ef] px-4 py-3 text-sm text-ink">
           <span>{banner}</span>

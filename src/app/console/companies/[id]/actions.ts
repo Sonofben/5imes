@@ -53,3 +53,23 @@ export async function changeDomain(id: string, f: FormData) {
   const { error } = await supabase.rpc("console_update_domain", { p_org: id, p_domain: String(f.get("domain") ?? ""), p_reason: reasonOf(f) });
   back(id, error ? { error: error.message } : { msg: "Email domain updated." });
 }
+
+export async function setPlan(id: string, f: FormData) {
+  const { supabase } = await requireConsole();
+  const { error } = await supabase.rpc("console_set_plan", { p_org: id, p_plan: String(f.get("plan")), p_seats: Number(f.get("seats")), p_reason: reasonOf(f) });
+  back(id, error ? { error: error.message } : { msg: "Plan and seats updated." });
+}
+
+export async function setArchived(id: string, archived: boolean, f: FormData) {
+  const { supabase } = await requireConsole();
+  const { error } = await supabase.rpc("console_set_archived", { p_org: id, p_archived: archived, p_reason: reasonOf(f) });
+  back(id, error ? { error: error.message } : { msg: archived ? "Company archived and suspended." : "Company restored from the archive (still suspended until you reactivate it)." });
+}
+
+export async function deleteCompany(id: string, f: FormData) {
+  const { supabase } = await requireConsole();
+  const { error } = await supabase.rpc("console_delete_company", { p_org: id, p_confirm_domain: String(f.get("confirm") ?? ""), p_reason: reasonOf(f) });
+  if (error) back(id, { error: error.message });
+  revalidatePath("/console/companies");
+  redirect(`/console/companies?archived=1`);
+}

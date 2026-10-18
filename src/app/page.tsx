@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { BRAND, PLANS, TRIAL_DAYS, naira } from "@/lib/constants";
+import { BRAND, naira } from "@/lib/constants";
+import { loadPublicPlans } from "@/lib/plans";
+
+// Prices and trial length come from Global Admin; refresh the cached page every 5 minutes.
+export const revalidate = 300;
 
 const cycles = [
   { label: "Monthly", months: 1 },
@@ -33,7 +37,8 @@ const team = [
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-const structuredData = {
+function structuredData(PLANS: Awaited<ReturnType<typeof loadPublicPlans>>["plans"]) {
+  return {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: BRAND.name,
@@ -47,12 +52,14 @@ const structuredData = {
     priceCurrency: "NGN",
     description: "Per employee per month",
   })),
-};
+  };
+}
 
-export default function Home() {
+export default async function Home() {
+  const { plans: PLANS, trialDays: TRIAL_DAYS } = await loadPublicPlans();
   return (
     <main className="overflow-hidden bg-[#faf9f6]">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(PLANS)) }} />
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
         <Logo />
         <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4">

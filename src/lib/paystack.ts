@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { BILLING_CYCLES, billingAmountKobo, type BillingCycleId } from "@/lib/billing";
 import { PLANS, type PlanId } from "@/lib/constants";
+import { loadPlans } from "@/lib/plans";
 
 const API = "https://api.paystack.co";
 
@@ -75,7 +76,8 @@ async function syncSeatRenewal(admin: NonNullable<ReturnType<typeof createAdminC
   if (!cycle || !Object.hasOwn(PLANS, payment.plan as PlanId) || !payment.paystack_plan_code) {
     return { ok: false, reason: "the paid seats are active, but renewal plan details are incomplete" };
   }
-  const recurringAmount = billingAmountKobo(PLANS[payment.plan as PlanId].pricePerSeat, payment.seats, cycle);
+  const { plans } = await loadPlans(admin);
+  const recurringAmount = billingAmountKobo(plans[payment.plan as PlanId].pricePerSeat, payment.seats, cycle);
   try {
     await paystack(`/plan/${encodeURIComponent(payment.paystack_plan_code)}`, {
       method: "PUT",

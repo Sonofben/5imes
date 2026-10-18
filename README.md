@@ -66,9 +66,29 @@ GitHub runs these on every push (repo **Actions** tab):
 - **App:** lint, unit tests (`npm test`) and production build.
 
 
-## Kora Forge console (`/console`)
+## Global Admin (`/console`)
 
-Platform staff only (listed in `platform_staff`, two-factor sign-in required). Shows company-level facts — plan, seats, counts, payments, health warnings — never staff attendance or locations. Actions (each logged with a reason): extend trial, complimentary term, add a person for a company, suspend/reactivate, transfer ownership, change email domain. A company's staff list is visible only while that company's admin has granted temporary support access (24 or 72 hours) in Settings; the admin sees a log of what support did.
+Kora Forge's platform-wide administration, for people on the Global Admin team (two-factor sign-in required).
+Roles: **Global admin** (everything), **Support admin** (companies, people, security, announcements),
+**Billing admin** (revenue, payments, plans/seats, complimentary terms), **Read-only admin**.
+
+- **Overview & health:** companies, trials, paying, revenue, active companies and people in the last 7 days,
+  check-ins per day, new companies per week, and companies that need attention (trial ending, unpaid, no check-ins, no office).
+- **Companies:** create a company for a client (owner gets an invitation), change plan and seats, extend trial,
+  complimentary term, suspend/reactivate, transfer ownership, change domain, archive, delete permanently (archived first,
+  domain typed to confirm), export company data (JSON).
+- **View as company admin:** read-only view of their people, today's attendance, offices and work week.
+- **Revenue & payments:** this month, last month, 12 months, all time, monthly run rate, by plan and provider, every payment with filters and CSV download.
+- **People:** look up any account by full email (company, role, status, last sign-in, two-factor); send password reset,
+  sign out everywhere, lock/unlock, reset two-factor.
+- **Security center:** company admins without two-factor, locked accounts, sign-in counts, account security events.
+- **Announcements & maintenance:** banners to all companies or one company (everyone or admins only); maintenance mode pauses check-ins.
+- **Plans & pricing:** plan names, prices, descriptions, features and office limits, and the free-trial length — no code change.
+  New prices apply to new payments; paid terms are unchanged.
+- **Team:** add (by invitation if needed), change role or remove Global Admin team members. There is always at least one Global admin.
+
+Privacy: a company's **staff list, attendance and view-as** open only while that company has granted support access
+(24 or 72 hours, in their Settings). Every action and every look is recorded in the audit log with a reason.
 
 ## Company branding
 

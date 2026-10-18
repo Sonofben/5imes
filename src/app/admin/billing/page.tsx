@@ -1,6 +1,7 @@
 import { requireMember, type Subscription } from "@/lib/session";
 import { BILLING_CYCLES, type BillingCycleId } from "@/lib/billing";
-import { PLANS, naira, type PlanId } from "@/lib/constants";
+import { naira, type PlanId } from "@/lib/constants";
+import { loadPlans } from "@/lib/plans";
 import { billingCheckoutEnabled, refreshPendingCheckout } from "@/lib/paystack";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Flash } from "@/components/Flash";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, org } = await requireMember({ admin: true });
+  const { plans: PLANS } = await loadPlans(supabase);
   const [{ data: initialSub }, { count }] = await Promise.all([
     supabase.from("subscriptions").select("*").eq("org_id", org.id).maybeSingle<Subscription>(),
     supabase.from("members").select("id", { count: "exact", head: true }).eq("org_id", org.id).in("status", ["active", "invited"]),

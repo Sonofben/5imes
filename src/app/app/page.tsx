@@ -7,6 +7,7 @@ import { HomeMap } from "./HomeMap";
 import { WelcomeSteps } from "./WelcomeSteps";
 import { WorkElsewhere, type ElsewhereRequest } from "./WorkElsewhere";
 import { PresenceWatcher } from "./PresenceWatcher";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { FLAG_LABELS, WEEKDAYS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export default async function StaffApp() {
         </div>
       </header>
 
+      <AnnouncementBanner supabase={supabase} />
       <section className="py-7">
         <p className="eyebrow">{org.name}</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">Good {greeting()}, {me.full_name?.split(" ")[0] || me.email.split("@")[0]}</h1>

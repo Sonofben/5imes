@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { requireConsole, can, naira, fmtDate, fmtDateTime } from "@/lib/console";
 import { Flash } from "@/components/Flash";
-import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain } from "./actions";
+import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 type Detail = {
-  org: { id: string; name: string; domain: string; slug: string; timezone: string; created_at: string; suspended_at: string | null; logo_url: string | null };
+  org: { id: string; name: string; domain: string; slug: string; timezone: string; created_at: string; suspended_at: string | null; logo_url: string | null; archived_at?: string | null };
   owner: { name: string | null; email: string } | null;
   subscription: { plan: string; status: string; trial_ends_at: string | null; current_period_end: string | null; seats_paid: number; billing_interval_months: number; paystack_subscription_code: string | null; cancel_at_period_end: boolean } | null;
   counts: { active: number; invited: number; pending: number; disabled: number; stale_invites: number; offices: number };
@@ -26,6 +26,8 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
   const { data, error } = await supabase.rpc("console_company", { p_org: id });
   if (error || !data) return <p className="card text-bad">{error?.message ?? "Company not found."}</p>;
   const d = data as Detail;
+  const { data: archivedRows } = await supabase.rpc("console_companies", { p_search: d.org.domain, p_archived: true });
+  const isArchived = ((archivedRows ?? []) as { id: string }[]).some((r) => r.id === id);
   const s = d.subscription;
   let staff: StaffRow[] | null = null; let staffError: string | null = null;
   if (sp.staff === "1" && can.staff(role)) {
@@ -50,6 +52,12 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
         <h1 className="page-heading mt-1">{d.org.name}</h1>
         <p className="text-sm text-muted">@{d.org.domain} · link /{d.org.slug} · joined {fmtDate(d.org.created_at)} · owner {d.owner ? `${d.owner.name ?? ""} <${d.owner.email}>` : "—"}</p></div>
       <Flash msg={sp.msg} error={sp.error} />
+      {isArchived && <p className="card border-red-200 bg-red-50 text-sm text-bad">This company is archived: hidden from lists and suspended.</p>}
+
+      <div className="flex flex-wrap gap-2">
+        {can.viewAs(role) && <Link href={`/console/companies/${id}/view`} className="btn-ghost btn-sm">{d.support_until ? "View as company admin (read-only, logged)" : "View as company admin — needs their permission"}</Link>}
+        {can.export(role) && <form action={`/console/companies/${id}/export`} method="get" className="flex gap-2"><input name="reason" required minLength={5} placeholder="Reason for export" className="input min-h-9 py-1 text-sm" aria-label="Reason for export" /><button className="btn-ghost btn-sm">Export company data</button></form>}
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="card space-y-1 text-sm"><h2 className="mb-2 font-bold">Subscription</h2>
@@ -73,6 +81,15 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
         {can.complimentary(role) && <form action={grantComplimentary.bind(null, id)} className="card space-y-2"><h2 className="font-bold">Complimentary term (₦0)</h2>
           <div className="grid grid-cols-3 gap-2"><select name="plan" className="input" defaultValue={s?.plan ?? "basic"}><option value="basic">Basic</option><option value="pro">Pro</option></select><input name="seats" type="number" min={Math.max(1, used)} defaultValue={Math.max(1, used)} className="input" /><select name="months" className="input" defaultValue="1"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></div>
           <Reason /><button className="btn-primary">Grant term</button></form>}
+        {can.setPlan(role) && <form action={setPlan.bind(null, id)} className="card space-y-2"><h2 className="font-bold">Change plan and seats</h2><p className="text-xs text-muted">Changes the plan and paid seats now, without a payment. Term dates stay the same.</p>
+          <div className="grid grid-cols-2 gap-2"><select name="plan" className="input" defaultValue={s?.plan ?? "pro"}><option value="basic">Basic</option><option value="pro">Pro</option></select><input name="seats" type="number" min={1} defaultValue={Math.max(1, s?.seats_paid ?? used)} className="input" aria-label="Paid seats" /></div>
+          <Reason /><button className="btn-primary">Save plan</button></form>}
+        {can.archive(role) && <form action={setArchived.bind(null, id, !isArchived)} className="card space-y-2"><h2 className="font-bold">{isArchived ? "Restore from archive" : "Archive company"}</h2>
+          <p className="text-xs text-muted">{isArchived ? "Brings the company back into the lists. It stays suspended until you reactivate it." : "Hides the company from lists and suspends it. Nothing is deleted."}</p>
+          <Reason /><button className={isArchived ? "btn-primary" : "btn-ghost text-bad"}>{isArchived ? "Restore" : "Archive"}</button></form>}
+        {can.ownerOnly(role) && isArchived && <form action={deleteCompany.bind(null, id)} className="card space-y-2 border-red-200"><h2 className="font-bold text-bad">Delete permanently</h2>
+          <p className="text-xs text-muted">Deletes the company, its people, locations, attendance and payment records. This cannot be undone. Export first if you need the data.</p>
+          <input name="confirm" required placeholder={`Type ${d.org.domain} to confirm`} className="input" aria-label="Type the domain to confirm" /><Reason /><button className="btn-ghost text-bad">Delete company</button></form>}
         {can.ownerOnly(role) && <div className="card space-y-4">
           <form action={setSuspended.bind(null, id, !d.org.suspended_at)} className="space-y-2"><h2 className="font-bold">{d.org.suspended_at ? "Reactivate company" : "Suspend company"}</h2><Reason /><button className={d.org.suspended_at ? "btn-primary" : "btn-ghost text-bad"}>{d.org.suspended_at ? "Reactivate" : "Suspend"}</button></form>
           <form action={transferOwner.bind(null, id)} className="space-y-2 border-t border-line pt-3"><h2 className="font-bold">Transfer ownership</h2><input name="email" type="email" required placeholder={`active member @${d.org.domain}`} className="input" /><Reason /><button className="btn-ghost">Transfer</button></form>
@@ -92,7 +109,7 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
         <table className="table"><thead><tr><th>Date</th><th>Via</th><th>What</th><th>Amount</th><th>Status</th></tr></thead>
           <tbody>{d.payments.length === 0 ? <tr><td colSpan={5} className="text-muted">No payments yet.</td></tr> : d.payments.map((p) => <tr key={p.reference}><td className="text-xs">{fmtDateTime(p.created_at)}</td><td className="capitalize">{p.provider}</td><td>{p.kind === "seat_increase" ? `Seats → ${p.seats}` : `${p.plan} · ${p.seats} seats · ${p.billing_interval_months} mo`}{p.note ? <span className="text-muted"> · {p.note}</span> : null}</td><td className="tabular-nums">{naira(p.amount_kobo)}</td><td>{p.status}</td></tr>)}</tbody></table></section>
 
-      <section className="card"><h2 className="mb-2 font-bold">Console actions on this company</h2>
+      <section className="card"><h2 className="mb-2 font-bold">Global Admin actions on this company</h2>
         {d.audit.length === 0 ? <p className="text-sm text-muted">None yet.</p> : <ul className="divide-y divide-line text-sm">{d.audit.map((a, i) => <li key={i} className="flex flex-wrap justify-between gap-2 py-2"><span><span className="font-mono text-xs">{a.action}</span> · {a.actor_email}{a.reason ? <span className="text-muted"> · {a.reason}</span> : null}</span><span className="text-xs text-muted">{fmtDateTime(a.at)}</span></li>)}</ul>}</section>
     </div>
   );
