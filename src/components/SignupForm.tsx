@@ -123,7 +123,7 @@ export function SignupForm() {
           {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2.5 text-sm leading-5 text-bad">{error}</p>}
           <button className="btn-brand w-full" disabled={busy || !authConfigured}>{busy ? "Creating…" : "Create workspace"}</button>
           <p className="text-center text-xs text-muted">Already have an account? <Link href="/login" className="font-medium text-brand underline">Sign in</Link></p>
-          <p className="text-center text-[11px] leading-5 text-muted">By continuing you agree to the 5ime terms. No card needed; the trial converts to a paid plan only when you add one.</p>
+          <p className="text-center text-[11px] leading-5 text-muted">By continuing you agree to the 5ime <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. No card needed; the trial converts to a paid plan only when you add one.</p>
         </form>
       </div>
     </main>

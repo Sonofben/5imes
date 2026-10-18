@@ -128,7 +128,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-xs text-muted sm:px-8"><Logo /><span>© {new Date().getFullYear()} {BRAND.name}. {BRAND.tagline}</span><Link href="/login" className="font-semibold text-ink hover:text-brand-dark">Sign in to your workspace</Link></footer>
+      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-xs text-muted sm:px-8"><Logo /><span>© {new Date().getFullYear()} {BRAND.name}. {BRAND.tagline}</span><span className="flex gap-4"><Link href="/privacy" className="hover:text-ink">Privacy</Link><Link href="/terms" className="hover:text-ink">Terms</Link><Link href="/login" className="font-semibold text-ink hover:text-brand-dark">Sign in to your workspace</Link></span></footer>
     </main>
   );
 }
