@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { PasswordField } from "@/components/PasswordField";
 import { BRAND, isPublicEmail } from "@/lib/constants";
+import { useCaptcha, isCaptchaError, CAPTCHA_MESSAGE } from "@/components/Captcha";
 
 const authConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -17,23 +18,19 @@ export type LoginBrand = { name: string; slug: string; logo_url: string | null; 
 
 type Mode = "password" | "code-request" | "code-verify";
 
-export function LoginForm({ brand }: { brand?: LoginBrand }) {
+export function LoginForm({ brand, initialError, initialNotice }: { brand?: LoginBrand; initialError?: string; initialNotice?: string }) {
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(initialNotice ?? null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   // Hidden until Supabase confirms which providers are switched on (no flash of dead buttons).
   const [providers, setProviders] = useState({ azure: false, google: false });
+  const captcha = useCaptcha();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const queryError = params.get("error");
-    const queryNotice = params.get("notice");
-    if (queryError) setError(queryError);
-    if (queryNotice) setNotice(queryNotice);
     if (!authConfigured) { setError("Supabase is not connected yet. Add the project URL and anon key to enable sign-in."); return; }
     // Only offer Microsoft / Google when they are switched on in Supabase Auth;
     // otherwise the button lands on a raw "provider is not enabled" error page.
@@ -60,7 +57,9 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
     if (!validateCompanyEmail()) return;
     setBusy(true);
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    const captchaToken = await captcha.getToken();
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password, options: { captchaToken } });
+    captcha.reset();
     setBusy(false);
     if (error) { setError(mapAuthError(error.message)); return; }
     // If the account requires a second factor, Supabase returns a session with aal1
@@ -74,10 +73,12 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
     setError(null); setNotice(null);
     if (!validateCompanyEmail()) return;
     setBusy(true);
+    const captchaToken = await captcha.getToken();
     const { error } = await createClient().auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: false, captchaToken },
     });
+    captcha.reset();
     setBusy(false);
     if (error) { setError(mapAuthError(error.message)); return; }
     setMode("code-verify");
@@ -145,6 +146,7 @@ export function LoginForm({ brand }: { brand?: LoginBrand }) {
           {providers.google && <button type="button" onClick={() => oauth("google")} disabled={!authConfigured || busy} className="btn-ghost w-full"><GoogleIcon/> Continue with Google Workspace</button>}
           {(providers.azure || providers.google) && <div className="flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line"/><span>or use work email</span><span className="h-px flex-1 bg-line"/></div>}
 
+          {captcha.slot}
           {mode === "password" && (
             <form onSubmit={signInWithPassword} className="space-y-3">
               <div>
@@ -204,6 +206,7 @@ function mapAuthError(message: string): string {
   if (m.includes("invalid login credentials")) return "Email or password is wrong. If you’ve just been invited, use the link we emailed you.";
   if (m.includes("email not confirmed")) return "Please confirm your email first. Check your inbox for the verification link.";
   if (m.includes("rate")) return "Too many attempts. Wait a minute, then try again.";
+  if (isCaptchaError(m)) return CAPTCHA_MESSAGE;
   if (m.includes("otp") && m.includes("expired")) return "That code has expired. Request a new one.";
   if (m.includes("otp") && m.includes("invalid")) return "That code is incorrect. Check and try again.";
   return message;

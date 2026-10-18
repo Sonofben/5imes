@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
-    "test": "node --experimental-strip-types --test test/*.test.mjs"
+    "test": "node --experimental-strip-types --conditions=react-server --test test/*.test.mjs",
+    "e2e": "playwright test",
+    "db:types": "node scripts/gen-db-types.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -15,9 +17,12 @@
     "leaflet": "^1.9.4",
     "next": "16.4.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.12",
     "@types/node": "^20",

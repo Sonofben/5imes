@@ -2,6 +2,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { BILLING_CYCLES, billingAmountKobo, type BillingCycleId } from "@/lib/billing";
 import { PLANS, type PlanId } from "@/lib/constants";
 import { loadPlans } from "@/lib/plans";
+import { friendly } from "@/lib/errors";
+import { PaymentResult, parseResult } from "./schemas.ts";
 
 const API = "https://api.paystack.co";
 
@@ -17,7 +19,7 @@ export function isDefinitivePaystackRejection(error: unknown) {
 }
 
 function isMissingPaystackTransaction(error: unknown) {
-  return error instanceof PaystackRequestError && error.status === 404 && /reference.*not found/i.test(error.message);
+  return error instanceof PaystackRequestError && error.status === 404 && /reference.*not found/i.test(friendly(error, "lib/paystack"));
 }
 
 export function paystackEnabled() {
@@ -53,7 +55,6 @@ export type PaidTx = {
   subscription?: string | { subscription_code?: string; email_token?: string } | null;
 };
 
-type PaymentResult = { ok: boolean; reason: string };
 type SeatPayment = {
   reference: string;
   kind: string;
@@ -84,14 +85,14 @@ async function syncSeatRenewal(admin: NonNullable<ReturnType<typeof createAdminC
       body: JSON.stringify({ amount: recurringAmount, update_existing_subscriptions: true }),
     });
   } catch (error) {
-    const reason = error instanceof Error ? error.message : "Paystack request failed";
+    const reason = friendly(error, "lib/paystack", "Paystack request failed");
     await admin.from("payments").update({ renewal_sync_status: "pending", renewal_sync_error: reason })
       .eq("reference", payment.reference).eq("status", "applied").eq("kind", "seat_increase");
     return { ok: false, reason: `the paid seats are active, but Paystack has not updated the next renewal yet (${reason})` };
   }
   const { error } = await admin.from("payments").update({ renewal_sync_status: "synced", renewal_sync_error: null })
     .eq("reference", payment.reference).eq("status", "applied").eq("kind", "seat_increase");
-  if (error) return { ok: false, reason: `the paid seats are active, but the renewal update needs a retry (${error.message})` };
+  if (error) return { ok: false, reason: `the paid seats are active, but the renewal update needs a retry (${friendly(error, "lib/paystack")})` };
   return { ok: true, reason: "paid seats are active and the next renewal amount is updated" };
 }
 
@@ -102,7 +103,7 @@ export async function retrySeatPlanSync(reference: string): Promise<PaymentResul
   const { data: payment, error } = await admin.from("payments")
     .select("reference,kind,status,plan,seats,billing_interval_months,amount_kobo,paystack_plan_code,renewal_sync_status")
     .eq("reference", reference).eq("kind", "seat_increase").eq("status", "applied").maybeSingle();
-  if (error) return { ok: false, reason: error.message };
+  if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
   if (!payment) return { ok: false, reason: "no applied seat payment needs a renewal retry" };
   if (payment.renewal_sync_status === "synced") return { ok: true, reason: "the recurring price is already updated" };
   return syncSeatRenewal(admin, payment as SeatPayment);
@@ -142,7 +143,7 @@ export async function applyPayment(tx: PaidTx): Promise<PaymentResult> {
   const { data: payment, error: paymentReadError } = await admin.from("payments")
     .select("kind,status,plan,seats,billing_interval_months,amount_kobo,paystack_plan_code,renewal_sync_status")
     .eq("reference", tx.reference).maybeSingle();
-  if (paymentReadError) return { ok: false, reason: paymentReadError.message };
+  if (paymentReadError) return { ok: false, reason: friendly(paymentReadError, "lib/paystack") };
 
   if (payment?.kind === "seat_increase" && tx.status === "success") {
     if (payment.status === "applied" && payment.renewal_sync_status === "synced") {
@@ -165,8 +166,8 @@ export async function applyPayment(tx: PaidTx): Promise<PaymentResult> {
     p_plan_code: providerCode(tx.plan, "plan_code"),
     p_email_token: typeof tx.subscription === "object" ? tx.subscription?.email_token ?? null : null,
   });
-  if (error) return { ok: false, reason: error.message };
-  const result = (data ?? { ok: false, reason: "No payment result returned." }) as PaymentResult;
+  if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
+  const result = parseResult(PaymentResult, data, "lib/paystack/apply", { ok: false, reason: "No payment result returned." });
   if (!result.ok || payment?.kind !== "seat_increase" || tx.status !== "success") return result;
   // Pay-per-term organizations have no Paystack plan to update.
   if (!payment.paystack_plan_code) return { ok: true, reason: "paid seats are active" };
@@ -193,7 +194,7 @@ export async function recordPaystackSubscription(data: {
     p_customer_code: data.customer?.customer_code ?? null,
     p_email_token: data.email_token ?? null,
   });
-  if (error) return { ok: false, reason: error.message };
+  if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
   return saved ? { ok: true, reason: "saved" } : { ok: false, reason: "no pending organization matched this plan" };
 }
 
@@ -202,7 +203,7 @@ export async function markPaystackInvoiceFailed(subscriptionCode: string) {
   if (!admin) return { ok: false, reason: "service role key missing" };
   const { data: current, error: readError } = await admin.from("subscriptions").select("status,current_period_end")
     .eq("paystack_subscription_code", subscriptionCode).maybeSingle();
-  if (readError) return { ok: false, reason: readError.message };
+  if (readError) return { ok: false, reason: friendly(readError, "lib/paystack") };
   if (!current) return { ok: true, reason: "stale invoice event for a superseded subscription ignored" };
   if (current.status !== "active") return { ok: true, reason: "subscription is no longer active; stale invoice event ignored" };
 
@@ -210,7 +211,7 @@ export async function markPaystackInvoiceFailed(subscriptionCode: string) {
   try {
     providerState = await paystack<{ status?: string }>(`/subscription/${encodeURIComponent(subscriptionCode)}`);
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : "could not verify the current Paystack invoice state" };
+    return { ok: false, reason: friendly(error, "lib/paystack", "could not verify the current Paystack invoice state") };
   }
   if (providerState.status !== "attention") {
     if (["active", "non-renewing", "completed", "cancelled"].includes(providerState.status ?? "")) {
@@ -223,7 +224,7 @@ export async function markPaystackInvoiceFailed(subscriptionCode: string) {
     p_subscription_code: subscriptionCode,
     p_expected_period_end: current.current_period_end,
   });
-  if (error) return { ok: false, reason: error.message };
+  if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
   if (data) return { ok: true, reason: "marked past due" };
   const { data: latest } = await admin.from("subscriptions").select("status,current_period_end")
     .eq("paystack_subscription_code", subscriptionCode).maybeSingle();
@@ -237,14 +238,14 @@ export async function syncPaystackCancellation(subscriptionCode: string) {
   if (!admin) return { ok: false, reason: "service role key missing" };
   const { data: current, error: currentError } = await admin.from("subscriptions").select("org_id,updated_at")
     .eq("paystack_subscription_code", subscriptionCode).maybeSingle();
-  if (currentError) return { ok: false, reason: currentError.message };
+  if (currentError) return { ok: false, reason: friendly(currentError, "lib/paystack") };
   if (!current) return { ok: true, reason: "stale event for a superseded subscription ignored" };
 
   let providerState: { status?: string };
   try {
     providerState = await paystack<{ status?: string }>(`/subscription/${encodeURIComponent(subscriptionCode)}`);
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : "could not verify current Paystack subscription state" };
+    return { ok: false, reason: friendly(error, "lib/paystack", "could not verify current Paystack subscription state") };
   }
   const providerStatus = providerState.status;
   let cancelled: boolean;
@@ -257,7 +258,7 @@ export async function syncPaystackCancellation(subscriptionCode: string) {
     p_cancelled: cancelled,
     p_expected_updated_at: current.updated_at,
   });
-  if (error) return { ok: false, reason: error.message };
+  if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
   if (data) return { ok: true, reason: "renewal state synchronized with current Paystack status" };
   const { data: stillCurrent } = await admin.from("subscriptions").select("org_id")
     .eq("paystack_subscription_code", subscriptionCode).maybeSingle();

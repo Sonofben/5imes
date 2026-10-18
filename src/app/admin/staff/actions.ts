@@ -5,10 +5,21 @@ import { revalidatePath } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { requireMember } from "@/lib/session";
 import { parseCsv } from "@/lib/csv";
+import { flashQuery } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
+import { z } from "zod";
+import { email as emailField, parseForm, staffRole, uuid } from "@/lib/schemas";
+
+const Invite = z.object({
+  email: emailField,
+  name: z.string().trim().max(120, "Name must be 120 characters or fewer.").default(""),
+  role: staffRole.default("staff"),
+  team: z.string().trim().max(60, "Team must be 60 characters or fewer.").default(""),
+});
 
 function back(params: Record<string, string>): never {
   revalidatePath("/admin", "layout");
-  redirect(`/admin/staff?${new URLSearchParams(params)}`);
+  redirect(`/admin/staff?${flashQuery(params)}`);
 }
 
 async function sendInviteEmail(email: string, companyName?: string) {
@@ -25,15 +36,11 @@ async function sendInviteEmail(email: string, companyName?: string) {
 
 export async function inviteOne(formData: FormData) {
   const { supabase, org } = await requireMember({ admin: true });
-  const email = String(formData.get("email") || "").trim().toLowerCase();
-  if (!email) back({ error: "Enter a work email address." });
-  const { error } = await supabase.rpc("invite_member", {
-    p_email: email,
-    p_name: String(formData.get("name") || "").trim(),
-    p_role: String(formData.get("role") || "staff"),
-    p_team: String(formData.get("team") || "").trim(),
-  });
-  if (error) back({ error: error.message });
+  const parsed = parseForm(Invite, formData);
+  if (!parsed.ok) back({ error: parsed.error });
+  const { email, name, role, team } = parsed.data;
+  const { error } = await supabase.rpc("invite_member", { p_email: email, p_name: name, p_role: role, p_team: team });
+  if (error) back({ error: friendly(error, "admin/staff") });
   const emailed = await sendInviteEmail(email, org.name);
   back({ msg: emailed ? `Invitation emailed to ${email}.` : `${email} was added. Ask them to sign in with that address.` });
 }
@@ -44,7 +51,7 @@ export async function inviteBulk(formData: FormData) {
   try {
     parsed = parseCsv(String(formData.get("csv") || ""));
   } catch (error) {
-    back({ error: error instanceof Error ? error.message : "Could not parse the CSV." });
+    back({ error: friendly(error, "admin/staff", "Could not parse the CSV.") });
   }
   if (parsed.length && parsed[0][0]?.trim().toLowerCase() === "email") parsed.shift();
   if (parsed.length < 1) back({ error: "Paste at least one staff row." });
@@ -67,7 +74,7 @@ export async function inviteBulk(formData: FormData) {
   if (problems.length) back({ error: problems.slice(0, 6).join(" · ") + (problems.length > 6 ? ` · and ${problems.length - 6} more` : "") });
 
   const { data: added, error } = await supabase.rpc("invite_members_bulk", { p_members: people });
-  if (error) back({ error: error.message });
+  if (error) back({ error: friendly(error, "admin/staff") });
   let emailCount = 0;
   for (const person of people) if (await sendInviteEmail(person.email, org.name)) emailCount++;
   back({ msg: `${Number(added ?? people.length)} invitations created${emailCount ? `; ${emailCount} emails sent` : ""}.` });
@@ -76,37 +83,39 @@ export async function inviteBulk(formData: FormData) {
 export async function setStatus(id: string, status: "active" | "disabled") {
   const supabase = await createClient();
   const { error } = await supabase.from("members").update({ status }).eq("id", id);
-  if (error) back({ error: error.message });
+  if (error) back({ error: friendly(error, "admin/staff") });
   back({ msg: status === "active" ? "Access approved." : "Access disabled." });
 }
 
 export async function setRole(id: string, formData: FormData) {
   const supabase = await createClient();
-  const role = String(formData.get("role") || "");
-  if (!["staff", "manager", "admin"].includes(role)) back({ error: "Choose a valid role." });
-  const { error } = await supabase.from("members").update({ role }).eq("id", id);
-  if (error) back({ error: error.message });
+  const parsed = staffRole.safeParse(formData.get("role"));
+  if (!parsed.success) back({ error: "Choose a valid role." });
+  const { error } = await supabase.from("members").update({ role: parsed.data }).eq("id", id);
+  if (error) back({ error: friendly(error, "admin/staff") });
   back({ msg: "Role updated." });
 }
 
 export async function removeMember(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("members").delete().eq("id", id);
-  if (error) back({ error: error.message });
+  if (error) back({ error: friendly(error, "admin/staff") });
   back({ msg: "Person removed." });
 }
 
 export async function reviewHome(id: string, approve: boolean) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("review_home_location", { p_member: id, p_approve: approve });
-  if (error) back({ error: error.message });
+  if (error) back({ error: friendly(error, "admin/staff") });
   back({ msg: approve ? "Home location approved." : "Home location rejected." });
 }
 
 export async function setLineManager(id: string, formData: FormData) {
   const supabase = await createClient();
-  const manager = String(formData.get("line_manager") || "");
+  const raw = String(formData.get("line_manager") || "");
+  const manager = raw && uuid.safeParse(raw).success ? raw : "";
+  if (raw && !manager) back({ error: "Choose a line manager from the list." });
   const { error } = await supabase.rpc("set_line_manager", { p_member: id, p_manager: manager || null });
-  if (error) back({ error: error.message });
+  if (error) back({ error: friendly(error, "admin/staff") });
   back({ msg: manager ? "Line manager saved." : "Line manager cleared. Their requests go to admins." });
 }

@@ -1,9 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { buildCsp, newNonce } from "@/lib/csp";
 
 const PROTECTED = ["/app", "/admin", "/console", "/start", "/onboarding", "/pending"];
 
 export async function proxy(request: NextRequest) {
+  // A fresh nonce per request. Next.js reads the policy from the request headers and adds
+  // the nonce to its own scripts; the same policy is sent to the browser on the response.
+  const nonce = newNonce();
+  const csp = buildCsp(nonce);
+  const next = () => {
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    headers.set("content-security-policy", csp);
+    return NextResponse.next({ request: { headers } });
+  };
+  const done = (res: NextResponse) => { res.headers.set("Content-Security-Policy", csp); return res; };
+  return done(await route(request, next));
+}
+
+async function route(request: NextRequest, next: () => NextResponse): Promise<NextResponse> {
   const path = request.nextUrl.pathname;
   const protectedPath = PROTECTED.some((p) => path === p || path.startsWith(p + "/"));
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,13 +28,12 @@ export async function proxy(request: NextRequest) {
     if (protectedPath) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      url.searchParams.set("error", "Supabase authentication is not configured.");
       return NextResponse.redirect(url);
     }
-    return NextResponse.next({ request });
+    return next();
   }
 
-  let response = NextResponse.next({ request });
+  let response = next();
 
   const supabase = createServerClient(
     supabaseUrl,
@@ -30,7 +45,7 @@ export async function proxy(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = next();
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );

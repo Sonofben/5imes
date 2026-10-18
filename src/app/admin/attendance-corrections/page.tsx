@@ -1,15 +1,13 @@
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { requireMember, timeIn } from "@/lib/session";
 import { reviewAttendanceCorrection } from "./actions";
+import type { Tables } from "@/lib/database.types";
+import { asObject } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
 
-type Correction = {
-  id: string; member_id: string; work_date: string; requested_in_at: string | null; requested_out_at: string | null;
-  reason: string; status: "pending" | "approved" | "rejected"; submitted_at: string; reviewed_at: string | null;
-  reviewed_by: string | null; review_note: string | null;
-};
-type AuditRow = { id: string; request_id: string; actor_label: string; event_type: string; occurred_at: string; details: Record<string, unknown> };
+type AuditRow = Pick<Tables<"attendance_correction_audit">, "id" | "request_id" | "actor_label" | "event_type" | "occurred_at" | "details">;
 
 function dateIn(value: string, timezone: string) {
   return new Intl.DateTimeFormat("en-NG", { timeZone: timezone, day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
@@ -39,7 +37,7 @@ export default async function AttendanceCorrectionsPage({ searchParams }: { sear
   const { data } = await supabase.from("attendance_correction_requests")
     .select("id,member_id,work_date,requested_in_at,requested_out_at,reason,status,submitted_at,reviewed_at,reviewed_by,review_note")
     .eq("org_id", org.id).order("submitted_at", { ascending: false }).limit(100);
-  const requests = (data ?? []) as Correction[];
+  const requests = (data ?? []);
   const memberIds = [...new Set(requests.map((row) => row.member_id))];
   const [{ data: memberRows }, { data: auditRows }] = await Promise.all([
     memberIds.length ? supabase.from("members").select("id,full_name,email").in("id", memberIds) : Promise.resolve({ data: [] as { id: string; full_name: string | null; email: string }[] }),
@@ -48,14 +46,14 @@ export default async function AttendanceCorrectionsPage({ searchParams }: { sear
   ]);
   const members = new Map((memberRows ?? []).map((row) => [row.id, row]));
   const auditsByRequest = new Map<string, AuditRow[]>();
-  for (const audit of (auditRows ?? []) as AuditRow[]) auditsByRequest.set(audit.request_id, [...(auditsByRequest.get(audit.request_id) ?? []), audit]);
+  for (const audit of (auditRows ?? [])) auditsByRequest.set(audit.request_id, [...(auditsByRequest.get(audit.request_id) ?? []), audit]);
   const pending = requests.filter((request) => request.status === "pending");
   const recent = requests.filter((request) => request.status !== "pending").slice(0, 30);
 
   return (
     <div className="space-y-6">
       <div><p className="eyebrow">Attendance</p><h1 className="page-heading">Correction requests</h1><p className="page-description">Review staff-submitted time corrections. Approving updates the attendance times; GPS/location data is not invented. Every decision is recorded.</p></div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">Waiting for review</h2><span className="chip bg-amber-50 text-warn">{pending.length} pending</span></div>
         {pending.length === 0 ? <p className="card text-sm text-muted">There are no attendance corrections waiting for review.</p> : pending.map((request) => {
@@ -71,7 +69,7 @@ export default async function AttendanceCorrectionsPage({ searchParams }: { sear
               <div><label className="label" htmlFor={`note-${request.id}`}>Review note (optional)</label><textarea id={`note-${request.id}`} name="note" maxLength={500} rows={2} className="input resize-y" placeholder="Add a short explanation for the employee." /></div>
               <div className="flex flex-wrap gap-2"><button name="decision" value="approve" disabled={request.member_id === me.id} className="btn-primary btn-sm">Approve and update attendance</button><button name="decision" value="reject" disabled={request.member_id === me.id} className="btn-ghost btn-sm text-bad">Reject</button></div>
             </form>
-            <details className="border-t border-line pt-3"><summary className="cursor-pointer text-sm font-semibold">Audit trail ({audits.length})</summary><ol className="mt-3 space-y-3">{audits.map((audit) => <li key={audit.id} className="border-l-2 border-line pl-3"><p className="text-sm font-medium capitalize">{audit.event_type} · {audit.actor_label}</p><p className="mt-0.5 text-xs text-muted">{dateTimeIn(audit.occurred_at, org.timezone)}</p>{auditTimes(audit.details ?? {}, org.timezone).length > 0 && <ul className="mt-2 space-y-1 text-xs text-muted">{auditTimes(audit.details ?? {}, org.timezone).map((item) => <li key={`${audit.id}-${item.label}`}><span className="font-medium text-ink">{item.label}:</span> {item.at}</li>)}</ul>}</li>)}</ol></details>
+            <details className="border-t border-line pt-3"><summary className="cursor-pointer text-sm font-semibold">Audit trail ({audits.length})</summary><ol className="mt-3 space-y-3">{audits.map((audit) => <li key={audit.id} className="border-l-2 border-line pl-3"><p className="text-sm font-medium capitalize">{audit.event_type} · {audit.actor_label}</p><p className="mt-0.5 text-xs text-muted">{dateTimeIn(audit.occurred_at, org.timezone)}</p>{auditTimes(asObject(audit.details), org.timezone).length > 0 && <ul className="mt-2 space-y-1 text-xs text-muted">{auditTimes(asObject(audit.details), org.timezone).map((item) => <li key={`${audit.id}-${item.label}`}><span className="font-medium text-ink">{item.label}:</span> {item.at}</li>)}</ul>}</li>)}</ol></details>
           </article>;
         })}
       </section>
@@ -82,7 +80,7 @@ export default async function AttendanceCorrectionsPage({ searchParams }: { sear
         return <article key={request.id} className="card space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-semibold">{person?.full_name || person?.email || "Former team member"} · {dateIn(`${request.work_date}T12:00:00`, org.timezone)}</h3><p className="mt-1 text-xs text-muted">Submitted {dateTimeIn(request.submitted_at, org.timezone)}{request.reviewed_at ? ` · reviewed ${dateTimeIn(request.reviewed_at, org.timezone)}` : ""}</p></div><span className={`chip ${request.status === "approved" ? "bg-green-50 text-ok" : "bg-red-50 text-bad"}`}>{request.status}</span></div>
           <p className="text-sm leading-6">{request.reason}</p>{request.review_note && <p className="text-sm text-muted"><b>Manager’s note:</b> {request.review_note}</p>}
-          <details className="border-t border-line pt-3"><summary className="cursor-pointer text-sm font-semibold">Audit trail ({audits.length})</summary><ol className="mt-3 space-y-3">{audits.map((audit) => <li key={audit.id} className="border-l-2 border-line pl-3"><p className="text-sm font-medium capitalize">{audit.event_type} · {audit.actor_label}</p><p className="mt-0.5 text-xs text-muted">{dateTimeIn(audit.occurred_at, org.timezone)}</p>{auditTimes(audit.details ?? {}, org.timezone).map((item) => <p key={`${audit.id}-${item.label}`} className="mt-1 text-xs text-muted"><b className="text-ink">{item.label}:</b> {item.at}</p>)}</li>)}</ol></details>
+          <details className="border-t border-line pt-3"><summary className="cursor-pointer text-sm font-semibold">Audit trail ({audits.length})</summary><ol className="mt-3 space-y-3">{audits.map((audit) => <li key={audit.id} className="border-l-2 border-line pl-3"><p className="text-sm font-medium capitalize">{audit.event_type} · {audit.actor_label}</p><p className="mt-0.5 text-xs text-muted">{dateTimeIn(audit.occurred_at, org.timezone)}</p>{auditTimes(asObject(audit.details), org.timezone).map((item) => <p key={`${audit.id}-${item.label}`} className="mt-1 text-xs text-muted"><b className="text-ink">{item.label}:</b> {item.at}</p>)}</li>)}</ol></details>
         </article>;
       })}</section>}
     </div>

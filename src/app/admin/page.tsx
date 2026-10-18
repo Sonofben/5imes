@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireMember, todayIn, timeIn, isoWeekdayIn, expectedMode, type Member } from "@/lib/session";
+import { requireMember, todayIn, timeIn, isoWeekdayIn, expectedMode } from "@/lib/session";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { FLAG_LABELS } from "@/lib/constants";
 import { shiftDate } from "@/lib/reports";
@@ -10,7 +10,6 @@ import { MapView, type MapMarker } from "@/components/maps/MapView";
 export const dynamic = "force-dynamic";
 
 type Event = { member_id: string; kind: "in" | "out"; at: string; local_date: string; location_type: string; location_id: string | null; flags: string[] };
-type Latest = Event;
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ q?: string; welcome?: string }> }) {
   const sp = await searchParams;
@@ -51,10 +50,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const mfaOn = !!factors?.totp?.some((factor) => factor.status === "verified");
 
   const locName = new Map((locations ?? []).map((location) => [location.id, location.name]));
-  const latestByMember = new Map(((latestEvents ?? []) as Latest[]).map((event) => [event.member_id, event]));
+  // The latest-event view can return nulls in principle; keep only complete rows.
+  const latest = (latestEvents ?? []).flatMap((e) => (e.member_id && e.kind && e.at && e.local_date && e.location_type
+    ? [{ ...e, member_id: e.member_id, kind: e.kind, at: e.at, local_date: e.local_date, location_type: e.location_type, flags: e.flags ?? [] }] : []));
+  const latestByMember = new Map(latest.map((event) => [event.member_id, event]));
   const eventsByMember = new Map<string, Event[]>();
-  for (const event of (events ?? []) as Event[]) eventsByMember.set(event.member_id, [...(eventsByMember.get(event.member_id) ?? []), event]);
-  const rows = ((members ?? []) as Pick<Member, "id" | "full_name" | "email" | "team">[]).map((member) => {
+  for (const event of (events ?? [])) eventsByMember.set(event.member_id, [...(eventsByMember.get(event.member_id) ?? []), event]);
+  const rows = (members ?? []).map((member) => {
     const todayEvents = eventsByMember.get(member.id) ?? [];
     const first = todayEvents.find((event) => event.kind === "in");
     const lastOut = [...todayEvents].reverse().find((event) => event.kind === "out");
@@ -103,10 +105,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       )}
 
       <AttendanceAlerts
-        members={(members ?? []) as Pick<Member, "id" | "full_name" | "email" | "team">[]}
+        members={(members ?? [])}
         schedules={schedules ?? []}
-        events={(alertEvents ?? []) as { member_id: string; kind: "in" | "out"; at: string; local_date: string; flags: string[] }[]}
-        latest={(latestEvents ?? []) as { member_id: string; kind: "in" | "out" }[]}
+        events={(alertEvents ?? [])}
+        latest={latest}
         timezone={org.timezone}
         workStart={org.work_start}
         workEnd={org.work_end}

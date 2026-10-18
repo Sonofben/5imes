@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { UserError } from "./errors.ts";
 
 export type ReportEvent = {
   id: string;
@@ -56,7 +57,7 @@ export async function loadReport(supabase: SupabaseClient, orgId: string, from: 
       .order("id", { ascending: true })
       .range(page * pageSize, page * pageSize + pageSize - 1);
     if (result.error) throw new ReportQueryError(`Attendance report query failed: ${result.error.message}`);
-    const pageEvents = (result.data ?? []) as ReportEvent[];
+    const pageEvents = (result.data ?? []);
     scanned.push(...pageEvents);
     if (pageEvents.length < pageSize) {
       complete = true;
@@ -134,9 +135,9 @@ export async function loadDeviceInfo(supabase: SupabaseClient, from: string, to:
       .rpc("attendance_device_info", { p_from: shiftDate(from, -1), p_to: to })
       .range(page * pageSize, page * pageSize + pageSize - 1);
     if (result.error) throw new ReportQueryError(`Device details query failed: ${result.error.message}`);
-    const rows = (result.data ?? []) as { attendance_id: string; ip: string | null; user_agent: string | null }[];
+    const rows = (result.data ?? []);
     for (const row of rows) info.set(row.attendance_id, { ip: row.ip, user_agent: row.user_agent });
     if (rows.length < pageSize) return info;
   }
-  throw new ReportQueryError("Too many events for the device-details export. Narrow the date range.");
+  throw new UserError("Too many events for the device-details export. Narrow the date range.");
 }

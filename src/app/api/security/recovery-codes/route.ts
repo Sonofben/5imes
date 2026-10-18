@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateRecoveryCodes } from "@/lib/recoveryCodes";
+import { friendly } from "@/lib/errors";
+import { statusFor } from "@/lib/throttle";
 
 /**
  * Generate a fresh batch of recovery codes for the signed-in user.
@@ -21,7 +23,7 @@ export async function POST() {
 
   const { codes } = generateRecoveryCodes();
   const { error } = await supabase.rpc("replace_recovery_codes", { p_codes: codes });
-  if (error) return NextResponse.json({ error: error.message }, { status: error.message.includes("aal2") ? 403 : 500 });
+  if (error) return NextResponse.json({ error: friendly(error, "api/security/recovery-codes") }, { status: error.message.includes("aal2") ? 403 : statusFor(error) });
 
   return NextResponse.json({ codes });
 }

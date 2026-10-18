@@ -1,5 +1,8 @@
 # 5ime
 
+> **Working on this code?** Read [AGENTS.md](./AGENTS.md) first — security rules, patterns, naming, where features go and the checks every change must pass. Releases: `scripts/deploy.sh` (see [DEPLOY.md](./DEPLOY.md)).
+
+
 > Work from anywhere, 5 days, on time.
 
 5ime is scheduled-work attendance software. Staff check in by GPS only at an approved **office**, or at their individually approved **home** on days assigned as home days. It does not mean employees can check in from any location. The system checks attendance against the team’s schedule—including a shift that crosses midnight. Companies pay per person in naira.

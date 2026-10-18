@@ -231,6 +231,23 @@ Needs an account on the Global Admin team (first one added with the SQL in DEPLO
 | H4 | A new person signs up with `@trostechnologies.com` without an invite | Goes to “waiting for approval”; admin sees them under “People waiting for approval” |
 | H5 | `/auth/challenge?next=https://google.com` after sign-in | Does **not** redirect to google.com |
 
+## 11b. Security hardening (migration 0014)
+
+| ID | Steps | Expected |
+|---|---|---|
+| S1 | Open `/login?error=Your+account+is+locked.+Call+0803` and `/admin/staff?msg=Pay+now` | The fake text is **not** shown anywhere on the page |
+| S2 | Any action that fails (e.g. invite an email from another domain) | A plain sentence; never database wording such as “permission denied for table…” or “violates constraint” |
+| S3 | Something unexpected fails | “Something went wrong… (ref ABC123)”; give the ref to the owner — it finds the full error in the server log |
+| S4 | Sign-in, sign-up, one-time code, forgot password (with CAPTCHA switched on) | Works; usually no visible challenge. With an ad blocker that blocks Cloudflare: “The security check didn’t complete…” |
+| S5 | Admin → Security → enter a wrong recovery code 6 times (needs an aal1 session, i.e. at the two-factor prompt use “Lost your phone?”) | Tries 1–5: “incorrect”; try 6: “Too many attempts…”. Global Admin → Security → “Limits reached” lists “Recovery-code guesses” for that person |
+| S6 | Admin → Reports → download CSV 31 times within an hour | The 31st is refused with “Too many attempts…” |
+| S7 | Settings → upload a `.txt` file renamed to `logo.png` | Refused: “That file isn’t a real PNG, JPG or WebP image.” A real PNG works |
+| S8 | Open browser DevTools → Console on `/`, `/login`, `/admin`, `/app` (with the map) | No red “Content Security Policy” / “Refused to load” messages; maps show tiles |
+| S9 | Visit `/.env`, `/.git/config`, `/package.json` | 404 for all |
+| S10 | `https://<host>/api/health` | `{"ok":true,"db":true,"version":"…"}` |
+| S11 | Payment: Billing → pay with Paystack test card | Goes to Paystack and back with “Payment received” (checks the CSP allows the Paystack redirect) |
+| S12 | Global Admin → People → “Send password reset” (with CAPTCHA on) | Email arrives (confirms server-side emails are not blocked by CAPTCHA) |
+
 ---
 
 ## 12. Results table

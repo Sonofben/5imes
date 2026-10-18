@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MapView } from "./MapView";
 import { searchPlaces, reverseGeocode, type Place } from "@/lib/geocode";
 import { getBestPosition } from "@/lib/geo";
+import { friendly } from "@/lib/errors";
 
 /**
  * Pick a place on a map: search an address, use current GPS, or tap the map.
@@ -40,7 +41,7 @@ export function LocationPicker({ radiusEditable = true, defaultRadius = 200, ini
       setResults(found);
       if (!found.length) setNote("No match. Try a street and area, e.g. “Adeola Odeku, Victoria Island”.");
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Search failed.");
+      setNote(friendly(err, "maps/search", "Search failed."));
     } finally { setBusy(false); }
   }
 
@@ -51,7 +52,7 @@ export function LocationPicker({ radiusEditable = true, defaultRadius = 200, ini
       await place(fix.lat, fix.lng);
       setNote(`Pinned your current position (±${Math.round(fix.accuracy)} m). Tap the map to adjust.`);
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Couldn’t get location.");
+      setNote(friendly(err, "maps/locate", "Couldn’t get location."));
     } finally { setBusy(false); }
   }
 

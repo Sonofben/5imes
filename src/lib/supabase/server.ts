@@ -1,11 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import type { Database } from "@/lib/database.types";
 
 /** Supabase client acting as the signed-in user (row-level security applies). */
 export async function createClient() {
   const cookieStore = await cookies();
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -31,7 +32,7 @@ export async function createClient() {
 export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) return null;
-  return createPlainClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key, {
+  return createPlainClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

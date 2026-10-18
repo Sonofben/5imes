@@ -9,6 +9,7 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { BRAND, isPublicEmail } from "@/lib/constants";
 import { suggestWorkspaceName, emailDomain } from "@/lib/workspace";
 import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
+import { useCaptcha, isCaptchaError, CAPTCHA_MESSAGE } from "@/components/Captcha";
 
 const authConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -17,6 +18,7 @@ function siteUrl() {
 }
 
 export function SignupForm() {
+  const captcha = useCaptcha();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   // Workspace name is suggested from the email domain until the person edits it.
@@ -45,6 +47,7 @@ export function SignupForm() {
 
     setBusy(true);
     const supabase = createClient();
+    const captchaToken = await captcha.getToken();
     const { data, error } = await supabase.auth.signUp({
       email: normalisedEmail,
       password,
@@ -53,8 +56,10 @@ export function SignupForm() {
         // this user already has a membership or needs to create a company.
         emailRedirectTo: `${siteUrl()}/auth/callback`,
         data: { full_name: fullName.trim(), company_name: company.trim() },
+        captchaToken,
       },
     });
+    captcha.reset();
     setBusy(false);
     if (error) { setError(mapSignUpError(error.message)); return; }
 
@@ -121,6 +126,7 @@ export function SignupForm() {
           />
           {notice && !error && <p role="status" className="rounded-xl border border-[#c8dfd1] bg-[#f1f8f3] p-3 text-sm leading-5 text-[#245c3e]">{notice}</p>}
           {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2.5 text-sm leading-5 text-bad">{error}</p>}
+          {captcha.slot}
           <button className="btn-brand w-full" disabled={busy || !authConfigured}>{busy ? "Creating…" : "Create workspace"}</button>
           <p className="text-center text-xs text-muted">Already have an account? <Link href="/login" className="font-medium text-brand underline">Sign in</Link></p>
           <p className="text-center text-[11px] leading-5 text-muted">By continuing you agree to the 5ime <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. No card needed; the trial converts to a paid plan only when you add one.</p>
@@ -137,5 +143,6 @@ function mapSignUpError(message: string): string {
   }
   if (m.includes("password")) return "Password doesn’t meet requirements. Pick a stronger one.";
   if (m.includes("rate")) return "Too many sign-up attempts. Wait a minute and try again.";
+  if (isCaptchaError(m)) return CAPTCHA_MESSAGE;
   return message;
 }

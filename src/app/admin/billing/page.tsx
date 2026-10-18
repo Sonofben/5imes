@@ -6,6 +6,7 @@ import { billingCheckoutEnabled, refreshPendingCheckout } from "@/lib/paystack";
 import { monnifyEnabled, settleMonnify } from "@/lib/monnify";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { PlanCheckoutCard } from "./PlanCheckoutCard";
 import { BillingSubscriptionActions } from "./BillingSubscriptionActions";
 import { SeatIncreaseCard } from "./SeatIncreaseCard";
@@ -59,10 +60,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     ? await admin.from("payments").select("reference,plan,seats,billing_interval_months,amount_kobo,currency,status,kind,created_at,applied_at")
       .eq("org_id", org.id).order("created_at", { ascending: false }).limit(50)
     : { data: null };
-  const paymentHistory = (historyResult.data ?? []) as {
-    reference: string; plan: PlanId; seats: number; billing_interval_months: number; amount_kobo: number | string;
-    currency: string; status: string; kind: string; created_at: string; applied_at: string | null;
-  }[];
+  const paymentHistory = (historyResult.data ?? []);
   const minSeats = Math.max(1, count ?? 0);
   const currentCycle = (Object.entries(BILLING_CYCLES).find(([, cycle]) => cycle.months === sub?.billing_interval_months)?.[0] ?? "monthly") as BillingCycleId;
   const fmt = (date?: string | null) => date ? new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "long", year: "numeric", timeZone: org.timezone }).format(new Date(date)) : "—";
@@ -90,7 +88,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-6">
       <div><p className="eyebrow">Organization</p><h1 className="page-heading">Billing</h1><p className="page-description">A clear per-seat subscription for your team. Choose a billing term; longer terms have no discount.</p></div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
 
       <section className="card grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div><p className="eyebrow">Current subscription</p><h2 className="mt-1 text-lg font-bold">{statusText}</h2><p className="mt-1 text-sm text-muted">{sub?.status === "trialing" ? `Trial ends ${fmt(sub.trial_ends_at)}.` : sub?.status === "active" ? `Current paid period ends ${accessUntil}.` : sub?.current_period_end ? `Current access ends ${accessUntil}.` : "Your subscription details will appear here."}</p>

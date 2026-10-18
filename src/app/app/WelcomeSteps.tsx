@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getBestPosition } from "@/lib/geo";
 import { reverseGeocode } from "@/lib/geocode";
+import { friendly, UserError } from "@/lib/errors";
 
 /** First-time welcome for staff: allow location → pin home (if they have home days) → add to home screen. */
 export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { companyName: string; logoUrl: string | null; hasHomeDays: boolean; homeDone: boolean }) {
@@ -28,7 +29,7 @@ export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { 
     try {
       const fix = await getBestPosition(10000, 50);
       setNote({ ok: true, text: `Location works (±${Math.round(fix.accuracy)}m).` });
-    } catch (e) { setNote({ ok: false, text: e instanceof Error ? e.message : "Could not get location." }); }
+    } catch (e) { setNote({ ok: false, text: friendly(e, "app/welcome", "Could not get location.") }); }
     finally { setBusy(false); }
   }
 
@@ -38,9 +39,9 @@ export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { 
       const fix = await getBestPosition(15000, 20);
       const address = await reverseGeocode(fix.lat, fix.lng);
       const { error } = await createClient().rpc("request_home_location", { p_lat: fix.lat, p_lng: fix.lng, p_accuracy: fix.accuracy, p_address: address ?? "" });
-      if (error) throw new Error(error.message);
+      if (error) throw new UserError(friendly(error, "app/welcome"));
       setNote({ ok: true, text: "Home location sent to your admin for approval." });
-    } catch (e) { setNote({ ok: false, text: e instanceof Error ? e.message : "Could not pin your home." }); }
+    } catch (e) { setNote({ ok: false, text: friendly(e, "app/welcome", "Could not pin your home.") }); }
     finally { setBusy(false); }
   }
 

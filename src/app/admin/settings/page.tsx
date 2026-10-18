@@ -1,16 +1,19 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireMember } from "@/lib/session";
-import { createClient } from "@/lib/supabase/server";
 import { Flash } from "@/components/Flash";
+import { flashQuery, readFlash } from "@/lib/flash";
 import { siteUrl } from "@/lib/site";
 import { BrandingCard } from "./BrandingCard";
 import { SupportAccessCard } from "./SupportAccessCard";
+import { friendly } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
-async function saveSettings(orgId: string, formData: FormData) {
+async function saveSettings(formData: FormData) {
   "use server";
+  // The company always comes from the signed-in admin, never from the form.
+  const { supabase, org } = await requireMember({ admin: true });
   const name = String(formData.get("name") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "").trim();
   const workStart = String(formData.get("work_start") ?? "");
@@ -26,14 +29,13 @@ async function saveSettings(orgId: string, formData: FormData) {
   if (!timePattern.test(workStart) || !timePattern.test(workEnd)) errors.push("Enter valid 24-hour work times.");
   if (!Number.isInteger(grace) || grace < 0 || grace > 180) errors.push("Grace period must be from 0 to 180 minutes.");
   if (!Number.isInteger(homeRadius) || homeRadius < 50 || homeRadius > 1000) errors.push("Home radius must be from 50 to 1,000 metres.");
-  if (errors.length) redirect(`/admin/settings?${new URLSearchParams({ error: errors.join(" ") })}`);
+  if (errors.length) redirect(`/admin/settings?${flashQuery({ error: errors.join(" ") })}`);
 
-  const supabase = await createClient();
   const { error } = await supabase.from("organizations").update({
     name, timezone, work_start: workStart, work_end: workEnd, grace_minutes: grace, home_radius_m: homeRadius,
-  }).eq("id", orgId);
+  }).eq("id", org.id);
   revalidatePath("/admin", "layout");
-  redirect(`/admin/settings?${new URLSearchParams(error ? { error: error.message } : { msg: "Settings saved." })}`);
+  redirect(`/admin/settings?${flashQuery(error ? { error: friendly(error, "admin/settings") } : { msg: "Settings saved." })}`);
 }
 
 const ZONES = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johannesburg", "Africa/Cairo", "Europe/London", "UTC"];
@@ -50,8 +52,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="max-w-2xl space-y-6">
       <div><p className="eyebrow">Organization</p><h1 className="page-heading">Company settings</h1><p className="page-description">Local work hours and location tolerances drive attendance flags and reports.</p></div>
-      <Flash msg={sp.msg} error={sp.error} />
-      <form action={saveSettings.bind(null, org.id)} className="card space-y-5">
+      <Flash {...readFlash(sp)} />
+      <form action={saveSettings} className="card space-y-5">
         <div><label className="label" htmlFor="company-name">Company name</label><input id="company-name" name="name" defaultValue={org.name} className="input" required maxLength={100} autoComplete="organization" /></div>
         <div><label className="label" htmlFor="company-domain">Email domain</label><input id="company-domain" value={`@${org.domain}`} disabled className="input bg-paper text-muted" /><p className="mt-1 text-xs text-muted">Only people using this organization’s email domain can join.</p></div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -64,7 +66,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"><p className="max-w-sm text-xs leading-5 text-muted">Changes apply to future check-ins. Existing attendance records are not rewritten.</p><button className="btn-primary">Save settings</button></div>
       </form>
       <BrandingCard slug={org.slug} logoUrl={org.logo_url} brandColor={org.brand_color} siteUrl={siteUrl()} />
-      <SupportAccessCard until={grants?.[0]?.expires_at ?? null} log={(supportLog ?? []) as { at: string; action: string; actor_email: string | null; reason: string | null }[]} timezone={org.timezone} />
+      <SupportAccessCard until={grants?.[0]?.expires_at ?? null} log={(supportLog ?? [])} timezone={org.timezone} />
     </div>
   );
 }

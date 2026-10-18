@@ -6,6 +6,9 @@ import { PLANS as DEFAULT_PLANS, type PlanId } from "@/lib/constants";
 import { loadPlans } from "@/lib/plans";
 import { BILLING_CYCLES, type BillingCycleId } from "@/lib/billing";
 import { siteUrl } from "@/lib/site";
+import { flashQuery } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
+import { Reservation, parseResult } from "@/lib/schemas";
 
 /**
  * Start a Moniepoint (Monnify) checkout for a new term (kind=subscription) or added seats (kind=seats).
@@ -14,7 +17,7 @@ import { siteUrl } from "@/lib/site";
  */
 export async function POST(request: Request) {
   const base = siteUrl(request);
-  const back = (query: Record<string, string>) => NextResponse.redirect(`${base}/admin/billing?${new URLSearchParams(query)}`, { status: 303 });
+  const back = (query: Record<string, string>) => NextResponse.redirect(`${base}/admin/billing?${flashQuery(query)}`, { status: 303 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${base}/login`, { status: 303 });
@@ -36,8 +39,9 @@ export async function POST(request: Request) {
     const seats = Number(form.get("seats"));
     if (!Number.isSafeInteger(seats) || seats < 1 || seats > 10000) return back({ error: "Choose a valid seat count." });
     reference = `5ime-seats-${randomUUID()}`;
-    const { data, error } = await supabase.rpc("prepare_paystack_seat_increase", { p_reference: reference, p_seats: seats });
-    if (error || !data?.ok) return back({ error: error?.message ?? data?.reason ?? "Could not reserve this seat payment." });
+    const { data: raw, error } = await supabase.rpc("prepare_paystack_seat_increase", { p_reference: reference, p_seats: seats });
+    const data = parseResult(Reservation, raw, "api/monnify/checkout", { ok: false, reason: "The payment could not be reserved." });
+    if (error || !data.ok) return back({ error: (error ? friendly(error, "api/monnify/checkout") : data.reason) ?? "Could not reserve this seat payment." });
     amount = Number(data.amount_kobo);
     description = `5ime seats → ${seats}`;
   } else {
@@ -48,10 +52,11 @@ export async function POST(request: Request) {
     const seats = Number(form.get("seats"));
     if (!Number.isSafeInteger(seats) || seats < 1 || seats > 10000) return back({ error: "Choose a valid seat count." });
     reference = `5ime-${me.org_id.slice(0, 8)}-${randomUUID()}`;
-    const { data, error } = await supabase.rpc("prepare_paystack_subscription", {
+    const { data: raw, error } = await supabase.rpc("prepare_paystack_subscription", {
       p_reference: reference, p_plan: plan, p_seats: seats, p_months: BILLING_CYCLES[cycle].months, p_auto_renew: false,
     });
-    if (error || !data?.ok) return back({ error: error?.message ?? data?.reason ?? "Could not reserve this payment." });
+    const data = parseResult(Reservation, raw, "api/monnify/checkout", { ok: false, reason: "The payment could not be reserved." });
+    if (error || !data.ok) return back({ error: (error ? friendly(error, "api/monnify/checkout") : data.reason) ?? "Could not reserve this payment." });
     amount = Number(data.amount_kobo);
     description = `5ime ${plans[plan].name} · ${seats} seats · ${BILLING_CYCLES[cycle].label}`;
   }
@@ -69,7 +74,7 @@ export async function POST(request: Request) {
     await admin.from("payments").update({ checkout_url: tx.checkoutUrl }).eq("reference", reference).eq("status", "pending");
     return NextResponse.redirect(tx.checkoutUrl, { status: 303 });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "Could not start payment.";
+    const detail = friendly(error, "api/monnify/checkout", "Could not start payment.");
     // If we never got past signing in to Moniepoint, no checkout exists: release the reservation.
     // Otherwise keep it pending so "Check payment status" can confirm what happened.
     if (detail.startsWith("Moniepoint sign-in failed")) await admin.from("payments").update({ status: "failed" }).eq("reference", reference).eq("status", "pending");

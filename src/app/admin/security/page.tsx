@@ -2,13 +2,14 @@ import Link from "next/link";
 import { requireMember } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { SecuritySettings } from "./SecuritySettings";
 
 export const dynamic = "force-dynamic";
 
 type SecurityStatus = { totp_enrolled: boolean; unused_recovery_codes: number };
 
-export default async function SecurityPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string; setup?: string }> }) {
+export default async function SecurityPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string; setup?: string; recovered?: string }> }) {
   const sp = await searchParams;
   // allowAal1: admins must be able to reach this page BEFORE they finish MFA
   // setup, otherwise they can never enrol.
@@ -29,7 +30,8 @@ export default async function SecurityPage({ searchParams }: { searchParams: Pro
         <p className="page-description">Your password protects day-to-day sign-in; two-factor stops someone with your password alone from reaching admin pages.</p>
         {totpEnrolled && <Link href="/admin" className="btn-ghost btn-sm mt-3">← Back to admin home</Link>}
       </div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
+      {sp.recovered === "1" && <Flash msg="Recovery code accepted. Set up your authenticator app again now — you have 10 minutes." />}
       {sp.setup && requiresMfa && !totpEnrolled && (
         <p role="alert" className="rounded-xl border border-[#ead8c0] bg-[#fff9ef] px-4 py-3 text-sm text-ink">
           You can’t use admin tools yet — finish setting up two-factor below. It takes about a minute.

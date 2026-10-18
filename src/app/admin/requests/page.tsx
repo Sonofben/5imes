@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { requireMember, timeIn, todayIn } from "@/lib/session";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { MapView, type MapCircle } from "@/components/maps/MapView";
 import { decideRequest, endSessionAtDeparture } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type Req = {
-  id: string; member_id: string; status: string; requested_at: string; effective_from: string; local_date: string;
-  lat: number; lng: number; accuracy_m: number | null; radius_m: number; place_name: string | null; address: string | null;
-  reason: string; decided_at: string | null; decided_by: string | null; decision_note: string | null; approver_id: string | null;
-};
-type Departure = { id: string; member_id: string; departed_at: string; lat: number; lng: number; accuracy_m: number | null; resolution: string | null };
 
 export default async function RequestsPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
@@ -29,11 +24,11 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   const person = new Map((people ?? []).map((p) => [p.id as string, p as { id: string; full_name: string | null; email: string; team: string | null; line_manager_id: string | null }]));
   const name = (id: string | null) => { const p = id ? person.get(id) : null; return p ? p.full_name || p.email : "—"; };
   const officeCircles: MapCircle[] = (offices ?? []).map((o) => ({ lat: o.lat, lng: o.lng, radius: o.radius_m, tone: "ink", label: o.name }));
-  const all = (requests ?? []) as Req[];
+  const all = (requests ?? []);
   const pending = all.filter((r) => r.status === "pending" && r.member_id !== me.id);
   const decided = all.filter((r) => r.status !== "pending").slice(0, 30);
   // Only today's departures are actionable; older ones closed with the day.
-  const leftWithoutAsking = ((departures ?? []) as Departure[])
+  const leftWithoutAsking = (departures ?? [])
     .filter((d) => d.member_id !== me.id && todayIn(org.timezone, new Date(d.departed_at)) === today);
 
   return (
@@ -46,7 +41,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
           Approve and their session carries on. Reject and they are checked out at the time they asked to move.
         </p>
       </div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
 
       <section className="space-y-3" aria-labelledby="pending-heading">
         <div className="flex items-center justify-between"><h2 id="pending-heading" className="text-lg font-bold">Waiting for you</h2><span className="chip bg-amber-50 text-warn">{pending.length}</span></div>

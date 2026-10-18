@@ -1,0 +1,107 @@
+import { z } from "zod";
+import { logError } from "./log.ts";
+
+/**
+ * Shapes of the jsonb returned by our own database functions. TypeScript cannot see inside
+ * jsonb, so each page parses the result with the matching schema instead of `as SomeType`.
+ * If a migration changes a function's output, the page shows a clear error (and the log
+ * says which field) rather than rendering half-broken data.
+ *
+ * test/json-shapes.test.mjs checks these schemas against the real functions' output.
+ */
+const num = z.coerce.number();
+const str = z.string();
+const opt = <T extends z.ZodTypeAny>(t: T) => t.nullable().optional();
+
+/** Parse; on a mismatch log the problem and return null. */
+export function parseOrNull<T extends z.ZodTypeAny>(schema: T, data: unknown, where: string): z.infer<T> | null {
+  const parsed = schema.safeParse(data);
+  if (parsed.success) return parsed.data;
+  logError(`${where}.shape`, new Error("Unexpected data shape"), { issues: parsed.error.issues.slice(0, 5) });
+  return null;
+}
+
+// public_plans()
+export const PublicPlans = z.object({
+  trial_days: num.optional(),
+  plans: z.array(z.object({
+    id: z.enum(["basic", "pro"]), name: str, pricePerSeat: num, blurb: str,
+    features: z.array(str).nullable().optional(), maxLocations: opt(num),
+  })).optional(),
+});
+
+// report_presence()
+export const Presence = z.object({ status: str, departed_at: opt(str), request_status: opt(str) }).passthrough();
+export type Presence = z.infer<typeof Presence>;
+
+// console_overview()
+export const ConsoleOverview = z.object({
+  companies: num, trialing: num, paying: num, expired: num, suspended: num, seats_used: num, seats_paid: num,
+  revenue_month_kobo: num, new_this_week: num, ending_soon: num,
+});
+
+// console_health()
+export const ConsoleHealth = z.object({
+  companies_active_7d: num, people_active_7d: num, checkins_today: num,
+  checkins_by_day: z.array(z.object({ day: str, checkins: num })),
+  signups_by_week: z.array(z.object({ week: str, companies: num })),
+  at_risk: z.array(z.object({ id: str, name: str, domain: str, reason: str, last_check_in: opt(str) })),
+});
+
+// console_revenue()
+export const ConsoleRevenue = z.object({
+  this_month_kobo: num, last_month_kobo: num, year_kobo: num, all_time_kobo: num, monthly_run_rate_kobo: num,
+  paying_companies: num, pending_count: num, failed_count_30d: num,
+  by_month: z.array(z.object({ month: str, kobo: num, payments: num })),
+  by_plan: z.record(num), by_provider: z.record(num),
+});
+
+// console_company(id)
+export const ConsoleCompany = z.object({
+  org: z.object({ id: str, name: str, domain: str, slug: str, timezone: str, created_at: str, suspended_at: opt(str), logo_url: opt(str), archived_at: opt(str) }),
+  owner: z.object({ name: opt(str), email: str }).nullable(),
+  subscription: z.object({
+    plan: str, status: str, trial_ends_at: opt(str), current_period_end: opt(str), seats_paid: num, billing_interval_months: num,
+    paystack_subscription_code: opt(str), cancel_at_period_end: z.boolean(),
+  }).nullable(),
+  counts: z.object({ active: num, invited: num, pending: num, disabled: num, stale_invites: num, offices: num }),
+  last_check_in: opt(str),
+  support_until: opt(str),
+  payments: z.array(z.object({
+    reference: str, provider: str, kind: str, status: str, plan: str, seats: num, billing_interval_months: num, amount_kobo: num, created_at: str, note: opt(str),
+  })),
+  audit: z.array(z.object({ at: str, action: str, actor_email: opt(str), reason: opt(str) })),
+});
+
+// console_company_snapshot(id)
+export const ConsoleSnapshot = z.object({
+  org: z.object({ name: str, domain: str, timezone: str, work_start: str, work_end: str, grace_minutes: num, home_radius_m: num, slug: str }),
+  today: str,
+  people: z.array(z.object({
+    id: str, name: str, email: str, role: str, status: str, team: opt(str), home_status: str, line_manager: opt(str),
+    today: z.array(z.object({ kind: str, at: str, type: str, flags: z.array(str) })).nullable(),
+  })),
+  locations: z.array(z.object({ name: str, lat: num, lng: num, radius_m: num, address: opt(str) })),
+  schedule: z.array(z.object({ weekday: num, mode: str })),
+  pending: z.object({ people: num, homes: num, corrections: num, location_requests: num }),
+});
+
+// console_plans()
+export const ConsolePlans = z.object({
+  trial_days: num,
+  plans: z.array(z.object({ id: z.enum(["basic", "pro"]), name: str, pricePerSeat: num, blurb: str, features: z.array(str), maxLocations: opt(num) })),
+  maintenance_mode: z.boolean(),
+  maintenance_message: opt(str),
+});
+
+// console_security()
+export const ConsoleSecurity = z.object({
+  admin_2fa: z.array(z.object({ id: str, name: str, admins: num, with_2fa: num, missing: num })),
+  locked: z.array(z.object({ user_id: str, email: str, company: opt(str) })),
+  sign_ins_24h: num, sign_ins_7d: num,
+  events: z.array(z.object({ created_at: str, kind: str, email: opt(str), company: opt(str) })),
+  global_admin_actions: z.array(z.object({ at: str, actor_email: opt(str), action: str, reason: opt(str) })),
+});
+
+// console_company_export(id) — only the part the download route reads
+export const ConsoleExportHead = z.object({ org: z.object({ domain: opt(str) }).passthrough().optional() }).passthrough();

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getBestPosition } from "@/lib/geo";
 import { FLAG_LABELS } from "@/lib/constants";
+import { friendly, UserError } from "@/lib/errors";
 
 type Result = { location_type: string; distance_m: number | null; flags: string[]; kind: string };
 
@@ -29,11 +30,11 @@ export function CheckInPanel({ checkedIn, expected, sessionLabel }: { checkedIn:
         p_accuracy: fix.accuracy,
         p_user_agent: navigator.userAgent,
       });
-      if (error) throw new Error(error.message);
-      setResult(data as Result);
+      if (error) throw new UserError(friendly(error, "app/check-in"));
+      setResult(data);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn’t record this attendance event. Please try again.");
+      setError(friendly(e, "app/check-in", "We couldn’t record this attendance event. Please try again."));
     } finally {
       setBusy(null);
     }

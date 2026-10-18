@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
+import { useCaptcha, isCaptchaError, CAPTCHA_MESSAGE } from "@/components/Captcha";
 
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
@@ -13,16 +14,25 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
   const [email, setEmail] = useState(initialEmail);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const captcha = useCaptcha();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     // Deliberately fire-and-forget: we always show the same success state so
     // the response does not reveal whether an account exists for that email.
-    await createClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    setError(null);
+    const captchaToken = await captcha.getToken();
+    const result = await createClient().auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: `${siteUrl()}/auth/callback?type=recovery`,
-    }).catch(() => undefined);
+      captchaToken,
+    }).catch(() => null);
+    captcha.reset();
     setBusy(false);
+    // The security check and rate limits are the only failures we report; neither reveals whether the account exists.
+    if (result?.error && isCaptchaError(result.error.message)) { setError(CAPTCHA_MESSAGE); return; }
+    if (result?.error && /rate|too many/i.test(result.error.message)) { setError("Too many requests. Wait a few minutes and try again."); return; }
     setSent(true);
   }
 
@@ -49,6 +59,8 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
                 <label className="label" htmlFor="fp-email">Work email</label>
                 <input id="fp-email" className="input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
+              {captcha.slot}
+              {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2.5 text-sm leading-5 text-bad">{error}</p>}
               <button className="btn-primary w-full" disabled={busy || !email.trim()}>{busy ? "Sending…" : "Send reset link"}</button>
               <p className="text-center text-xs text-muted"><Link href="/login" className="underline">Back to sign in</Link></p>
             </form>

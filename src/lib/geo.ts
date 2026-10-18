@@ -1,3 +1,4 @@
+import { UserError } from "./errors.ts";
 export type Fix = { lat: number; lng: number; accuracy: number };
 
 /**
@@ -7,7 +8,7 @@ export type Fix = { lat: number; lng: number; accuracy: number };
 export function getBestPosition(ms = 10000, goodEnough = 25): Promise<Fix> {
   return new Promise((resolve, reject) => {
     if (!("geolocation" in navigator)) {
-      reject(new Error("This browser can’t share location. Try Chrome or Safari on your phone."));
+      reject(new UserError("This browser can’t share location. Try Chrome or Safari on your phone."));
       return;
     }
     let best: Fix | null = null;
@@ -15,7 +16,7 @@ export function getBestPosition(ms = 10000, goodEnough = 25): Promise<Fix> {
       navigator.geolocation.clearWatch(id);
       clearTimeout(timer);
       if (best) resolve(best);
-      else reject(new Error("Couldn’t get your location. Turn on location/GPS and try again."));
+      else reject(new UserError("Couldn’t get your location. Turn on location/GPS and try again."));
     };
     const id = navigator.geolocation.watchPosition(
       (p) => {
@@ -27,9 +28,9 @@ export function getBestPosition(ms = 10000, goodEnough = 25): Promise<Fix> {
         navigator.geolocation.clearWatch(id);
         clearTimeout(timer);
         if (err.code === err.PERMISSION_DENIED) {
-          reject(new Error("Location permission is blocked. Allow location for this site in your browser settings."));
+          reject(new UserError("Location permission is blocked. Allow location for this site in your browser settings."));
         } else if (best) resolve(best);
-        else reject(new Error("Couldn’t get your location. Turn on location/GPS and try again."));
+        else reject(new UserError("Couldn’t get your location. Turn on location/GPS and try again."));
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: ms }
     );

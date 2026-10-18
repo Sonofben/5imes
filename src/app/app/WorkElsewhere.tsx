@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getBestPosition, type Fix } from "@/lib/geo";
 import { reverseGeocode } from "@/lib/geocode";
 import { MapView } from "@/components/maps/MapView";
+import { friendly } from "@/lib/errors";
 
 export type ElsewhereRequest = {
   id: string; status: "pending" | "approved" | "rejected" | "cancelled"; requested_at: string; effective_from: string;
@@ -31,7 +32,7 @@ export function WorkElsewhere({ request, approverName, timezone }: { request: El
       const f = await getBestPosition(15000, 25);
       setFix(f);
       setAddress((await reverseGeocode(f.lat, f.lng)) ?? "");
-    } catch (e) { setError(e instanceof Error ? e.message : "Couldn’t get your location."); }
+    } catch (e) { setError(friendly(e, "app/work-elsewhere", "Couldn’t get your location.")); }
     finally { setBusy(null); }
   }
 
@@ -43,7 +44,7 @@ export function WorkElsewhere({ request, approverName, timezone }: { request: El
       p_lat: fix.lat, p_lng: fix.lng, p_accuracy: fix.accuracy, p_reason: reason, p_place_name: placeName, p_address: address,
     });
     setBusy(null);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendly(error, "app/work-elsewhere")); return; }
     setOpen(false); setFix(null); setReason(""); setPlaceName("");
     router.refresh();
   }
@@ -53,7 +54,7 @@ export function WorkElsewhere({ request, approverName, timezone }: { request: El
     setBusy("Cancelling…");
     const { error } = await createClient().rpc("cancel_work_elsewhere", { p_request: request.id });
     setBusy(null);
-    if (error) setError(error.message); else router.refresh();
+    if (error) setError(friendly(error, "app/work-elsewhere")); else router.refresh();
   }
 
   const place = request ? request.place_name || request.address || "the requested place" : "";

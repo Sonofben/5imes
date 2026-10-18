@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { friendly } from "@/lib/errors";
+import { statusFor } from "@/lib/throttle";
 
 /**
  * Trade a plaintext recovery code for an AAL1 grace window.
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const { data: ok, error } = await supabase.rpc("verify_and_consume_recovery_code", { p_code: code });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: friendly(error, "api/security/recovery-signin") }, { status: statusFor(error) });
   if (ok !== true) {
     return NextResponse.json({ error: "Recovery code is incorrect or already used." }, { status: 400 });
   }

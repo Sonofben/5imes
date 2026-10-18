@@ -1,29 +1,31 @@
 import { requireConsole, can, fmtDateTime, ROLE_LABELS, ROLE_HELP, type ConsoleRole } from "@/lib/console";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
 import { Reason } from "../Reason";
 import { teamAdd, teamSetRole, teamRemove } from "../actions";
+import { lookup } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
 
-type Member = { user_id: string; email: string; role: ConsoleRole; created_at: string; last_sign_in_at: string | null; totp_enrolled: boolean };
 const ROLES = Object.keys(ROLE_LABELS) as ConsoleRole[];
 
 export default async function TeamPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, role, user } = await requireConsole();
   const { data, error } = await supabase.rpc("console_team");
-  const team = (data ?? []) as Member[];
+  const team = (data ?? []);
   const edit = can.ownerOnly(role);
   return (
     <div className="space-y-6">
       <div><h1 className="page-heading">Global Admin team</h1><p className="page-description">Kora Forge people who can open Global Admin. Everyone needs two-factor sign-in. {edit ? "" : "Only a Global admin can change the team."}</p></div>
-      <Flash msg={sp.msg} error={sp.error ?? error?.message} />
+      <Flash msg={readFlash(sp).msg} error={readFlash(sp).error ?? (error ? friendly(error, "console.team") : undefined)} />
       <ul className="grid gap-2 text-sm sm:grid-cols-2">{ROLES.map((r) => <li key={r} className="card p-3"><b>{ROLE_LABELS[r]}</b><span className="text-muted"> — {ROLE_HELP[r]}</span></li>)}</ul>
       <div className="card overflow-x-auto p-0"><table className="table min-w-[760px]">
         <thead><tr><th>Person</th><th>Role</th><th>Two-factor</th><th>Last sign-in</th>{edit && <th>Change</th>}</tr></thead>
         <tbody>{team.map((m) => <tr key={m.user_id}>
           <td><div className="font-semibold">{m.email}</div><div className="text-xs text-muted">Added {fmtDateTime(m.created_at)}{m.user_id === user.id ? " · you" : ""}</div></td>
-          <td>{ROLE_LABELS[m.role]}</td>
+          <td>{lookup(ROLE_LABELS, m.role, m.role)}</td>
           <td>{m.totp_enrolled ? <span className="chip bg-green-50 text-ok">On</span> : <span className="chip bg-amber-50 text-warn">Not set up</span>}</td>
           <td className="text-xs">{fmtDateTime(m.last_sign_in_at)}</td>
           {edit && <td><div className="flex flex-col gap-2">

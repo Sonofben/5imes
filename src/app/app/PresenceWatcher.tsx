@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getBestPosition } from "@/lib/geo";
+import { Presence } from "@/lib/jsonShapes";
 
 const EVERY_MS = 15 * 60_000;
-type Presence = { status: string; departed_at?: string; request_status?: string | null };
+
 
 /**
  * While the person is checked in and 5ime is open, re-check GPS every 15 minutes
@@ -25,7 +26,8 @@ export function PresenceWatcher({ timezone }: { timezone: string }) {
       try {
         const fix = await getBestPosition(10000, 50);
         const { data } = await createClient().rpc("report_presence", { p_lat: fix.lat, p_lng: fix.lng, p_accuracy: fix.accuracy });
-        if (!stopped && data) setState(data as Presence);
+        const presence = Presence.safeParse(data);
+        if (!stopped && presence.success) setState(presence.data);
       } catch {
         // No location this time (permission or signal). Try again on the next round.
       }

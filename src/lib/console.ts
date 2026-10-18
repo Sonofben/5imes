@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { throttle } from "@/lib/throttle";
+import { flashQuery } from "@/lib/flash";
 
 export type ConsoleRole = "owner" | "support" | "finance" | "viewer";
 
@@ -17,6 +19,14 @@ export async function requireConsole(opts: { allowAal1?: boolean } = {}) {
   if (aal?.currentLevel !== "aal2" && !opts.allowAal1) redirect("/console/mfa");
   const { data: role } = await supabase.rpc("console_role");
   return { supabase, user, role: (role ?? null) as ConsoleRole | null };
+}
+
+/** requireConsole for actions that change something: also applies the Global Admin action limit. */
+export async function requireConsoleAction() {
+  const ctx = await requireConsole();
+  const limited = await throttle(ctx.supabase, "console_action");
+  if (limited) redirect(`/console?${flashQuery({ error: limited })}`);
+  return ctx;
 }
 
 /** What each Global Admin role is called on screen. */

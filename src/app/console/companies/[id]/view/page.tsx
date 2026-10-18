@@ -2,18 +2,11 @@ import Link from "next/link";
 import { requireConsole, can, fmtDateTime } from "@/lib/console";
 import { MapView } from "@/components/maps/MapView";
 import { FLAG_LABELS, WEEKDAYS } from "@/lib/constants";
+import { friendly } from "@/lib/errors";
+import { parseOrNull, ConsoleSnapshot } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
-type Snapshot = {
-  org: { name: string; domain: string; timezone: string; work_start: string; work_end: string; grace_minutes: number; home_radius_m: number; slug: string };
-  today: string;
-  people: { id: string; name: string; email: string; role: string; status: string; team: string | null; home_status: string; line_manager: string | null;
-            today: { kind: string; at: string; type: string; flags: string[] }[] | null }[];
-  locations: { name: string; lat: number; lng: number; radius_m: number; address: string | null }[];
-  schedule: { weekday: number; mode: string }[];
-  pending: { people: number; homes: number; corrections: number; location_requests: number };
-};
 
 /** Read-only view of what the company admin sees. Needs the company's support-access permission; every open is logged. */
 export default async function ViewAsCompany({ params }: { params: Promise<{ id: string }> }) {
@@ -23,9 +16,10 @@ export default async function ViewAsCompany({ params }: { params: Promise<{ id: 
   const { data, error } = await supabase.rpc("console_company_snapshot", { p_org: id });
   if (error || !data) return (
     <div className="space-y-3"><Link href={`/console/companies/${id}`} className="text-sm text-muted underline">← Back</Link>
-      <p className="card text-bad">{error?.message ?? "Not available."}</p></div>
+      <p className="card text-bad">{(error ? friendly(error, "console/companies/[id]/view") : "Not available.")}</p></div>
   );
-  const s = data as Snapshot;
+  const s = parseOrNull(ConsoleSnapshot, data, "console/companies/[id]/view");
+  if (!s) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
   const time = (iso: string) => new Intl.DateTimeFormat("en-NG", { timeZone: s.org.timezone, hour: "numeric", minute: "2-digit" }).format(new Date(iso));
   return (
     <div className="space-y-5">

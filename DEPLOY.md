@@ -56,7 +56,9 @@ bash ~/vps-check.sh
    11. `supabase/migrations/0011_work_elsewhere_line_managers_maps.sql`
    12. `supabase/migrations/0012_global_admin.sql`
    13. `supabase/migrations/0013_reserved_links.sql`
+   14. `supabase/migrations/0014_rate_limits_and_hardening.sql`
 
+   For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
    - `Project URL`
@@ -226,11 +228,98 @@ Then open `https://<ip-with-dashes>.sslip.io`. You should see the 5ime landing p
 4. Add the rest of the team from **Global Admin → Team** (no more SQL). Roles: Global admin, Support admin, Billing admin, Read-only admin.
 5. Logo uploads use Supabase Storage: the app creates a public `logos` bucket automatically on the first upload (needs `SUPABASE_SERVICE_ROLE_KEY`).
 
+## 8. Releases with migration tracking and automatic rollback (from 0014 on)
+
+From now on every release goes through `scripts/deploy.sh`. It applies only the migrations that
+have not run yet (recording each in `supabase_migrations.schema_migrations`), builds, starts, checks
+`/api/health`, and puts the previous version back if the new one doesn't come up healthy.
+
+**One-time setup**
+
+1. **Database connection string.** Supabase → **Connect** (top of the project) → **Session pooler** →
+   copy the URI and put your database password in it. Add it to `/opt/apps/5ime/.env` yourself:
+   ```
+   DATABASE_URL=postgresql://postgres.<ref>:<your-db-password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+   ```
+   It stays on the server only. (`chmod 600 .env` if you haven't.)
+2. **Tell the tracker what you already ran by hand.** First check which of 0011–0013 are in the
+   database — in the Supabase SQL Editor run:
+   ```sql
+   select to_regclass('public.work_location_requests') is not null as has_0011,
+          to_regclass('public.platform_plans')        is not null as has_0012,
+          'signup' = any (public.reserved_slugs())                as has_0013;
+   ```
+   Record everything up to the last one that shows `true` — for example if all three are true:
+   ```bash
+   cd /opt/apps/5ime && scripts/migrate.sh --baseline 0013
+   ```
+   (If only 0011 is true, use `--baseline 0011`; the deploy will then run 0012, 0013, 0014 for you.)
+3. `scripts/migrate.sh --status` lists what is applied and what is pending.
+
+**Every release**
+```bash
+cd /opt/apps/5ime
+scripts/deploy.sh            # latest main
+scripts/deploy.sh v2026.10.20   # or a tagged release
+```
+`deploy.sh` leaves the folder on the released commit (a "detached" checkout); that's expected —
+always release with `deploy.sh` rather than `git pull`.
+
+## 9. Request limits in Nginx (per visitor IP)
+
+```bash
+cd /opt/apps/5ime
+sudo cp deploy/nginx/5ime-limits-http.conf   /etc/nginx/conf.d/5ime-limits.conf
+sudo cp deploy/nginx/5ime-limits-server.conf /etc/nginx/snippets/5ime-limits.conf
+sudo nano /etc/nginx/sites-available/5ime
+```
+In the `server { … }` block that has `listen 443` (the one Certbot added), add this line just
+above `location / {`:
+```
+    include /etc/nginx/snippets/5ime-limits.conf;
+```
+Then:
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+for i in $(seq 1 25); do curl -s -o /dev/null -w "%{http_code} " https://5imes.koraforge.com.ng/api/health; done; echo
+```
+You should see `200`s and then `429`s (the limit working). If `nginx -t` fails, remove the
+`include` line and reload — nothing else changes. CACTS's site file is not touched.
+
+## 10. CAPTCHA (Cloudflare Turnstile) on sign-up, sign-in and password reset
+
+The order matters: the app must send the CAPTCHA before Supabase starts requiring it.
+
+1. Cloudflare dashboard → **Turnstile** → **Add widget**: name `5ime`, hostname `5imes.koraforge.com.ng`,
+   widget mode **Managed**. Copy the **Site key** and the **Secret key**. (Your domain doesn't have to
+   be on Cloudflare for this.)
+2. In `/opt/apps/5ime/.env` add the **site** key only:
+   ```
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAAA...
+   ```
+   and release: `scripts/deploy.sh` (the site key is built into the page, so it needs a build).
+3. Supabase → **Authentication → Attack Protection** → enable **CAPTCHA protection**, provider
+   **Turnstile**, paste the **secret** key, save.
+4. Test: sign out, sign in, request a one-time code, and use "Forgot password". Most people never
+   see a challenge; occasionally a checkbox appears.
+5. While there: Supabase → **Authentication → Rate Limits** — keep email sending low (for example
+   30 per hour) and sign-in/verification limits at Supabase's defaults or lower.
+
+To turn CAPTCHA off again: disable it in Supabase first, then empty the site key and release.
+
+## 11. Optional: error tracking
+
+Errors are always written to `docker logs fivetime-web` as JSON lines with a reference code (the
+same code users see on screen). To also collect them in a dashboard, run GlitchTip (free,
+self-hosted) or use Sentry, and put the project DSN in `.env` as `ERROR_TRACKING_DSN=…`, then `docker compose up -d`.
+
 ## Everyday operations
 
 | Task | Command (in `/opt/apps/5ime`) |
 |---|---|
-| Deploy an update | `git pull && docker compose up -d --build` |
+| Deploy an update | `scripts/deploy.sh` |
+| Pending migrations | `scripts/migrate.sh --status` |
+| Health | `curl -s http://127.0.0.1:3005/api/health` |
 | Logs | `docker compose logs -f --tail=100` |
 | Restart | `docker compose restart` |
 | Stop (CACTS unaffected) | `docker compose down` |
@@ -286,6 +375,10 @@ Each app stays in its own house: one can be rebuilt or stopped without touching 
 |---|---|
 | `docker compose ps` not healthy | Run `docker compose logs --tail=100`. Usually a typo in `.env`. |
 | "Location permission is blocked" | Use the **https** address. In the phone's browser settings, allow Location for the site. |
+| "Something went wrong (ref ABC123)" | `docker logs fivetime-web 2>&1 \| grep ABC123` shows the full error. |
+| "Too many attempts" for a real user | A rate limit was reached. Global Admin → Security → "Limits reached" shows who and which limit; it clears by itself when the window ends. |
+| "The security check didn't complete" | Turnstile couldn't run (blocked script or ad blocker). Check the site key in `.env` matches the hostname, and that Supabase has the matching secret key. |
+| Deploy rolled back | `deploy.sh` prints the last log lines. Fix and run it again; the database migrations stay applied. |
 | Magic link → "Sign-in failed" | Supabase **Redirect URLs** must include `https://<host>/auth/callback`, and `NEXT_PUBLIC_SITE_URL` must match exactly. Rebuild after changing it. |
 | Emails not arriving | Built-in Supabase mailer limit hit. Add custom SMTP. |
 | Check-ins always "Outside approved locations" | Re-pin the office from inside the building, or raise its radius (Pro). |

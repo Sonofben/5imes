@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { PasswordField } from "@/components/PasswordField";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
+import { friendly } from "@/lib/errors";
+import { useCaptcha } from "@/components/Captcha";
 
 type Props = {
   role: "owner" | "admin" | "manager" | "staff";
@@ -35,6 +37,7 @@ function ChangePasswordCard({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const captcha = useCaptcha();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,8 +52,9 @@ function ChangePasswordCard({ onDone }: { onDone: () => void }) {
     const result = await fetch("/api/security/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ current, next }),
+      body: JSON.stringify({ current, next, captchaToken: await captcha.getToken() }),
     }).then((r) => r.json()).catch(() => null);
+    captcha.reset();
     setBusy(false);
     if (!result?.ok) { setError(result?.error ?? "Could not change password."); return; }
     setCurrent(""); setNext(""); setConfirm("");
@@ -65,6 +69,7 @@ function ChangePasswordCard({ onDone }: { onDone: () => void }) {
         <p className="text-sm text-muted">You’ll stay signed in on this device.</p>
       </div>
       <form onSubmit={submit} className="space-y-3">
+        {captcha.slot}
         <PasswordField id="cp-current" label="Current password" autoComplete="current-password" value={current} onChange={setCurrent} />
         <div className="space-y-1">
           <PasswordField
@@ -117,7 +122,7 @@ function TotpCard({ requiresMfa, enrolled, role, currentAal, onDone }: { require
     }
     const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `5ime ${Date.now()}` });
     setBusy(false);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendly(error, "admin/security")); return; }
     setFactorId(data.id); setQr(data.totp.qr_code); setSecret(data.totp.secret);
     setPhase("verifying");
   }
@@ -128,7 +133,7 @@ function TotpCard({ requiresMfa, enrolled, role, currentAal, onDone }: { require
     setError(null); setBusy(true);
     const supabase = createClient();
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
-    if (error) { setBusy(false); setError(error.message); return; }
+    if (error) { setBusy(false); setError(friendly(error, "admin/security")); return; }
 
     // Generate initial recovery codes via a server action.
     const result = await fetch("/api/security/recovery-codes", { method: "POST" }).then((r) => r.json()).catch(() => null);

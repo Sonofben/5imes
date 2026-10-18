@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import "./globals.css";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BRAND } from "@/lib/constants";
@@ -37,7 +38,10 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Every page is rendered per request so each one carries that request's CSP nonce
+  // (a page built ahead of time would have no nonce and its scripts would be blocked).
+  await connection();
   return (
     <html lang="en">
       <body className="min-h-screen">

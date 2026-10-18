@@ -4,8 +4,7 @@ import { Logo } from "@/components/Logo";
 import { BRAND, naira } from "@/lib/constants";
 import { loadPublicPlans } from "@/lib/plans";
 
-// Prices and trial length come from Global Admin; refresh the cached page every 5 minutes.
-export const revalidate = 300;
+// Rendered per request (see the CSP note in app/layout.tsx); prices come from Global Admin.
 
 const cycles = [
   { label: "Monthly", months: 1 },

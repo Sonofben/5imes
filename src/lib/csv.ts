@@ -1,3 +1,4 @@
+import { UserError } from "./errors.ts";
 export function parseCsv(input: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -31,7 +32,7 @@ export function parseCsv(input: string): string[][] {
     }
   }
 
-  if (quoted) throw new Error("CSV contains an unclosed quoted field.");
+  if (quoted) throw new UserError("CSV contains an unclosed quoted field.");
   row.push(field);
   if (row.some((cell) => cell.length > 0)) rows.push(row);
   return rows;

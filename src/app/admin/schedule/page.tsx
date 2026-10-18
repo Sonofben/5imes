@@ -1,6 +1,7 @@
-import { requireMember, type Member, type Subscription } from "@/lib/session";
+import { requireMember, type Subscription } from "@/lib/session";
 import { WEEKDAYS } from "@/lib/constants";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { saveSchedule } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
     supabase.from("members").select("*").eq("org_id", org.id).eq("status", "active").order("full_name"),
     supabase.from("subscriptions").select("plan").eq("org_id", org.id).maybeSingle<Pick<Subscription, "plan">>(),
   ]);
-  const all = (schedules ?? []) as Row[];
+  const all = (schedules ?? []);
   const isPro = sub?.plan !== "basic";
 
   return (
@@ -47,9 +48,9 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
           Which days are office days and which are home days. A check-in from the wrong place on a given day is flagged.
         </p>
       </div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
 
-      <form action={saveSchedule.bind(null, org.id, null)} className="card space-y-4">
+      <form action={saveSchedule.bind(null, null)} className="card space-y-4">
         <h2 className="font-bold">Company default</h2>
         <DaySelects rows={all.filter((r) => r.member_id === null)} />
         <button className="btn-primary">Save default</button>
@@ -62,9 +63,9 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
         </div>
         {isPro ? (
           <ul className="divide-y divide-line">
-            {((members ?? []) as Member[]).map((m) => (
+            {(members ?? []).map((m) => (
               <li key={m.id} className="py-3">
-                <form action={saveSchedule.bind(null, org.id, m.id)} className="flex flex-col gap-2 lg:flex-row lg:items-end">
+                <form action={saveSchedule.bind(null, m.id)} className="flex flex-col gap-2 lg:flex-row lg:items-end">
                   <div className="lg:w-48">
                     <div className="font-medium">{m.full_name || m.email}</div>
                     <div className="text-xs text-muted">{m.team || m.email}</div>

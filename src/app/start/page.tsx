@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
+import { friendly, isRateLimited } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +23,16 @@ export default async function StartPage() {
   const { error: joinError } = await supabase.rpc("join_organization");
 
   const { data, error } = await supabase.rpc("post_auth_destination");
-  const row = Array.isArray(data) ? (data[0] as Destination | undefined) : (data as Destination | undefined);
+  const row: Destination | undefined = data?.[0];
 
   if (!error && row?.destination && row.destination !== "/start") {
     redirect(row.destination);
   }
 
-  const message = row?.reason ?? joinError?.message ?? error?.message ?? null;
+  // Joining is a no-op for people who already belong to a company, so a rate-limited join
+  // must not stop them from being routed.
+  const joinProblem = joinError && !isRateLimited(joinError) ? friendly(joinError, "start") : null;
+  const message = row?.reason ?? joinProblem ?? (error ? friendly(error, "start") : null);
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">

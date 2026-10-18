@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/site";
+import { friendly } from "@/lib/errors";
+import { flashQuery } from "@/lib/flash";
 
 /**
  * Single auth callback used by every email we send:
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
     // they don't need the PKCE verifier cookie from the browser that asked.
     // Admin invitations have no verifier at all, so they must use this path.
     const { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
-    if (error) return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(linkError(error.message))}`);
+    if (error) return NextResponse.redirect(`${base}/login?${flashQuery({ error: linkError(error) })}`);
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error && isMissingVerifier(error.message) && type !== "recovery") {
@@ -40,11 +42,13 @@ export async function GET(request: Request) {
       // signed up. Supabase has already confirmed the email before sending the
       // person here; only the automatic sign-in can't happen on this device.
       // So treat it as success and let them sign in with their password.
-      return NextResponse.redirect(`${base}/login?notice=${encodeURIComponent("Your email is confirmed. Sign in with your email and password to continue.")}`);
+      return NextResponse.redirect(`${base}/login?${flashQuery({ msg: "Your email is confirmed. Sign in with your email and password to continue." })}`);
     }
-    if (error) return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(linkError(error.message))}`);
+    if (error) return NextResponse.redirect(`${base}/login?${flashQuery({ error: linkError(error) })}`);
   } else {
-    return NextResponse.redirect(`${base}/login?error=${encodeURIComponent(errorDesc || "That sign-in link is invalid or has expired.")}`);
+    // Provider text (error_description) is not shown as-is: it comes from the link, which anyone can edit.
+    if (errorDesc) friendly(new Error(errorDesc), "auth/callback/provider");
+    return NextResponse.redirect(`${base}/login?${flashQuery({ error: "That sign-in link is invalid or has expired. Try again." })}`);
   }
 
   if (type === "recovery") return NextResponse.redirect(`${base}/auth/reset`);
@@ -58,10 +62,11 @@ function isMissingVerifier(message: string) {
   return /code verifier|code_verifier|both auth code and code verifier/i.test(message);
 }
 
-function linkError(message: string) {
+function linkError(error: { message: string }) {
+  const message = error.message;
   return isMissingVerifier(message)
     ? "This password-reset link was opened on a different device. Request a new link from this device under “Forgot password?”."
     : /expired|invalid/i.test(message)
       ? "That link has expired or was already used. Request a new one."
-      : message;
+      : friendly(error, "auth/callback");
 }

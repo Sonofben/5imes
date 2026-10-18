@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { friendly } from "@/lib/errors";
 
 /** Two-factor sign-in for the console: enrol an authenticator app once, then enter a 6-digit code. */
 export function MfaForm() {
@@ -16,12 +17,12 @@ export function MfaForm() {
     (async () => {
       const supabase = createClient();
       const { data, error } = await supabase.auth.mfa.listFactors();
-      if (error) { setError(error.message); return; }
+      if (error) { setError(friendly(error, "console/mfa")); return; }
       const verified = data.totp.find((f) => f.status === "verified");
       if (verified) { setFactorId(verified.id); return; }
       for (const f of data.all.filter((f) => f.status === "unverified")) await supabase.auth.mfa.unenroll({ factorId: f.id });
       const { data: enrolled, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `5ime console ${Date.now()}` });
-      if (enrollError) { setError(enrollError.message); return; }
+      if (enrollError) { setError(friendly(enrollError, "console/mfa")); return; }
       setFactorId(enrolled.id); setQr(enrolled.totp.qr_code); setSecret(enrolled.totp.secret);
     })();
   }, []);
@@ -32,7 +33,7 @@ export function MfaForm() {
     setBusy(true); setError(null);
     const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
     setBusy(false);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendly(error, "console/mfa")); return; }
     window.location.assign("/console"); // full load so the server sees the new session cookie
   }
 

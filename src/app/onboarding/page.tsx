@@ -3,21 +3,23 @@ import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { loadPlans } from "@/lib/plans";
 import { suggestWorkspaceName } from "@/lib/workspace";
+import { friendly } from "@/lib/errors";
+import { flashQuery, readFlash } from "@/lib/flash";
 
 async function createCompany(formData: FormData) {
   "use server";
   const supabase = await createClient();
   const name = String(formData.get("name") || "").trim();
   const { error } = await supabase.rpc("create_organization", { p_name: name });
-  if (error) redirect(`/onboarding?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(`/onboarding?${flashQuery({ error: friendly(error, "onboarding") })}`);
   // The workspace owner always lands on the admin home, which shows the setup checklist.
   redirect("/admin?welcome=1");
 }
 
 export const dynamic = "force-dynamic";
 
-export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const { error } = readFlash(await searchParams);
   const supabase = await createClient();
   const {
     data: { user },

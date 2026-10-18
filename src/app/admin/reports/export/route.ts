@@ -4,6 +4,8 @@ import { loadDeviceInfo, loadReport, shiftDate } from "@/lib/reports";
 import { todayIn, type Org } from "@/lib/session";
 import { FLAG_LABELS } from "@/lib/constants";
 import { csvRow } from "@/lib/csv";
+import { friendly } from "@/lib/errors";
+import { throttle } from "@/lib/throttle";
 
 function validDate(value: string | null) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -18,6 +20,8 @@ export async function GET(request: Request) {
 
   const { data: me } = await supabase.from("members").select("id,org_id,status,role").eq("user_id", user.id).maybeSingle();
   if (!me || me.status !== "active" || !["owner", "admin", "manager"].includes(me.role)) return new NextResponse("Forbidden", { status: 403 });
+  const limited = await throttle(supabase, "report_export");
+  if (limited) return new NextResponse(limited, { status: 429 });
   const [{ data: org }, { data: sub }] = await Promise.all([
     supabase.from("organizations").select("id,name,domain,timezone,work_start,work_end,grace_minutes,home_radius_m").eq("id", me.org_id).single<Org>(),
     supabase.from("subscriptions").select("plan").eq("org_id", me.org_id).maybeSingle(),
@@ -65,6 +69,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return new NextResponse(error instanceof Error ? error.message : "Could not build a complete report.", { status: 422 });
+    return new NextResponse(friendly(error, "admin/reports/export", "Could not build a complete report."), { status: 422 });
   }
 }

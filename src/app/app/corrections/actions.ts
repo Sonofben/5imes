@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/session";
+import { flashQuery } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
 
 function fail(message: string): never {
-  redirect(`/app/corrections?${new URLSearchParams({ error: message })}`);
+  redirect(`/app/corrections?${flashQuery({ error: message })}`);
 }
 
 export async function submitAttendanceCorrection(formData: FormData) {
@@ -28,9 +30,9 @@ export async function submitAttendanceCorrection(formData: FormData) {
     p_check_out: checkOut || null,
     p_reason: reason,
   });
-  if (error) fail(error.message);
+  if (error) fail(friendly(error, "app/corrections"));
   revalidatePath("/app");
   revalidatePath("/app/corrections");
   revalidatePath("/admin", "layout");
-  redirect("/app/corrections?msg=Your+correction+request+was+sent+for+manager+review.");
+  redirect(`/app/corrections?${flashQuery({ msg: "Your correction request was sent for manager review." })}`);
 }

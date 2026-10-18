@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireMember } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/server";
 import { ReceiptPrintButton } from "./ReceiptPrintButton";
+import { flashQuery } from "@/lib/flash";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function PaymentReceiptPage({ params }: { params: Promise<{
   const { reference } = await params;
   const { org } = await requireMember({ admin: true });
   const admin = createAdminClient();
-  if (!admin) redirect("/admin/billing?error=Payment+history+is+not+available.");
+  if (!admin) redirect(`/admin/billing?${flashQuery({ error: "Payment history is not available." })}`);
   const { data, error } = await admin.from("payments")
     .select("reference,plan,seats,billing_interval_months,amount_kobo,currency,status,kind,created_at,applied_at")
     .eq("org_id", org.id).eq("reference", reference).eq("status", "applied").maybeSingle<Payment>();

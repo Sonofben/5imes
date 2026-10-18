@@ -3,10 +3,13 @@ import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isDefinitivePaystackRejection, paystack, paystackEnabled } from "@/lib/paystack";
 import { siteUrl } from "@/lib/site";
+import { flashQuery } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
+import { Reservation, parseResult } from "@/lib/schemas";
 
 export async function POST(request: Request) {
   const base = siteUrl(request);
-  const back = (query: Record<string, string>) => NextResponse.redirect(`${base}/admin/billing?${new URLSearchParams(query)}`, { status: 303 });
+  const back = (query: Record<string, string>) => NextResponse.redirect(`${base}/admin/billing?${flashQuery(query)}`, { status: 303 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${base}/login`, { status: 303 });
@@ -21,8 +24,9 @@ export async function POST(request: Request) {
   const seats = Number(form.get("seats"));
   if (!Number.isSafeInteger(seats) || seats < 1 || seats > 10000) return back({ error: "Choose a valid seat count." });
   const reference = `5ime-seats-${randomUUID()}`;
-  const { data, error } = await supabase.rpc("prepare_paystack_seat_increase", { p_reference: reference, p_seats: seats });
-  if (error || !data?.ok) return back({ error: error?.message ?? data?.reason ?? "Could not prepare the seat increase." });
+  const { data: raw, error } = await supabase.rpc("prepare_paystack_seat_increase", { p_reference: reference, p_seats: seats });
+  const data = parseResult(Reservation, raw, "api/paystack/seats", { ok: false, reason: "The payment could not be reserved." });
+  if (error || !data.ok) return back({ error: (error ? friendly(error, "api/paystack/seats") : data.reason) ?? "Could not prepare the seat increase." });
   const amount = Number(data.amount_kobo);
   if (!Number.isSafeInteger(amount) || amount < 1) {
     await admin.from("payments").update({ status: "failed" }).eq("reference", reference).eq("status", "pending");
@@ -58,7 +62,7 @@ export async function POST(request: Request) {
     if (!transactionRequestStarted || definitivelyRejected) {
       await admin.from("payments").update({ status: "failed" }).eq("reference", reference).eq("status", "pending");
     }
-    const detail = error instanceof Error ? error.message : "Could not start the seat checkout.";
+    const detail = friendly(error, "api/paystack/seats", "Could not start the seat checkout.");
     const message = transactionRequestStarted && !definitivelyRejected
       ? `Paystack may have created this seat checkout. Check the pending attempt before trying again. (${detail})`
       : detail;

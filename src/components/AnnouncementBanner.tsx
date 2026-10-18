@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
+import { lookup } from "@/lib/schemas";
 
 type Ann = { id: string | null; message: string; level: "info" | "warning" | "critical"; maintenance: boolean };
 const TONE: Record<Ann["level"], string> = {
@@ -8,14 +10,14 @@ const TONE: Record<Ann["level"], string> = {
 };
 
 /** Platform-wide messages from Global Admin (announcements and maintenance). */
-export async function AnnouncementBanner({ supabase }: { supabase: SupabaseClient }) {
+export async function AnnouncementBanner({ supabase }: { supabase: SupabaseClient<Database> }) {
   const { data } = await supabase.rpc("my_announcements");
-  const items = (data ?? []) as Ann[];
+  const items = (data ?? []);
   if (!items.length) return null;
   return (
     <div className="my-3 space-y-2">
       {items.map((a, i) => (
-        <p key={a.id ?? `m${i}`} role={a.level === "info" ? "status" : "alert"} className={`rounded-2xl border px-4 py-3 text-sm ${TONE[a.level]}`}>
+        <p key={a.id ?? `m${i}`} role={a.level === "info" ? "status" : "alert"} className={`rounded-2xl border px-4 py-3 text-sm ${lookup(TONE, a.level, TONE.info)}`}>
           {a.maintenance && <b>Maintenance: </b>}{a.message}
         </p>
       ))}

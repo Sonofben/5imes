@@ -1,24 +1,21 @@
 import Link from "next/link";
 import { requireConsole, naira, fmtDateTime } from "@/lib/console";
 import { Bars } from "../Bars";
+import { friendly } from "@/lib/errors";
+import { parseOrNull, ConsoleRevenue } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
-type Revenue = {
-  this_month_kobo: number; last_month_kobo: number; year_kobo: number; all_time_kobo: number; monthly_run_rate_kobo: number;
-  paying_companies: number; pending_count: number; failed_count_30d: number;
-  by_month: { month: string; kobo: number; payments: number }[]; by_plan: Record<string, number>; by_provider: Record<string, number>;
-};
-type Payment = { reference: string; org_id: string; company: string; domain: string; provider: string; kind: string; status: string; plan: string; seats: number; months: number; amount_kobo: number; created_at: string; applied_at: string | null; note: string | null };
 
 export default async function RevenuePage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; status?: string; q?: string }> }) {
   const sp = await searchParams;
   const { supabase } = await requireConsole();
   const filters = { p_from: sp.from || null, p_to: sp.to || null, p_status: sp.status || null, p_search: sp.q || null };
   const [{ data: revData, error }, { data: payData }] = await Promise.all([supabase.rpc("console_revenue"), supabase.rpc("console_payments", filters)]);
-  if (error || !revData) return <p className="card text-bad">{error?.message ?? "No revenue data."}</p>;
-  const r = revData as Revenue;
-  const payments = (payData ?? []) as Payment[];
+  if (error || !revData) return <p className="card text-bad">{(error ? friendly(error, "console/revenue") : "No revenue data.")}</p>;
+  const r = parseOrNull(ConsoleRevenue, revData, "console/revenue");
+  if (!r) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
+  const payments = (payData ?? []);
   const tiles: [string, string | number][] = [
     ["This month", naira(r.this_month_kobo)], ["Last month", naira(r.last_month_kobo)], ["Last 12 months", naira(r.year_kobo)], ["All time", naira(r.all_time_kobo)],
     ["Monthly run rate", naira(r.monthly_run_rate_kobo)], ["Paying companies", r.paying_companies], ["Pending payments", r.pending_count], ["Failed (30 days)", r.failed_count_30d],

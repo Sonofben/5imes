@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { requireConsole, naira, fmtDate, ROLE_LABELS } from "@/lib/console";
 import { Bars } from "./Bars";
+import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
+import { parseOrNull, ConsoleHealth, ConsoleOverview, ConsoleRevenue } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
-type Overview = { companies: number; trialing: number; paying: number; expired: number; suspended: number; seats_used: number; seats_paid: number; revenue_month_kobo: number; new_this_week: number; ending_soon: number };
-type Health = {
-  companies_active_7d: number; people_active_7d: number; checkins_today: number;
-  checkins_by_day: { day: string; checkins: number }[]; signups_by_week: { week: string; companies: number }[];
-  at_risk: { id: string; name: string; domain: string; reason: string; last_check_in: string | null }[];
-};
-type Revenue = { this_month_kobo: number; monthly_run_rate_kobo: number; pending_count: number; failed_count_30d: number };
 
-export default async function GlobalAdminOverview() {
+export default async function GlobalAdminOverview({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const flash = readFlash(await searchParams);
   const { supabase, role } = await requireConsole();
   const [ovRes, healthRes, revRes] = await Promise.all([
     supabase.rpc("console_overview"), supabase.rpc("console_health"), supabase.rpc("console_revenue"),
@@ -21,14 +19,15 @@ export default async function GlobalAdminOverview() {
     return (
       <div className="space-y-4">
         <h1 className="page-heading">Overview</h1>
-        <p className="card text-bad">Global Admin data lookup failed. {ovRes.error?.message ?? "No data returned."}</p>
+        <p className="card text-bad">Global Admin data lookup failed. {(ovRes.error ? friendly(ovRes.error, "console") : "No data returned.")}</p>
         <p className="text-sm text-muted">If you just deployed, check that every migration up to 0012 has been run in Supabase.</p>
       </div>
     );
   }
-  const ov = ovRes.data as Overview;
-  const h = (healthRes.data ?? null) as Health | null;
-  const rev = (revRes.data ?? null) as Revenue | null;
+  const ov = parseOrNull(ConsoleOverview, ovRes.data, "console/overview");
+  if (!ov) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
+  const h = parseOrNull(ConsoleHealth, healthRes.data, "console/health");
+  const rev = parseOrNull(ConsoleRevenue, revRes.data, "console/revenue");
   const tiles: [string, string | number, string?][] = [
     ["Companies", ov.companies, "/console/companies"], ["On trial", ov.trialing], ["Paying", ov.paying], ["Expired", ov.expired],
     ["Suspended", ov.suspended], ["Active companies (7 days)", h?.companies_active_7d ?? "—"], ["People checking in (7 days)", h?.people_active_7d ?? "—"],
@@ -38,6 +37,7 @@ export default async function GlobalAdminOverview() {
 
   return (
     <div className="space-y-6">
+      <Flash {...flash} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="eyebrow">Signed in as {role ? ROLE_LABELS[role] : "—"}</p><h1 className="page-heading">Platform overview</h1></div>
         <Link href="/console/companies" className="btn-primary btn-sm">All companies</Link>

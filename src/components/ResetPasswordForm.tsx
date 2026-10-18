@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { PasswordField } from "@/components/PasswordField";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { passwordIssues, PASSWORD_HINT, MIN_PASSWORD_LENGTH } from "@/lib/password";
+import { friendly } from "@/lib/errors";
 
 /**
  * Reset flow (`mode="reset"`): user arrived from an email link. Supabase has
@@ -44,7 +45,7 @@ export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
     setBusy(true);
     const { error } = await createClient().auth.updateUser({ password });
     setBusy(false);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendly(error, "auth/reset")); return; }
     // Log the event (silently; failure here does not block the user).
     void createClient().rpc("log_security_event", {
       p_kind: mode === "invite" ? "password_set" : "password_reset",

@@ -1,3 +1,4 @@
+import { UserError } from "./errors.ts";
 /**
  * Address search and street addresses from OpenStreetMap (Nominatim).
  * Free, no key; fair-use limit is about one request per second, which is fine
@@ -13,7 +14,7 @@ export async function searchPlaces(query: string, countryCodes = "ng"): Promise<
   if (q.length < 3) return [];
   const url = `${BASE}/search?format=jsonv2&limit=6&addressdetails=0&accept-language=en&countrycodes=${countryCodes}&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error("Address search is busy. Try again in a moment.");
+  if (!res.ok) throw new UserError("Address search is busy. Try again in a moment.");
   const rows = (await res.json()) as { display_name: string; lat: string; lon: string }[];
   return rows.map((r) => ({ label: r.display_name, lat: Number(r.lat), lng: Number(r.lon) }));
 }

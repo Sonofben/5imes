@@ -3,6 +3,7 @@ import { mapsLink } from "@/lib/geo";
 import { inviteOne, inviteBulk, setStatus, setRole, removeMember, reviewHome, setLineManager } from "./actions";
 import { MapView } from "@/components/maps/MapView";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { ConfirmAction } from "./ConfirmAction";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +29,8 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
       : Promise.resolve({ data: [] as PrivateLocationRow[] }),
     isAdmin ? supabase.from("subscriptions").select("plan").eq("org_id", org.id).maybeSingle<Pick<Subscription, "plan">>() : Promise.resolve({ data: null }),
   ]);
-  const privateByMember = new Map(((privateRows ?? []) as PrivateLocationRow[]).map((row) => [row.member_id, row]));
-  type Row = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at"> & { line_manager_id: string | null };
-  const members = ((data ?? []) as Row[]).map((m) => {
+  const privateByMember = new Map((privateRows ?? []).map((row) => [row.member_id, row]));
+  const members = (data ?? []).map((m) => {
     const location = privateByMember.get(m.id);
     return {
       ...m,
@@ -61,7 +61,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
           <p className="page-description">{activeCount} active · {totalSeats} active or invited seats · company email only (@{org.domain})</p>
         </div>
       </div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
 
       {isAdmin && (pending.length > 0 || homeRequests.length > 0) && (
         <div className="grid gap-4 xl:grid-cols-2">

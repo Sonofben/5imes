@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { requireConsole, can, fmtDate } from "@/lib/console";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { Reason } from "../Reason";
 import { createCompany } from "./actions";
+import { friendly } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +26,7 @@ export default async function GlobalCompanies({ searchParams }: { searchParams: 
     supabase.rpc("console_companies", { p_search: sp.q ?? null, p_archived: archived }),
     supabase.rpc("public_plans"),
   ]);
-  const rows = (data ?? []) as Row[];
+  const rows = (data ?? []);
   const trialDays = (plans as { trial_days?: number } | null)?.trial_days ?? 14;
   return (
     <div className="space-y-4">
@@ -33,8 +35,8 @@ export default async function GlobalCompanies({ searchParams }: { searchParams: 
           <Link href={archived ? "/console/companies" : "/console/companies?archived=1"} className="text-sm text-muted underline">{archived ? "← Active companies" : "Show archived"}</Link></div>
         <form className="flex gap-2">{archived && <input type="hidden" name="archived" value="1" />}<input name="q" defaultValue={sp.q} placeholder="Search name, domain or link" className="input w-64" /><button className="btn-primary">Search</button></form>
       </div>
-      <Flash error={sp.error} />
-      {error && <p className="card text-bad">{error.message}</p>}
+      <Flash error={readFlash(sp).error} />
+      {error && <p className="card text-bad">{friendly(error, "console/companies")}</p>}
 
       {can.createCompany(role) && !archived && (
         <details className="card" open={sp.new === "1"}>

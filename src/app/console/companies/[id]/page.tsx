@@ -1,20 +1,13 @@
 import Link from "next/link";
 import { requireConsole, can, naira, fmtDate, fmtDateTime } from "@/lib/console";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany } from "./actions";
+import { friendly } from "@/lib/errors";
+import { parseOrNull, ConsoleCompany as CompanyShape } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
-type Detail = {
-  org: { id: string; name: string; domain: string; slug: string; timezone: string; created_at: string; suspended_at: string | null; logo_url: string | null; archived_at?: string | null };
-  owner: { name: string | null; email: string } | null;
-  subscription: { plan: string; status: string; trial_ends_at: string | null; current_period_end: string | null; seats_paid: number; billing_interval_months: number; paystack_subscription_code: string | null; cancel_at_period_end: boolean } | null;
-  counts: { active: number; invited: number; pending: number; disabled: number; stale_invites: number; offices: number };
-  last_check_in: string | null;
-  support_until: string | null;
-  payments: { reference: string; provider: string; kind: string; status: string; plan: string; seats: number; billing_interval_months: number; amount_kobo: number; created_at: string; note: string | null }[];
-  audit: { at: string; action: string; actor_email: string | null; reason: string | null }[];
-};
 type StaffRow = { full_name: string | null; email: string; role: string; status: string; team: string | null; home_status: string; last_check_in: string | null };
 
 function Reason() { return <input name="reason" required minLength={5} placeholder="Reason (saved in audit log)" className="input" />; }
@@ -24,15 +17,16 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
   const sp = await searchParams;
   const { supabase, role } = await requireConsole();
   const { data, error } = await supabase.rpc("console_company", { p_org: id });
-  if (error || !data) return <p className="card text-bad">{error?.message ?? "Company not found."}</p>;
-  const d = data as Detail;
+  if (error || !data) return <p className="card text-bad">{(error ? friendly(error, "console/companies/[id]") : "Company not found.")}</p>;
+  const d = parseOrNull(CompanyShape, data, "console/companies/[id]");
+  if (!d) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
   const { data: archivedRows } = await supabase.rpc("console_companies", { p_search: d.org.domain, p_archived: true });
-  const isArchived = ((archivedRows ?? []) as { id: string }[]).some((r) => r.id === id);
+  const isArchived = (archivedRows ?? []).some((r) => r.id === id);
   const s = d.subscription;
   let staff: StaffRow[] | null = null; let staffError: string | null = null;
   if (sp.staff === "1" && can.staff(role)) {
     const r = await supabase.rpc("console_staff_list", { p_org: id });
-    staff = (r.data ?? []) as StaffRow[]; staffError = r.error?.message ?? null;
+    staff = (r.data ?? []); staffError = r.error ? friendly(r.error, "console/company/staff") : null;
   }
   const used = d.counts.active + d.counts.invited;
   const warnings = [
@@ -51,7 +45,7 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
       <div><Link href="/console/companies" className="text-sm text-muted underline">← Companies</Link>
         <h1 className="page-heading mt-1">{d.org.name}</h1>
         <p className="text-sm text-muted">@{d.org.domain} · link /{d.org.slug} · joined {fmtDate(d.org.created_at)} · owner {d.owner ? `${d.owner.name ?? ""} <${d.owner.email}>` : "—"}</p></div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
       {isArchived && <p className="card border-red-200 bg-red-50 text-sm text-bad">This company is archived: hidden from lists and suspended.</p>}
 
       <div className="flex flex-wrap gap-2">

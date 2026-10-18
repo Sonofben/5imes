@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getBestPosition } from "@/lib/geo";
 import { reverseGeocode } from "@/lib/geocode";
+import { friendly, UserError } from "@/lib/errors";
 
 export function HomeLocationPanel({ status, hasApproved, hasPending }: { status: string; hasApproved: boolean; hasPending: boolean }) {
   const router = useRouter();
@@ -23,11 +24,11 @@ export function HomeLocationPanel({ status, hasApproved, hasPending }: { status:
         p_accuracy: fix.accuracy,
         p_address: address ?? "",
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new UserError(friendly(error, "app/home-location"));
       setMsg({ ok: true, text: `Sent for approval (accuracy ±${Math.round(fix.accuracy)}m).` });
       router.refresh();
     } catch (e) {
-      setMsg({ ok: false, text: e instanceof Error ? e.message : "Something went wrong" });
+      setMsg({ ok: false, text: friendly(e, "app/home-location", "Something went wrong") });
     } finally {
       setBusy(false);
     }

@@ -1,25 +1,27 @@
 import { requireConsole, can } from "@/lib/console";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { Reason } from "../Reason";
 import { savePlan, setPlatform } from "../actions";
+import { friendly } from "@/lib/errors";
+import { parseOrNull, ConsolePlans } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
-type Plan = { id: "basic" | "pro"; name: string; pricePerSeat: number; blurb: string; features: string[]; maxLocations: number | null };
-type Data = { trial_days: number; plans: Plan[]; maintenance_mode: boolean; maintenance_message: string | null };
 
 export default async function PricingPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, role } = await requireConsole();
   const { data, error } = await supabase.rpc("console_plans");
-  if (error || !data) return <p className="card text-bad">{error?.message ?? "No data."}</p>;
-  const d = data as Data;
+  if (error || !data) return <p className="card text-bad">{(error ? friendly(error, "console/pricing") : "No data.")}</p>;
+  const d = parseOrNull(ConsolePlans, data, "console/pricing");
+  if (!d) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
   const edit = can.ownerOnly(role);
   return (
     <div className="space-y-6">
       <div><h1 className="page-heading">Plans & pricing</h1>
         <p className="page-description">Prices are in naira per person per month. A change applies to new payments and new trials straight away; terms already paid are not changed. {edit ? "" : "Only a Global admin can change these."}</p></div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
       <div className="grid gap-4 lg:grid-cols-2">
         {d.plans.map((p) => (
           <form key={p.id} action={savePlan.bind(null, p.id)} className="card space-y-3">

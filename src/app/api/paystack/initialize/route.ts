@@ -5,10 +5,13 @@ import { PLANS as DEFAULT_PLANS, type PlanId } from "@/lib/constants";
 import { loadPlans } from "@/lib/plans";
 import { BILLING_CYCLES, type BillingCycleId } from "@/lib/billing";
 import { siteUrl } from "@/lib/site";
+import { flashQuery } from "@/lib/flash";
+import { friendly } from "@/lib/errors";
+import { Reservation, parseResult } from "@/lib/schemas";
 
 export async function POST(request: Request) {
   const base = siteUrl(request);
-  const back = (query: Record<string, string>) => NextResponse.redirect(`${base}/admin/billing?${new URLSearchParams(query)}`, { status: 303 });
+  const back = (query: Record<string, string>) => NextResponse.redirect(`${base}/admin/billing?${flashQuery(query)}`, { status: 303 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${base}/login`, { status: 303 });
@@ -41,15 +44,16 @@ export async function POST(request: Request) {
   const interval = BILLING_CYCLES[cycle];
   // Default is a one-off payment for the chosen term; automatic card renewal is opt-in.
   const autoRenew = form.get("auto_renew") === "on";
-  const { data: reservation, error: reservationError } = await supabase.rpc("prepare_paystack_subscription", {
+  const { data: reservationRaw, error: reservationError } = await supabase.rpc("prepare_paystack_subscription", {
     p_reference: reference,
     p_plan: plan,
     p_seats: seats,
     p_months: interval.months,
     p_auto_renew: autoRenew,
   });
-  if (reservationError || !reservation?.ok) {
-    return back({ error: reservationError?.message ?? reservation?.reason ?? "Could not reserve this subscription checkout." });
+  const reservation = parseResult(Reservation, reservationRaw, "api/paystack/initialize", { ok: false, reason: "The payment could not be reserved." });
+  if (reservationError || !reservation.ok) {
+    return back({ error: (reservationError ? friendly(reservationError, "api/paystack/initialize") : reservation.reason) ?? "Could not reserve this subscription checkout." });
   }
   const amount = Number(reservation.amount_kobo);
   if (!Number.isSafeInteger(amount) || amount < 1) {
@@ -70,7 +74,7 @@ export async function POST(request: Request) {
       planCode = paystackPlan.plan_code;
       const { error: savePlanError } = await admin.from("payments").update({ paystack_plan_code: planCode })
         .eq("reference", reference).eq("status", "pending");
-      if (savePlanError) throw new Error(`Could not save the Paystack plan code: ${savePlanError.message}`);
+      if (savePlanError) throw new Error(`Could not save the Paystack plan code: ${friendly(savePlanError, "api/paystack/initialize")}`);
     }
 
     // From this point a network failure may occur after Paystack created the transaction.
@@ -106,7 +110,7 @@ export async function POST(request: Request) {
     if (!transactionRequestStarted || definitivelyRejected) {
       await admin.from("payments").update({ status: "failed" }).eq("reference", reference).eq("status", "pending");
     }
-    const detail = error instanceof Error ? error.message : "Could not start payment. Please try again.";
+    const detail = friendly(error, "api/paystack/initialize", "Could not start payment. Please try again.");
     const message = transactionRequestStarted && !definitivelyRejected
       ? `Paystack may have created this checkout. Check the pending attempt before trying again. (${detail})`
       : detail;

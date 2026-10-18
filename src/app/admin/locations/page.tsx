@@ -2,6 +2,7 @@ import { requireMember, type Subscription } from "@/lib/session";
 import { loadPlans } from "@/lib/plans";
 import { mapsLink } from "@/lib/geo";
 import { Flash } from "@/components/Flash";
+import { readFlash } from "@/lib/flash";
 import { LocationPicker } from "@/components/maps/LocationPicker";
 import { MapView } from "@/components/maps/MapView";
 import { addLocation, updateRadius, deleteLocation } from "./actions";
@@ -33,7 +34,7 @@ export default async function LocationsPage({
           and approved by you in Staff.
         </p>
       </div>
-      <Flash msg={sp.msg} error={sp.error} />
+      <Flash {...readFlash(sp)} />
 
       {(locations ?? []).length > 0 && (
         <MapView
@@ -77,7 +78,7 @@ export default async function LocationsPage({
         </div>
 
         {canAdd ? (
-          <form action={addLocation.bind(null, org.id)} className="card space-y-3">
+          <form action={addLocation} className="card space-y-3">
             <h2 className="font-bold">Add an office</h2>
             <input name="name" className="input" placeholder="e.g. Head office, Ikeja" required />
             <LocationPicker radiusEditable={!isBasic} defaultRadius={200} />

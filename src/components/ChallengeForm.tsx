@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
+import { friendly } from "@/lib/errors";
 
 export function ChallengeForm({ factorId, next }: { factorId: string; next: string }) {
   const [mode, setMode] = useState<"totp" | "recovery">("totp");
@@ -16,7 +17,7 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
     setError(null); setBusy(true);
     const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
     setBusy(false);
-    if (error) { setError(error.message); return; }
+    if (error) { setError(friendly(error, "auth/challenge")); return; }
     window.location.assign(next); // full load so the server sees the new session cookie
   }
 
@@ -29,7 +30,7 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
     if (!result?.ok) { setError(result?.error ?? "Could not verify that recovery code."); return; }
     // The server has logged a `recovery_used` event; requireMember's grace
     // window will let the user through on aal1 while they re-enroll TOTP.
-    window.location.assign("/admin/security?msg=" + encodeURIComponent("Recovery code accepted. Please re-enrol your authenticator app — the grace window is 10 minutes.")); // full load so the server sees the new session cookie
+    window.location.assign("/admin/security?recovered=1"); // full load so the server sees the new session cookie
   }
 
   return (
