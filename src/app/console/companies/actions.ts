@@ -15,7 +15,7 @@ export async function createCompany(f: FormData) {
   });
   if (error) redirect(`/console/companies?${new URLSearchParams({ error: error.message, new: "1" })}`);
   const admin = createAdminClient();
-  const sent = admin ? !(await admin.auth.admin.inviteUserByEmail(email, { redirectTo: `${siteUrl()}/auth/callback?type=invite` })).error : false;
+  const sent = admin ? !(await admin.auth.admin.inviteUserByEmail(email, { redirectTo: `${siteUrl()}/auth/callback?type=invite`, data: { company_name: String(f.get("name") ?? "").trim() } })).error : false;
   revalidatePath("/console/companies");
   redirect(`/console/companies/${data}?${new URLSearchParams({ msg: sent ? `Company created. Invitation emailed to ${email}.` : `Company created. Ask ${email} to sign in or use "Forgot password" to set a password.` })}`);
 }

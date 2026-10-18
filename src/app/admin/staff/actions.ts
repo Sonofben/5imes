@@ -11,19 +11,20 @@ function back(params: Record<string, string>): never {
   redirect(`/admin/staff?${new URLSearchParams(params)}`);
 }
 
-async function sendInviteEmail(email: string) {
+async function sendInviteEmail(email: string, companyName?: string) {
   const admin = createAdminClient();
   if (!admin) return false;
   const site = process.env.NEXT_PUBLIC_SITE_URL;
   // Invitees land on /auth/callback?type=invite, which routes them to
   // /auth/invite to pick their own password.
   const redirectTo = site ? `${site}/auth/callback?type=invite` : undefined;
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
+  // company_name is shown in the invitation email ({{ .Data.company_name }}).
+  const { error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo, data: companyName ? { company_name: companyName } : undefined });
   return !error;
 }
 
 export async function inviteOne(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase, org } = await requireMember({ admin: true });
   const email = String(formData.get("email") || "").trim().toLowerCase();
   if (!email) back({ error: "Enter a work email address." });
   const { error } = await supabase.rpc("invite_member", {
@@ -33,7 +34,7 @@ export async function inviteOne(formData: FormData) {
     p_team: String(formData.get("team") || "").trim(),
   });
   if (error) back({ error: error.message });
-  const emailed = await sendInviteEmail(email);
+  const emailed = await sendInviteEmail(email, org.name);
   back({ msg: emailed ? `Invitation emailed to ${email}.` : `${email} was added. Ask them to sign in with that address.` });
 }
 
@@ -68,7 +69,7 @@ export async function inviteBulk(formData: FormData) {
   const { data: added, error } = await supabase.rpc("invite_members_bulk", { p_members: people });
   if (error) back({ error: error.message });
   let emailCount = 0;
-  for (const person of people) if (await sendInviteEmail(person.email)) emailCount++;
+  for (const person of people) if (await sendInviteEmail(person.email, org.name)) emailCount++;
   back({ msg: `${Number(added ?? people.length)} invitations created${emailCount ? `; ${emailCount} emails sent` : ""}.` });
 }
 

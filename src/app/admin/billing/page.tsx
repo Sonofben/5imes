@@ -3,6 +3,7 @@ import { BILLING_CYCLES, type BillingCycleId } from "@/lib/billing";
 import { naira, type PlanId } from "@/lib/constants";
 import { loadPlans } from "@/lib/plans";
 import { billingCheckoutEnabled, refreshPendingCheckout } from "@/lib/paystack";
+import { monnifyEnabled, settleMonnify } from "@/lib/monnify";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Flash } from "@/components/Flash";
 import { PlanCheckoutCard } from "./PlanCheckoutCard";
@@ -21,15 +22,17 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     supabase.from("members").select("id", { count: "exact", head: true }).eq("org_id", org.id).in("status", ["active", "invited"]),
   ]);
   let sub = initialSub;
-  const checkoutEnabled = billingCheckoutEnabled();
+  // Payment providers switched on for this server. Paystack and/or Moniepoint.
+  const providers = [...(billingCheckoutEnabled() ? ["paystack" as const] : []), ...(monnifyEnabled() ? ["monnify" as const] : [])];
+  const checkoutEnabled = providers.length > 0;
   const admin = createAdminClient();
   const readPaymentStates = async () => {
     if (!admin) return { pendingSeat: null, pendingSubscription: null, sync: null };
     const [pendingSeatResult, pendingSubscriptionResult, syncResult] = await Promise.all([
-      admin.from("payments").select("reference,seats,amount_kobo,checkout_url,created_at")
+      admin.from("payments").select("reference,seats,amount_kobo,checkout_url,created_at,provider")
         .eq("org_id", org.id).eq("kind", "seat_increase").eq("status", "pending")
         .order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      admin.from("payments").select("reference,plan,seats,billing_interval_months,amount_kobo,checkout_url,created_at")
+      admin.from("payments").select("reference,plan,seats,billing_interval_months,amount_kobo,checkout_url,created_at,provider")
         .eq("org_id", org.id).eq("kind", "subscription").eq("status", "pending")
         .order("created_at", { ascending: false }).limit(1).maybeSingle(),
       admin.from("payments").select("reference,renewal_sync_error,created_at")
@@ -40,8 +43,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   };
   let paymentStates = await readPaymentStates();
   if (admin && checkoutEnabled && (paymentStates.pendingSeat || paymentStates.pendingSubscription)) {
-    for (const reference of [paymentStates.pendingSeat?.reference, paymentStates.pendingSubscription?.reference]) {
-      if (reference) await refreshPendingCheckout(reference);
+    for (const pending of [paymentStates.pendingSeat, paymentStates.pendingSubscription]) {
+      if (!pending) continue;
+      if (pending.provider === "monnify") { if (monnifyEnabled()) await settleMonnify(pending.reference).catch(() => undefined); }
+      else if (billingCheckoutEnabled()) await refreshPendingCheckout(pending.reference);
     }
     paymentStates = await readPaymentStates();
     const refreshedSubscription = await supabase.from("subscriptions").select("*").eq("org_id", org.id).maybeSingle<Subscription>();
@@ -100,17 +105,17 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <BillingSubscriptionActions cancelled={!!sub?.cancel_at_period_end} />
       </section>}
 
-      {pendingSubscription && <section className="card border-warn/30 bg-amber-50/50" role="status"><p className="eyebrow text-warn">Subscription checkout in progress</p><h2 className="mt-1 font-semibold">{PLANS[pendingSubscription.plan as PlanId]?.name ?? "Subscription"} · {pendingSubscription.seats} seats · {pendingSubscription.billing_interval_months} months</h2><p className="mt-1 text-sm text-muted">Reserved charge: {naira(Number(pendingSubscription.amount_kobo) / 100)}. Resume or verify this same attempt before starting another checkout to avoid duplicate charges.</p><div className="mt-3 flex flex-wrap gap-2">{pendingSubscription.checkout_url && <a className="btn-brand" href={pendingSubscription.checkout_url} target="_blank" rel="noreferrer">Continue pending checkout</a>}<a className="btn-ghost" href={`/api/paystack/verify?reference=${encodeURIComponent(pendingSubscription.reference)}`}>Check payment status</a></div></section>}
+      {pendingSubscription && <section className="card border-warn/30 bg-amber-50/50" role="status"><p className="eyebrow text-warn">Subscription checkout in progress</p><h2 className="mt-1 font-semibold">{PLANS[pendingSubscription.plan as PlanId]?.name ?? "Subscription"} · {pendingSubscription.seats} seats · {pendingSubscription.billing_interval_months} months</h2><p className="mt-1 text-sm text-muted">Reserved charge: {naira(Number(pendingSubscription.amount_kobo) / 100)}. Resume or verify this same attempt before starting another checkout to avoid duplicate charges.</p><div className="mt-3 flex flex-wrap gap-2">{pendingSubscription.checkout_url && <a className="btn-brand" href={pendingSubscription.checkout_url} target="_blank" rel="noreferrer">Continue pending checkout</a>}<a className="btn-ghost" href={`/api/${pendingSubscription.provider === "monnify" ? "monnify" : "paystack"}/verify?reference=${encodeURIComponent(pendingSubscription.reference)}`}>Check payment status</a></div></section>}
 
-      {pendingSeatChange && <section className="card border-warn/30 bg-amber-50/50" role="status"><p className="eyebrow text-warn">Seat payment in progress</p><h2 className="mt-1 font-semibold">Adding seats to your subscription</h2><p className="mt-1 text-sm text-muted">Target capacity: {pendingSeatChange.seats} seats · prorated charge: {naira(Number(pendingSeatChange.amount_kobo) / 100)}.</p><p className="mt-2 text-xs leading-5 text-muted">Seats remain reserved until Paystack confirms the result. Checking status closes the reservation only after Paystack reports the checkout failed, was abandoned or was reversed.</p><div className="mt-3 flex flex-wrap gap-2">{pendingSeatChange.checkout_url && <a className="btn-brand" href={pendingSeatChange.checkout_url} target="_blank" rel="noreferrer">Continue Paystack checkout</a>}<a className="btn-ghost" href={`/api/paystack/verify?reference=${encodeURIComponent(pendingSeatChange.reference)}`}>Check status and release if unpaid</a></div></section>}
+      {pendingSeatChange && <section className="card border-warn/30 bg-amber-50/50" role="status"><p className="eyebrow text-warn">Seat payment in progress</p><h2 className="mt-1 font-semibold">Adding seats to your subscription</h2><p className="mt-1 text-sm text-muted">Target capacity: {pendingSeatChange.seats} seats · prorated charge: {naira(Number(pendingSeatChange.amount_kobo) / 100)}.</p><p className="mt-2 text-xs leading-5 text-muted">Seats remain reserved until the payment provider confirms the result. Checking status closes the reservation only after the provider reports the payment failed or expired.</p><div className="mt-3 flex flex-wrap gap-2">{pendingSeatChange.checkout_url && <a className="btn-brand" href={pendingSeatChange.checkout_url} target="_blank" rel="noreferrer">Continue checkout</a>}<a className="btn-ghost" href={`/api/${pendingSeatChange.provider === "monnify" ? "monnify" : "paystack"}/verify?reference=${encodeURIComponent(pendingSeatChange.reference)}`}>Check status and release if unpaid</a></div></section>}
 
       {renewalSyncPending && <section className="card border-warn/30 bg-amber-50/50" role="status"><p className="eyebrow text-warn">Payment received · renewal update pending</p><h2 className="mt-1 font-semibold">Your new seats are active</h2><p className="mt-1 text-sm leading-6 text-muted">The prorated payment is verified and the added capacity is active. The next recurring amount has not yet been confirmed by Paystack. Retry the price update here; this does not charge you again.</p><form action={retrySeatRenewalPrice} className="mt-3"><button className="btn-primary" disabled={!checkoutEnabled}>{checkoutEnabled ? "Retry renewal price update" : "Paystack setup is not ready"}</button></form></section>}
 
-      {seatIncreaseEnabled && sub?.current_period_start && sub.current_period_end && <SeatIncreaseCard paidSeats={sub.seats_paid} assignedSeats={minSeats} pricePerSeat={PLANS[sub.plan].pricePerSeat} cycle={currentCycle} enabled={!pendingSeatChange && checkoutEnabled} />}
+      {seatIncreaseEnabled && sub?.current_period_start && sub.current_period_end && <SeatIncreaseCard paidSeats={sub.seats_paid} assignedSeats={minSeats} pricePerSeat={PLANS[sub.plan].pricePerSeat} cycle={currentCycle} enabled={!pendingSeatChange && checkoutEnabled} providers={providers} />}
 
       {canStartNewTerm ? (termRunning && sub
-        ? <div className="space-y-3"><div><p className="eyebrow">Pay ahead</p><h2 className="text-lg font-bold">Pay for your next term</h2><p className="mt-1 text-sm text-muted">Your current term runs until {accessUntil}. Paying now adds the next term right after it. To change plan, wait until this term ends.</p></div><div className="max-w-xl"><PlanCheckoutCard plan={PLANS[sub.plan]} minSeats={Math.max(minSeats, sub.seats_paid)} defaultCycle={currentCycle} enabled={checkoutEnabled} allowAutoRenew={false} payAheadUntil={accessUntil} /></div></div>
-        : <div className="grid gap-4 xl:grid-cols-2">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} />)}</div>) : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its verified Paystack status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same Paystack transaction before starting a new subscription." : "Automatic renewal is on, so Paystack will charge the next term for you. Turn automatic renewal off above if you would rather pay each term yourself."}</p></section>}
+        ? <div className="space-y-3"><div><p className="eyebrow">Pay ahead</p><h2 className="text-lg font-bold">Pay for your next term</h2><p className="mt-1 text-sm text-muted">Your current term runs until {accessUntil}. Paying now adds the next term right after it. To change plan, wait until this term ends.</p></div><div className="max-w-xl"><PlanCheckoutCard plan={PLANS[sub.plan]} minSeats={Math.max(minSeats, sub.seats_paid)} defaultCycle={currentCycle} enabled={checkoutEnabled} allowAutoRenew={false} payAheadUntil={accessUntil} providers={providers} /></div></div>
+        : <div className="grid gap-4 xl:grid-cols-2">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} providers={providers} />)}</div>) : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its payment status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same payment before starting a new subscription." : "Automatic renewal is on, so Paystack will charge the next term for you. Turn automatic renewal off above if you would rather pay each term yourself."}</p></section>}
       <p className="text-xs leading-5 text-muted">Quarterly is 3 months; biannually is 6 months; yearly is 12 months. Total = seats × monthly price per seat × months, paid upfront in naira. Nothing is charged automatically unless you tick “Renew automatically”.</p>
 
       <section className="space-y-3">

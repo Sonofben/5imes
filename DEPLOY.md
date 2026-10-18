@@ -55,6 +55,7 @@ bash ~/vps-check.sh
    10. `supabase/migrations/0010_explicit_api_grants.sql`
    11. `supabase/migrations/0011_work_elsewhere_line_managers_maps.sql`
    12. `supabase/migrations/0012_global_admin.sql`
+   13. `supabase/migrations/0013_reserved_links.sql`
 
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
 3. **Copy the keys.** In **Project Settings → API**, copy:
@@ -63,7 +64,7 @@ bash ~/vps-check.sh
    - the `service_role` key
 4. **Set the auth URLs.** In **Authentication → URL Configuration**:
    - **Site URL:** your canonical HTTPS address, e.g. `https://5imes.koraforge.com.ng` (no trailing slash). Or, for a demo on a bare IP, `https://<ip-with-dashes>.sslip.io`.
-   - **Redirect URLs:** add `<Site URL>/auth/callback`
+   - **Redirect URLs:** add `<Site URL>/auth/callback**` (the two stars at the end matter: they allow `?type=invite` and the other variants)
 5. **Email + password sign-in** is now the normal route.
    - In **Authentication → Providers**, make sure *Email* is enabled with *Confirm email* ON. The signup page sends a verification link; invites use `inviteUserByEmail` and land on `/auth/invite` for the staff member to pick their own password.
    - *Multi-Factor Authentication* (TOTP) must be enabled under **Authentication → Providers → Multi-Factor Authentication** — turn on *TOTP*. Admins and owners are required by the server guard to enrol before they can reach admin tools.
@@ -75,7 +76,18 @@ bash ~/vps-check.sh
      - *Password:* your Resend API key (starts with `re_`)
      - *Sender email:* a verified address on your Resend domain (e.g. `no-reply@koraforge.com.ng`)
      - *Sender name:* `5ime`
-   - **Email templates.** Still under *Emails*, open each template and make sure the `{{ .ConfirmationURL }}` link uses your Site URL. The confirmation, magic-link, invite, and recovery templates all route through `/auth/callback` and work as-is.
+   - **Email templates (required).** Still under *Emails → Templates*, replace each template with the matching file from `docs/email-templates/` (open the file, copy everything, paste into the *Message body*, save). Set these subjects:
+
+     | Supabase template | File | Subject |
+     |---|---|---|
+     | Confirm signup | `confirm-signup.html` | Confirm your email for 5ime |
+     | Invite user | `invite-user.html` | You’re invited to 5ime |
+     | Magic Link | `magic-link.html` | Your 5ime sign-in code |
+     | Change Email Address | `change-email.html` | Confirm your new 5ime email |
+     | Reset Password | `reset-password.html` | Reset your 5ime password |
+     | Reauthentication | `reauthentication.html` | Your 5ime confirmation code |
+
+     These links use `token_hash`, so they work on any phone or computer (not only the one that asked), and invitations work at all. The invite email names the company automatically.
 6. **Session policy.** The app relies on Supabase's standard session: a 1-hour JWT with a refresh token rotated on use. In **Authentication → Policies** (or *Sessions*) you can tighten this: `Access token lifetime` 3600s is a sensible default; `Refresh token lifetime` 2592000s (30 days) means a device that goes two inactive weeks still refreshes silently. Admins additionally must satisfy TOTP (aal2) before `/admin/*` server-side; aal2 is a session-level fact, so it persists until the user signs out or Supabase rotates the session.
 
 ### Role routing and MFA grace (from 0008 onward)
@@ -254,6 +266,19 @@ Each app stays in its own house: one can be rebuilt or stopped without touching 
   1. Put the Kora Forge secret key in `PAYSTACK_SECRET_KEY`, and the subaccount code (`ACCT_…`) in `PAYSTACK_SUBACCOUNT`.
   2. Set the webhook to `https://<host>/api/paystack/webhook`.
   3. Run `docker compose up -d` to apply.
+- **Moniepoint (Monnify)** — card, bank transfer and USSD; one-off payment per term (no automatic renewal):
+  1. In the Monnify dashboard, copy the **API Key**, **Secret Key** and **Contract Code** (Developer → API Keys & Contracts). Start with the **sandbox** keys.
+  2. In `/opt/apps/5ime/.env` add:
+     ```
+     MONNIFY_BASE_URL=https://sandbox.monnify.com
+     MONNIFY_API_KEY=...
+     MONNIFY_SECRET_KEY=...
+     MONNIFY_CONTRACT_CODE=...
+     ```
+  3. In Monnify → Settings → Webhook URLs, set the **transaction completion** webhook to `https://<host>/api/monnify/webhook`.
+  4. Run `docker compose up -d` (no rebuild needed for these). The Billing page now shows **Pay with Moniepoint**.
+  5. Test with a sandbox card or transfer. When it works, switch to the **live** keys and `MONNIFY_BASE_URL=https://api.monnify.com`, then `docker compose up -d` again.
+  - If both Paystack and Moniepoint are set, admins see both buttons. Automatic card renewal stays a Paystack-only option.
 
 ## Troubleshooting
 

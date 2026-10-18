@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>{{ if .Data.company_name }}{{ .Data.company_name }} invited you to 5ime{{ else }}You’ve been invited to 5ime{{ end }}</title></head>
+<body style="margin:0;padding:0;background:#f4f3ef;-webkit-text-size-adjust:100%">
+  <span style="display:none!important;opacity:0;color:transparent;height:0;width:0;overflow:hidden">You’ve been invited to check in with 5ime</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3ef">
+    <tr><td align="center" style="padding:32px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
+        <tr><td style="padding:0 4px 18px;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#182126"><span style="color:#e65b35">5</span>ime</td></tr>
+        <tr><td style="background:#ffffff;border:1px solid #e1e5e2;border-radius:18px;padding:30px 28px;font-family:Arial,Helvetica,sans-serif;color:#182126">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td>
+            <h1 style="margin:0 0 12px;font-size:22px;line-height:28px;font-weight:700;color:#182126">{{ if .Data.company_name }}{{ .Data.company_name }} invited you to 5ime{{ else }}You’ve been invited to 5ime{{ end }}</h1>
+            <p style="margin:0 0 20px;font-size:15px;line-height:23px;color:#36414a">{{ if .Data.company_name }}{{ .Data.company_name }} uses 5ime{{ else }}Your company uses 5ime{{ end }} to record office and home workdays. Accept the invitation and choose your password to get started.</p>
+          </td></tr>
+          <tr><td style="padding:8px 0 4px">
+            <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#bd4528;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;line-height:1;padding:15px 26px;border-radius:12px">Accept invitation</a>
+          </td></tr>
+          <tr><td style="padding:22px 0 0"><p style="margin:0;font-size:13px;line-height:20px;color:#68737a">After setting your password, 5ime shows you how to allow location, pin your home (if you have home days) and add the app to your phone.</p></td></tr>
+          <tr><td style="padding:22px 0 0">
+            <p style="margin:0;font-size:12px;line-height:18px;color:#68737a">Button not working? Copy this link into your browser:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="color:#68737a;word-break:break-all">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite</a></p>
+          </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:18px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#68737a">
+          5ime · Work from anywhere, 5 days, on time.<br>This email was sent to {{ .Email }}. If you didn’t expect it, you can ignore it.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

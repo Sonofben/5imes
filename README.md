@@ -9,7 +9,7 @@
 - **App:** Next.js 16 App Router, installable on phones as a PWA.
 - **Styling:** Tailwind CSS v4.
 - **Data and sign-in:** Supabase Auth and Postgres with row-level security.
-- **Payments:** Paystack in NGN. Pay per term by default (no automatic charge); automatic card renewal is opt-in.
+- **Payments:** Paystack and Moniepoint (Monnify) in NGN. Pay per term by default (no automatic charge); automatic card renewal is opt-in.
 - **Hosting:** Docker container on the shared Contabo VPS, behind the host's Nginx. See [DEPLOY.md](DEPLOY.md).
 
 ## Plans and billing
