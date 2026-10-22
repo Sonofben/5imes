@@ -375,6 +375,7 @@ Each app stays in its own house: one can be rebuilt or stopped without touching 
 |---|---|
 | `docker compose ps` not healthy | Run `docker compose logs --tail=100`. Usually a typo in `.env`. |
 | "Location permission is blocked" | Use the **https** address. In the phone's browser settings, allow Location for the site. |
+| 502 Bad Gateway, and `/var/log/nginx/error.log` says "upstream sent too big header" | The 5ime site file needs bigger header buffers: add `proxy_buffer_size 32k; proxy_buffers 8 32k; proxy_busy_buffers_size 64k;` inside its `server { … }` blocks, then `sudo nginx -t && sudo systemctl reload nginx`. |
 | "Something went wrong (ref ABC123)" | `docker logs fivetime-web 2>&1 \| grep ABC123` shows the full error. |
 | "Too many attempts" for a real user | A rate limit was reached. Global Admin → Security → "Limits reached" shows who and which limit; it clears by itself when the window ends. |
 | "The security check didn't complete" | Turnstile couldn't run (blocked script or ad blocker). Check the site key in `.env` matches the hostname, and that Supabase has the matching secret key. |
