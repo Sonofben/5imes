@@ -338,6 +338,67 @@ Global Admin → Plans & pricing) and visitor management. Companies on a free tr
 4. **Badges.** The tablet shows a badge with a **Print badge** button; it prints on any printer the
    tablet can reach (a small label printer works best). Without a printer, visitors keep the code on their pass.
 
+## 13. Keeping the site up (target: 99%+ of the time)
+
+99% uptime allows about 7 hours of downtime a month; 99.5% about 3.5 hours. One VPS can meet
+that if problems are noticed and fixed in minutes, not hours. Four layers do that:
+
+| Layer | Fixes | Already in place? |
+|---|---|---|
+| Docker `restart: unless-stopped` | the app crashing, the server rebooting | Yes (docker-compose.yml) |
+| Watchdog, every minute | the app hung but still "running"; Nginx stopped | Install below |
+| Outside uptime monitor | anything else — you get an alert within minutes | Set up below |
+| Smarter offline page | tells users whether *their* internet or *our* site is down, and reloads itself when it's back | Yes (from this release) |
+
+### 13a. Start everything on boot (one-time, 1 min)
+
+```bash
+sudo systemctl enable docker nginx
+systemctl is-enabled docker nginx      # both: enabled
+```
+
+### 13b. Watchdog (one-time, 2 min)
+
+```bash
+cd /opt/apps/5ime
+sudo cp deploy/systemd/5ime-watchdog.service deploy/systemd/5ime-watchdog.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now 5ime-watchdog.timer
+systemctl list-timers 5ime-watchdog.timer   # shows the next run
+sudo systemctl start 5ime-watchdog.service && journalctl -t 5ime-watchdog -n 5   # run it once now
+```
+
+What it does: if `/api/health` doesn't answer three minutes in a row, it restarts the
+container; if Nginx is stopped it starts it (only if `nginx -t` passes); it warns when the disk
+is 90% full or memory is nearly gone. It stands aside while `scripts/deploy.sh` runs.
+See what it has done: `journalctl -t 5ime-watchdog --since "7 days ago"`.
+
+### 13c. Outside uptime monitor and alerts (one-time, 5 min, free)
+
+The watchdog can't help if the whole VPS or its network is down — only something outside can
+see that. Use UptimeRobot (uptimerobot.com) or Better Stack (betterstack.com); both have free plans.
+
+1. Create the account yourself.
+2. Add an **HTTP(s)** monitor: URL `https://5imes.koraforge.com.ng/api/health`, every **1–5 minutes**
+   (free UptimeRobot is 5), and for UptimeRobot add a keyword check for `"ok":true`.
+3. Alert contacts: your email, plus the mobile app (push) or Telegram so you see it quickly.
+4. Optional: a public status page you can share with clients, and the monitor's monthly
+   uptime % is your proof of the 99% figure.
+
+Add one monitor per app on this VPS (CACTS too) — when every app goes down together, it's the
+server or Contabo, not the app.
+
+### 13d. Habits that prevent most outages
+
+- Deploy with `scripts/deploy.sh` only — it checks health and rolls back by itself. Expect
+  5–15 seconds of downtime while the new container starts; deploy outside working hours.
+- After editing Nginx, always `sudo nginx -t` **before** `sudo systemctl reload nginx`.
+- Once a month: `df -h /`, `free -h`, `docker system prune -f` (removes old images), and
+  `sudo apt upgrade` followed by a reboot at a quiet time.
+- Supabase's free plan has no uptime promise. When paying clients rely on 5ime, move the
+  project to Supabase Pro.
+- Beyond ~99.9% you need a second server and a load balancer — not worth it at this stage.
+
 ## Everyday operations
 
 | Task | Command (in `/opt/apps/5ime`) |
@@ -409,3 +470,4 @@ Each app stays in its own house: one can be rebuilt or stopped without touching 
 | Emails not arriving | Built-in Supabase mailer limit hit. Add custom SMTP. |
 | Check-ins always "Outside approved locations" | Re-pin the office from inside the building, or raise its radius (Pro). |
 | `nginx -t` fails after adding 5ime | Run `sudo rm /etc/nginx/sites-enabled/5ime && sudo nginx -t`. This puts Nginx back exactly as it was for CACTS. |
+| Users see "We can’t reach 5ime right now" | Their internet works but the site didn’t answer. Run `journalctl -t 5ime-watchdog -n 20`, `docker compose ps`, `sudo systemctl status nginx`, and check the uptime monitor’s history. |

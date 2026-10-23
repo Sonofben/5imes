@@ -1,4 +1,4 @@
-const CACHE_NAME = "5ime-static-v1";
+const CACHE_NAME = "5ime-static-v2";
 const PRECACHE_URLS = [
   "/offline.html",
   "/icon.svg",

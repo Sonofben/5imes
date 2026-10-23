@@ -1,0 +1,11 @@
+# Runs scripts/watchdog.sh once. Started every minute by 5ime-watchdog.timer.
+# Install: see DEPLOY.md section 13.
+[Unit]
+Description=5ime watchdog (restart the app or Nginx if they stop answering)
+After=docker.service nginx.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+Environment=APP_DIR=/opt/apps/5ime
+ExecStart=/opt/apps/5ime/scripts/watchdog.sh

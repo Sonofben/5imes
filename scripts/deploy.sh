@@ -11,6 +11,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# One release at a time, and the watchdog (scripts/watchdog.sh) stands aside while we work.
+exec 9>/run/5ime-deploy.lock
+flock -n 9 || { echo "Another deploy is already running." >&2; exit 1; }
+
 ref="${1:-origin/main}"
 health="http://127.0.0.1:3005/api/health"
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#12141a">
-    <title>Offline · 5ime</title>
+    <title>Can’t connect · 5ime</title>
     <style>
       :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #182126; background: #f4f3ef; }
       * { box-sizing: border-box; }
@@ -20,11 +20,42 @@
   </head>
   <body>
     <main>
-      <p class="brand">5ime · Offline</p>
-      <h1>You’re offline right now.</h1>
-      <p>Connect to the internet, then try again to load your workspace.</p>
-      <p class="note">Check-ins are not recorded or saved for later while offline.</p>
-      <button type="button" onclick="location.reload()">Try again</button>
+      <p class="brand" id="brand">5ime · Can’t connect</p>
+      <h1 id="title">We can’t reach 5ime right now.</h1>
+      <p id="detail">Your internet seems to be working, so the problem is on our side or somewhere between you and us. We’re trying again automatically.</p>
+      <p class="note">Check-ins are not recorded or saved for later until the connection is back.</p>
+      <button type="button" id="retry">Try again</button>
+      <p id="status" aria-live="polite"></p>
     </main>
+    <script>
+      (function () {
+        var brand = document.getElementById("brand"), title = document.getElementById("title");
+        var detail = document.getElementById("detail"), status = document.getElementById("status");
+        function show() {
+          if (navigator.onLine === false) {
+            brand.textContent = "5ime · Offline";
+            title.textContent = "You’re offline right now.";
+            detail.textContent = "Connect to the internet (Wi‑Fi or mobile data). This page reloads by itself when you’re back online.";
+          }
+        }
+        var waiting = false;
+        function check() {
+          if (waiting) return;
+          waiting = true;
+          status.textContent = "Checking…";
+          fetch("/api/health", { cache: "no-store" }).then(function (r) {
+            if (r.ok) { location.reload(); return; }
+            status.textContent = "Still can’t reach 5ime. Trying again in 20 seconds.";
+          }).catch(function () {
+            status.textContent = navigator.onLine === false ? "" : "Still can’t reach 5ime. Trying again in 20 seconds.";
+          }).finally(function () { waiting = false; });
+        }
+        show();
+        document.getElementById("retry").addEventListener("click", check);
+        window.addEventListener("online", check);
+        window.addEventListener("offline", show);
+        setInterval(function () { if (navigator.onLine !== false) check(); }, 20000);
+      })();
+    </script>
   </body>
 </html>
