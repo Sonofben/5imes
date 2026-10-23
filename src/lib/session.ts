@@ -44,7 +44,7 @@ export type Org = {
 
 export type Subscription = {
   org_id: string;
-  plan: "basic" | "pro";
+  plan: "basic" | "pro" | "premium";
   status: "trialing" | "active" | "past_due" | "cancelled";
   trial_ends_at: string | null;
   current_period_end: string | null;

@@ -38,6 +38,21 @@ export const PLANS = {
       "Faster support by WhatsApp & email",
     ],
   },
+  premium: {
+    id: "premium",
+    name: "Premium",
+    pricePerSeat: 1000,
+    blurb: "For offices that welcome visitors.",
+    features: [
+      "Everything in Pro",
+      "Visitor invitations with a QR pass by email",
+      "Reception tablet: visitors sign in and out",
+      "Host alert the moment a visitor arrives",
+      "Who’s on site: staff and visitors, for fire drills",
+      "Visitor blocklist and visitor log with CSV export",
+      "Visitor details deleted automatically after a set time",
+    ],
+  },
 } as const;
 
 export type PlanId = keyof typeof PLANS;

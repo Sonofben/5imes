@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 type Payment = {
   reference: string;
-  plan: "basic" | "pro";
+  plan: "basic" | "pro" | "premium";
   seats: number;
   billing_interval_months: number;
   amount_kobo: number | string;

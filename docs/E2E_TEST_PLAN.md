@@ -231,6 +231,29 @@ Needs an account on the Global Admin team (first one added with the SQL in DEPLO
 | H4 | A new person signs up with `@trostechnologies.com` without an invite | Goes to “waiting for approval”; admin sees them under “People waiting for approval” |
 | H5 | `/auth/challenge?next=https://google.com` after sign-in | Does **not** redirect to google.com |
 
+## 10d. Visitor management (Premium, migration 0015)
+
+Needs a company on Premium (or on its free trial), an office, and a tablet or phone browser for the reception screen.
+
+| ID | Steps | Expected |
+|---|---|---|
+| V1 | Company on paid **Pro** opens Admin → Visitors | “Part of the Premium plan” with an Upgrade button; no visitor screens |
+| V2 | Premium (or trial) admin → Visitors → Settings → Add tablet (office, name) | A message with an 8-character pairing code |
+| V3 | On the tablet open `/kiosk`, type a wrong code, then the right one | Wrong: “wrong or has expired”. Right: “Welcome to <company>” |
+| V4 | Visitors → Invite a visitor: name, **your own** email, date today, office | “Invitation emailed …” and the email arrives with a QR image, code, address, map link and “Open your visitor pass” |
+| V5 | Open the pass link from the email on a phone | Pass page with QR, code, time, office, host |
+| V6 | Tablet → I have an invitation → scan the QR from the phone (Android Chrome) or type the code → That’s me → I accept | Badge screen with name, host, office, time, code; host gets “Your visitor has arrived” email; host’s `/app` shows the arrival notice |
+| V7 | Tablet → I don’t have an invitation → name, phone, type 2+ letters of a staff name, pick them → accept | Signed in as walk-in; host emailed |
+| V8 | Admin → Visitors → Blocklist → add a phone number; walk-in with that number | Tablet: “Please speak to reception” (no reason shown); host emailed “refused” |
+| V9 | Settings → tick “Take a photo”, save; sign in another walk-in | Tablet asks for a photo (front camera); the photo shows in the Visitor log for admins only |
+| V10 | Tablet → Sign out → tap your name (first name + initial), and another visitor by typing their code | “Goodbye …”; Visitor log shows the out time |
+| V11 | Admin → Visitors → Who’s on site (print) | Staff checked in and visitors on site per office; Print works |
+| V12 | Visitor log → Download CSV | CSV opens in Excel/Sheets |
+| V13 | Staff (non-admin) → `/app` → “My visitors” → invite a visitor | Works; staff cannot pick a different host and cannot open Admin → Visitors |
+| V14 | Admin → Settings → Switch off the tablet; tap anything on the tablet | Tablet returns to the pairing screen |
+| V15 | Print a badge from the tablet | Only the badge prints (not the whole screen) |
+| V16 | Billing page and landing page | Three plans: Basic ₦250, Pro ₦500, Premium ₦1,000 |
+
 ## 11b. Security hardening (migration 0014)
 
 | ID | Steps | Expected |

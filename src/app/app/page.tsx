@@ -19,7 +19,7 @@ export default async function StaffApp() {
   const today = todayIn(org.timezone);
   const weekday = isoWeekdayIn(org.timezone);
 
-  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }] = await Promise.all([
+  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }] = await Promise.all([
     supabase.from("schedules").select("member_id,weekday,mode").eq("org_id", org.id),
     supabase.from("attendance").select("id,kind,at,location_type,flags,distance_m").eq("member_id", me.id).eq("local_date", today).order("at", { ascending: true }),
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date").eq("member_id", me.id).maybeSingle<LatestAttendance>(),
@@ -28,6 +28,9 @@ export default async function StaffApp() {
       .eq("member_id", me.id).eq("local_date", today).neq("status", "cancelled")
       .order("requested_at", { ascending: false }).limit(1).maybeSingle<ElsewhereRequest>(),
     supabase.rpc("my_line_manager").maybeSingle<{ id: string; full_name: string | null; email: string }>(),
+    supabase.from("visits").select("id,visitor_name,visitor_company,signed_in_at").eq("host_member_id", me.id).eq("status", "on_site")
+      .gte("signed_in_at", new Date(Date.now() - 3 * 3600 * 1000).toISOString()).order("signed_in_at", { ascending: false }).limit(5),
+    supabase.rpc("org_has_premium", { p_org: org.id }),
   ]);
   const approverName = lineManager ? lineManager.full_name || lineManager.email : "your admin";
 
@@ -52,6 +55,7 @@ export default async function StaffApp() {
       </header>
 
       <AnnouncementBanner supabase={supabase} />
+      {(arrived ?? []).map((v) => <p key={v.id} role="status" className="my-3 rounded-2xl border border-[#c8dfd1] bg-[#f1f8f3] px-4 py-3 text-sm text-[#245c3e]"><b>{v.visitor_name}</b>{v.visitor_company ? ` (${v.visitor_company})` : ""} has arrived at reception · {timeIn(v.signed_in_at!, org.timezone)}</p>)}
       <section className="py-7">
         <p className="eyebrow">{org.name}</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">Good {greeting()}, {me.full_name?.split(" ")[0] || me.email.split("@")[0]}</h1>
@@ -88,6 +92,11 @@ export default async function StaffApp() {
         <div><h2 className="font-bold">Need to correct an attendance time?</h2><p className="mt-1 text-sm text-muted">Send a request for your manager to review. Your recorded times change only if it is approved.</p></div>
         <Link href="/app/corrections" className="btn-ghost">Request correction</Link>
       </section>
+
+      {premium && <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="font-bold">Expecting a visitor?</h2><p className="mt-1 text-sm text-muted">Send them a pass for the reception tablet. You’ll get an email when they arrive.</p></div>
+        <Link href="/app/visitors" className="btn-ghost">My visitors</Link>
+      </section>}
 
       <section className="card mb-4">
         <div className="mb-3 flex items-center justify-between"><h2 className="font-bold">This week</h2><span className="text-xs text-muted">Your schedule</span></div>

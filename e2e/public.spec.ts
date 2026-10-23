@@ -65,3 +65,24 @@ test("health endpoint reports the version and database state", async ({ request 
   expect(body).toHaveProperty("version");
   expect(body).toHaveProperty("db");
 });
+
+test("an unpaired reception tablet shows the pairing screen, not company data", async ({ page }) => {
+  const problems = watch(page);
+  await page.goto("/kiosk", { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Set up this reception tablet" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pair tablet" })).toBeDisabled();
+  expect(problems).toEqual([]);
+});
+
+test("tablet and visitor endpoints refuse requests without a valid tablet or pass", async ({ request }) => {
+  expect((await request.get("/api/kiosk/on-site")).status()).toBe(401);
+  expect((await request.post("/api/kiosk/find", { data: { code: "ABCD2345" } })).status()).toBe(401);
+  expect((await request.get("/api/visit-qr?t=nonsense")).status()).toBe(404);
+  expect((await request.get("/v/NOTAREALTOKEN")).status()).toBe(404);
+});
+
+test("the camera is allowed only for our own pages (reception tablet)", async ({ request }) => {
+  const h = (await request.get("/login")).headers();
+  expect(h["permissions-policy"]).toContain("camera=(self)");
+  expect(h["permissions-policy"]).toContain("microphone=()");
+});

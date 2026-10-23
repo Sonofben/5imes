@@ -10,7 +10,7 @@ export type PlanCatalog = { plans: Record<PlanId, PlanInfo>; trialDays: number }
  * Falls back to the built-in defaults if the settings can't be read.
  */
 export async function loadPlans(supabase: SupabaseClient): Promise<PlanCatalog> {
-  const fallback: PlanCatalog = { plans: { basic: { ...PLANS.basic }, pro: { ...PLANS.pro } }, trialDays: TRIAL_DAYS };
+  const fallback: PlanCatalog = { plans: { basic: { ...PLANS.basic }, pro: { ...PLANS.pro }, premium: { ...PLANS.premium } }, trialDays: TRIAL_DAYS };
   try {
     const { data, error } = await supabase.rpc("public_plans");
     if (error || !data) return fallback;

@@ -13,6 +13,9 @@ const LIMIT_LABEL: Record<string, string> = {
   report_export: "Report exports", password_change: "Password changes", logo_upload: "Logo uploads", invite_email: "Invitation emails",
   console_invite: "Global Admin invitations", console_sensitive: "Global Admin sensitive actions", console_export: "Global Admin exports",
   console_action: "Global Admin actions",
+  visitor_invite: "Visitor invitations (per person)", visitor_invite_org: "Visitor invitations (company)", visitor_sign: "Front-desk sign-ins",
+  visitor_block: "Blocklist changes", kiosk_setup: "Reception tablet setup", kiosk_pair: "Tablet pairing attempts (all)",
+  kiosk_lookup: "Reception tablet lookups", kiosk_sign_in: "Reception tablet sign-ins",
 };
 const windowLabel = (secs: number) => secs >= 86400 ? "day" : secs >= 3600 ? "hour" : `${Math.round(secs / 60)} minutes`;
 const KIND: Record<string, string> = { password_set: "Password set", password_changed: "Password changed", password_reset: "Password reset", totp_enrolled: "Two-factor turned on", totp_disabled: "Two-factor turned off", recovery_regenerated: "Recovery codes renewed", recovery_used: "Recovery code used" };

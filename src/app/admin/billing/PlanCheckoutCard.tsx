@@ -36,7 +36,7 @@ export function PlanCheckoutCard({
       <form action="/api/paystack/initialize" method="post" onSubmit={() => setSubmitting(true)} className={`card flex h-full flex-col gap-5 ${plan.id === "pro" ? "border-ink ring-1 ring-ink/5" : ""}`}>
       <input type="hidden" name="plan" value={plan.id} />
       <input type="hidden" name="kind" value="subscription" />
-      <div className="flex items-start justify-between gap-3"><div><p className="eyebrow">{plan.id === "pro" ? "For growing teams" : "For focused teams"}</p><h2 className="mt-1 text-xl font-bold">{plan.name}</h2><p className="mt-1 text-sm text-muted">{plan.blurb}</p></div>{plan.id === "pro" && <span className="chip shrink-0 bg-brand/10 text-brand-dark">More controls</span>}</div>
+      <div className="flex items-start justify-between gap-3"><div><p className="eyebrow">{plan.id === "premium" ? "For offices with visitors" : plan.id === "pro" ? "For growing teams" : "For focused teams"}</p><h2 className="mt-1 text-xl font-bold">{plan.name}</h2><p className="mt-1 text-sm text-muted">{plan.blurb}</p></div>{plan.id === "pro" && <span className="chip shrink-0 bg-brand/10 text-brand-dark">More controls</span>}</div>
       <div className="rounded-xl bg-paper p-4"><p className="text-sm text-muted">Per seat · per month</p><p className="mt-1 text-3xl font-extrabold tracking-tight">{naira(plan.pricePerSeat)}<span className="ml-1 text-sm font-medium text-muted">/ month</span></p></div>
       <ul className="space-y-2 text-sm leading-5">{plan.features.map((feature) => <li key={feature} className="flex gap-2"><span aria-hidden="true" className="font-bold text-ok">✓</span><span>{feature}</span></li>)}</ul>
       <div className="mt-auto space-y-4 border-t border-line pt-4">

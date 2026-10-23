@@ -57,6 +57,7 @@ bash ~/vps-check.sh
    12. `supabase/migrations/0012_global_admin.sql`
    13. `supabase/migrations/0013_reserved_links.sql`
    14. `supabase/migrations/0014_rate_limits_and_hardening.sql`
+   15. `supabase/migrations/0015_premium_visitor_management.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -312,6 +313,30 @@ To turn CAPTCHA off again: disable it in Supabase first, then empty the site key
 Errors are always written to `docker logs fivetime-web` as JSON lines with a reference code (the
 same code users see on screen). To also collect them in a dashboard, run GlitchTip (free,
 self-hosted) or use Sentry, and put the project DSN in `.env` as `ERROR_TRACKING_DSN=…`, then `docker compose up -d`.
+
+## 12. Visitor management (Premium plan)
+
+Migration 0015 adds the **Premium** plan (₦1,000 per seat to start — change it any time in
+Global Admin → Plans & pricing) and visitor management. Companies on a free trial can use it too.
+`scripts/deploy.sh` applies the migration.
+
+1. **Visitor emails.** Invitations (with the QR pass) and host alerts are sent with Resend's API.
+   In `/opt/apps/5ime/.env` add (use the same Resend account as Supabase's SMTP):
+   ```
+   RESEND_API_KEY=re_...
+   EMAIL_FROM=5ime <no-reply@koraforge.com.ng>
+   ```
+   The sender must be on a domain verified in Resend. Then `docker compose up -d` (no rebuild needed).
+   Without these, invitations still work — the admin sees the visitor's code to pass on.
+2. **Reception tablet.** In 5ime as a company admin: **Visitors → Settings → Reception tablets → Add tablet**.
+   On the tablet, open `https://<host>/kiosk`, type the 8-character code (valid 15 minutes, works once),
+   then tap **Full screen**. Android tablets with Chrome can scan the QR code with the camera;
+   on other tablets visitors type the code. An admin can switch a tablet off at any time.
+3. **Optional visitor photo.** Off by default. Turn it on in Visitors → Settings. Photos go to a private
+   Supabase Storage bucket `visitor-photos` (created automatically) and are deleted with the visitor's
+   details after the retention period (default 90 days).
+4. **Badges.** The tablet shows a badge with a **Print badge** button; it prints on any printer the
+   tablet can reach (a small label printer works best). Without a printer, visitors keep the code on their pass.
 
 ## Everyday operations
 

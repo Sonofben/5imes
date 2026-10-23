@@ -25,7 +25,7 @@ export function parseOrNull<T extends z.ZodTypeAny>(schema: T, data: unknown, wh
 export const PublicPlans = z.object({
   trial_days: num.optional(),
   plans: z.array(z.object({
-    id: z.enum(["basic", "pro"]), name: str, pricePerSeat: num, blurb: str,
+    id: z.enum(["basic", "pro", "premium"]), name: str, pricePerSeat: num, blurb: str,
     features: z.array(str).nullable().optional(), maxLocations: opt(num),
   })).optional(),
 });
@@ -89,7 +89,7 @@ export const ConsoleSnapshot = z.object({
 // console_plans()
 export const ConsolePlans = z.object({
   trial_days: num,
-  plans: z.array(z.object({ id: z.enum(["basic", "pro"]), name: str, pricePerSeat: num, blurb: str, features: z.array(str), maxLocations: opt(num) })),
+  plans: z.array(z.object({ id: z.enum(["basic", "pro", "premium"]), name: str, pricePerSeat: num, blurb: str, features: z.array(str), maxLocations: opt(num) })),
   maintenance_mode: z.boolean(),
   maintenance_message: opt(str),
 });
@@ -105,3 +105,33 @@ export const ConsoleSecurity = z.object({
 
 // console_company_export(id) — only the part the download route reads
 export const ConsoleExportHead = z.object({ org: z.object({ domain: opt(str) }).passthrough().optional() }).passthrough();
+
+// visit_pass(token) — what a visitor's pass page shows
+export const VisitPass = z.object({
+  name: str, code: str, status: str, expected_at: opt(str), signed_in_at: opt(str), purpose: opt(str),
+  org: str, timezone: str, host: opt(str),
+  location: z.object({ name: str, address: opt(str), lat: opt(num), lng: opt(num) }).nullable(),
+});
+
+// kiosk_context(token)
+export const KioskContext = z.object({
+  device: str, device_name: str, org_id: str,
+  org: z.object({ name: str, logo_url: opt(str), brand_color: opt(str), timezone: str }),
+  location: z.object({ id: str, name: str }).nullable(),
+  photo_required: z.boolean(), rules_text: str,
+});
+export type KioskContext = z.infer<typeof KioskContext>;
+
+// kiosk_find_visit
+export const KioskVisit = z.object({ id: str, status: str, name: str, company: opt(str), host: opt(str) });
+export type KioskVisit = z.infer<typeof KioskVisit>;
+
+// kiosk_sign_in
+export const KioskSignIn = z.object({
+  status: z.enum(["on_site", "denied"]), visit: str, visitor: str, code: opt(str), company: opt(str), signed_in_at: opt(str),
+  location: opt(str), host_name: opt(str), host_email: opt(str),
+});
+export type KioskSignIn = z.infer<typeof KioskSignIn>;
+
+// vms_invite
+export const Invitation = z.object({ id: str, code: str, pass_token: str });

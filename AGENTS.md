@@ -63,9 +63,13 @@ docs/                 E2E test plan, email templates
    Never render text taken straight from the URL. **[CI]** e2e test "a message typed into a link is not shown".
 9. **Content-Security-Policy** with a per-request nonce (`src/lib/csp.ts`, set in `src/proxy.ts`).
    A new outside service must be added there; never add `'unsafe-inline'` to `script-src`. **[CI]**
-10. **Uploads**: check size, the declared type and the file's first bytes; store under a path the
+10. **Reception tablet (kiosk)**: a paired tablet is identified only by its random token in an httpOnly
+    cookie; `/api/kiosk/*` routes pass it to `kiosk_*` functions (service_role only), which derive the company
+    and office from it. Tablet screens show the minimum (first name + initial in lists) and reset themselves.
+    Never add a kiosk function that takes a company or office id from the request. **[CI]** `supabase/tests/96_visitors.sql`.
+11. **Uploads**: check size, the declared type and the file's first bytes; store under a path the
     server chooses; only the server writes the stored URL. **[review]**
-11. **Webhooks** verify the provider's signature; payments are confirmed by asking the provider,
+12. **Webhooks** verify the provider's signature; payments are confirmed by asking the provider,
     and the amount must equal what we reserved. **[review]**
 
 ## 3. Reading and writing data

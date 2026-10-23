@@ -165,6 +165,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      kiosk_devices: {
+        Row: {
+          id: string;
+          org_id: string;
+          location_id: string;
+          name: string;
+          token_hash: string | null;
+          pairing_code_hash: string | null;
+          pairing_expires_at: string | null;
+          paired_at: string | null;
+          last_seen_at: string | null;
+          revoked_at: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          location_id: string;
+          name: string;
+          token_hash?: string | null;
+          pairing_code_hash?: string | null;
+          pairing_expires_at?: string | null;
+          paired_at?: string | null;
+          last_seen_at?: string | null;
+          revoked_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          location_id?: string;
+          name?: string;
+          token_hash?: string | null;
+          pairing_code_hash?: string | null;
+          pairing_expires_at?: string | null;
+          paired_at?: string | null;
+          last_seen_at?: string | null;
+          revoked_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       locations: {
         Row: {
           id: string;
@@ -373,7 +418,7 @@ export type Database = {
         Row: {
           reference: string;
           org_id: string;
-          plan: "basic" | "pro";
+          plan: "basic" | "pro" | "premium";
           seats: number;
           billing_interval_months: number;
           amount_kobo: number;
@@ -395,7 +440,7 @@ export type Database = {
         Insert: {
           reference: string;
           org_id: string;
-          plan: "basic" | "pro";
+          plan: "basic" | "pro" | "premium";
           seats: number;
           billing_interval_months: number;
           amount_kobo: number;
@@ -417,7 +462,7 @@ export type Database = {
         Update: {
           reference?: string;
           org_id?: string;
-          plan?: "basic" | "pro";
+          plan?: "basic" | "pro" | "premium";
           seats?: number;
           billing_interval_months?: number;
           amount_kobo?: number;
@@ -512,7 +557,7 @@ export type Database = {
       };
       platform_plans: {
         Row: {
-          plan: "basic" | "pro";
+          plan: "basic" | "pro" | "premium";
           name: string;
           price_naira: number;
           blurb: string;
@@ -522,7 +567,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
-          plan: "basic" | "pro";
+          plan: "basic" | "pro" | "premium";
           name: string;
           price_naira: number;
           blurb?: string;
@@ -532,7 +577,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
-          plan?: "basic" | "pro";
+          plan?: "basic" | "pro" | "premium";
           name?: string;
           price_naira?: number;
           blurb?: string;
@@ -735,7 +780,7 @@ export type Database = {
       subscriptions: {
         Row: {
           org_id: string;
-          plan: "basic" | "pro";
+          plan: "basic" | "pro" | "premium";
           status: "trialing" | "active" | "past_due" | "cancelled";
           trial_ends_at: string | null;
           current_period_end: string | null;
@@ -751,7 +796,7 @@ export type Database = {
         };
         Insert: {
           org_id: string;
-          plan?: "basic" | "pro";
+          plan?: "basic" | "pro" | "premium";
           status?: "trialing" | "active" | "past_due" | "cancelled";
           trial_ends_at?: string | null;
           current_period_end?: string | null;
@@ -767,7 +812,7 @@ export type Database = {
         };
         Update: {
           org_id?: string;
-          plan?: "basic" | "pro";
+          plan?: "basic" | "pro" | "premium";
           status?: "trialing" | "active" | "past_due" | "cancelled";
           trial_ends_at?: string | null;
           current_period_end?: string | null;
@@ -807,6 +852,144 @@ export type Database = {
           granted_at?: string;
           expires_at?: string;
           revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
+      visitor_blocklist: {
+        Row: {
+          id: string;
+          org_id: string;
+          name: string | null;
+          email: string | null;
+          phone: string | null;
+          reason: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          name?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          name?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          reason?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      visitor_settings: {
+        Row: {
+          org_id: string;
+          photo_required: boolean;
+          rules_text: string;
+          retention_days: number;
+          notify_host: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          org_id: string;
+          photo_required?: boolean;
+          rules_text?: string;
+          retention_days?: number;
+          notify_host?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          org_id?: string;
+          photo_required?: boolean;
+          rules_text?: string;
+          retention_days?: number;
+          notify_host?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      visits: {
+        Row: {
+          id: string;
+          org_id: string;
+          location_id: string | null;
+          host_member_id: string | null;
+          visitor_name: string;
+          visitor_email: string | null;
+          visitor_phone: string | null;
+          visitor_company: string | null;
+          purpose: string | null;
+          expected_at: string | null;
+          code: string;
+          pass_token_hash: string | null;
+          status: "expected" | "on_site" | "left" | "cancelled" | "denied";
+          walk_in: boolean;
+          signed_in_at: string | null;
+          signed_out_at: string | null;
+          sign_in_source: string | null;
+          rules_accepted_at: string | null;
+          photo_path: string | null;
+          denied_reason: string | null;
+          personal_data_deleted_at: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          location_id?: string | null;
+          host_member_id?: string | null;
+          visitor_name: string;
+          visitor_email?: string | null;
+          visitor_phone?: string | null;
+          visitor_company?: string | null;
+          purpose?: string | null;
+          expected_at?: string | null;
+          code: string;
+          pass_token_hash?: string | null;
+          status?: "expected" | "on_site" | "left" | "cancelled" | "denied";
+          walk_in?: boolean;
+          signed_in_at?: string | null;
+          signed_out_at?: string | null;
+          sign_in_source?: string | null;
+          rules_accepted_at?: string | null;
+          photo_path?: string | null;
+          denied_reason?: string | null;
+          personal_data_deleted_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          location_id?: string | null;
+          host_member_id?: string | null;
+          visitor_name?: string;
+          visitor_email?: string | null;
+          visitor_phone?: string | null;
+          visitor_company?: string | null;
+          purpose?: string | null;
+          expected_at?: string | null;
+          code?: string;
+          pass_token_hash?: string | null;
+          status?: "expected" | "on_site" | "left" | "cancelled" | "denied";
+          walk_in?: boolean;
+          signed_in_at?: string | null;
+          signed_out_at?: string | null;
+          sign_in_source?: string | null;
+          rules_accepted_at?: string | null;
+          photo_path?: string | null;
+          denied_reason?: string | null;
+          personal_data_deleted_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -962,6 +1145,14 @@ export type Database = {
       is_org_viewer: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_public_email_domain: { Args: { d: string | null }; Returns: boolean };
       join_organization: { Args: Record<PropertyKey, never>; Returns: Json };
+      kiosk_context: { Args: { p_token: string | null }; Returns: Json };
+      kiosk_device: { Args: { p_token: string | null }; Returns: Database["public"]["Tables"]["kiosk_devices"]["Row"] };
+      kiosk_find_visit: { Args: { p_token: string | null; p_code: string | null }; Returns: Json };
+      kiosk_hosts: { Args: { p_token: string | null; p_query: string | null }; Returns: { id: string; name: string; team: string }[] };
+      kiosk_pair: { Args: { p_code: string | null }; Returns: Json };
+      kiosk_sign_in: { Args: { p_token: string | null; p_visit: string | null; p_name: string | null; p_phone: string | null; p_email: string | null; p_company: string | null; p_purpose: string | null; p_host: string | null; p_rules_accepted: boolean | null; p_photo_path: string | null }; Returns: Json };
+      kiosk_sign_out: { Args: { p_token: string | null; p_code: string | null; p_visit: string | null }; Returns: Json };
+      kiosk_visitors_on_site: { Args: { p_token: string | null }; Returns: { id: string; name: string; since: string }[] };
       log_security_event: { Args: { p_kind: string | null; p_detail?: Json | null }; Returns: undefined };
       mark_onboarded: { Args: Record<PropertyKey, never>; Returns: undefined };
       mark_paystack_invoice_failed: { Args: { p_subscription_code: string | null; p_expected_period_end: string | null }; Returns: boolean };
@@ -973,7 +1164,11 @@ export type Database = {
       my_role: { Args: Record<PropertyKey, never>; Returns: string };
       my_security_status_fn: { Args: Record<PropertyKey, never>; Returns: { user_id: string; totp_enrolled: boolean; unused_recovery_codes: number }[] };
       my_support_log: { Args: Record<PropertyKey, never>; Returns: { at: string; action: string; actor_email: string; reason: string }[] };
+      norm_email: { Args: { p: string | null }; Returns: string };
+      norm_name: { Args: { p: string | null }; Returns: string };
+      norm_phone: { Args: { p: string | null }; Returns: string };
       org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; domain: string }[] };
+      org_has_premium: { Args: { p_org: string | null }; Returns: boolean };
       plan_price: { Args: { p_plan: string | null }; Returns: number };
       platform_trial_days: { Args: Record<PropertyKey, never>; Returns: number };
       post_auth_destination: { Args: Record<PropertyKey, never>; Returns: { destination: string; reason: string }[] };
@@ -998,6 +1193,18 @@ export type Database = {
       throttle: { Args: { p_bucket: string | null }; Returns: undefined };
       unique_org_slug: { Args: { p_name: string | null }; Returns: string };
       verify_and_consume_recovery_code: { Args: { p_code: string | null }; Returns: boolean };
+      visit_pass: { Args: { p_token: string | null }; Returns: Json };
+      vms_block: { Args: { p_name: string | null; p_email: string | null; p_phone: string | null; p_reason: string | null }; Returns: undefined };
+      vms_cancel: { Args: { p_visit: string | null }; Returns: undefined };
+      vms_invite: { Args: { p_location: string | null; p_name: string | null; p_email: string | null; p_phone: string | null; p_company: string | null; p_purpose: string | null; p_expected_at: string | null; p_host?: string | null }; Returns: Json };
+      vms_kiosk_pairing_code: { Args: { p_location: string | null; p_name: string | null; p_device?: string | null }; Returns: string };
+      vms_kiosk_revoke: { Args: { p_device: string | null }; Returns: undefined };
+      vms_on_site: { Args: { p_location?: string | null }; Returns: { kind: string; name: string; detail: string; since: string; location_id: string }[] };
+      vms_purge_expired: { Args: { p_limit?: number | null }; Returns: { photo_path: string }[] };
+      vms_save_settings: { Args: { p_photo_required: boolean | null; p_rules: string | null; p_retention_days: number | null; p_notify_host: boolean | null }; Returns: undefined };
+      vms_settings_for: { Args: { p_org: string | null }; Returns: Database["public"]["Tables"]["visitor_settings"]["Row"] };
+      vms_staff_sign: { Args: { p_visit: string | null; p_in: boolean | null }; Returns: Json };
+      vms_unblock: { Args: { p_id: string | null }; Returns: undefined };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
