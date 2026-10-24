@@ -12,11 +12,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Production uses the defaults; a staging folder's .env overrides them (DEPLOY.md §14).
-envval() { grep -E "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
+envval() { { grep -E "^$1=" .env 2>/dev/null || true; } | tail -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 container="$(envval CONTAINER_NAME)"; container="${container:-fivetime-web}"
 image="$(envval IMAGE_NAME)"; image="${image:-fivetime-web}"
 port="$(envval APP_PORT)"; port="${port:-3005}"
-lock="/run/5ime-deploy.lock"; [[ "$container" != "fivetime-web" ]] && lock="/run/${container}-deploy.lock"
+lock="/run/5ime-deploy.lock"; if [[ "$container" != "fivetime-web" ]]; then lock="/run/${container}-deploy.lock"; fi
 
 # One release at a time, and the watchdog (scripts/watchdog.sh) stands aside while we work.
 exec 9>"$lock"
