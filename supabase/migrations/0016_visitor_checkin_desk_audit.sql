@@ -730,6 +730,18 @@ begin
   truncate pg_temp.vms_purged;
 end $$;
 
+-- ───────────────────────────────────────────── Premium plan description (only if Global Admin hasn't edited it)
+update public.platform_plans set features = array['Everything in Pro',
+         'Visitors check in from their own phone (invitation link or QR poster)',
+         'Reception desk: admit or turn away each visitor',
+         'Reception access for front-desk staff, without admin rights',
+         'Host alert the moment a visitor is let in',
+         'Who’s on site: staff and visitors, for fire drills',
+         'Visitor reports, audit trail and blocklist',
+         'Privacy notice, automatic deletion and data requests (NDPA)',
+         'Optional reception tablet with badge printing']
+ where plan = 'premium' and features[2] = 'Visitor invitations with a QR pass by email';
+
 -- ───────────────────────────────────────────── grants
 do $$
 declare f text;
