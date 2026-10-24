@@ -260,6 +260,17 @@ Test on **staging** first. Needs a company on Premium (or its free trial), an of
 | V21 | Desk → Print evacuation list | Staff and visitors on site per office |
 | V22 | Billing page and landing page | Three plans: Basic ₦250, Pro ₦500, Premium ₦1,000 |
 
+## 10e. Brand kit (migration 0017)
+
+| ID | Steps | Expected |
+|---|---|---|
+| B1 | Pro/Premium admin → Settings → Branding → upload a logo with 2–3 colours | Swatches of the logo’s colours appear under Main and Accent |
+| B2 | Pick a dark main colour, then a very light one (e.g. yellow) | Preview text switches between white and dark; contrast stays “4.5:1” or better |
+| B3 | Save; open the company link `/<slug>` on a laptop | Left panel in the main colour with readable text and the accent stripe |
+| B4 | Staff `/app`; visitor poster link; an invited visitor’s email and check-in page; the reception tablet | Logo and colours on each; dashboards and tables unchanged |
+| B5 | Company on paid **Basic** → Settings → Branding | Logo works; colour pickers are disabled with “part of Pro and Premium” |
+| B6 | Basic company that had colours during the trial | Colours stay saved but are not shown anywhere until they upgrade |
+
 ## 11b. Security hardening (migration 0014)
 
 | ID | Steps | Expected |

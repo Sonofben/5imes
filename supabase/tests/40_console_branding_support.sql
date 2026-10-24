@@ -25,10 +25,21 @@ select set_config('test.acme', (select id::text from organizations where domain 
 set role authenticated;
 
 \echo '--- Company link & branding'
+reset role;
+-- Brand colours need Pro or Premium (0017): put this company on Pro for the branding check, then restore it.
+create temporary table acme_sub as select * from subscriptions where org_id = current_setting('test.acme')::uuid;
+update subscriptions set plan = 'pro', status = 'active', trial_ends_at = null, current_period_end = now() + interval '30 days'
+ where org_id = current_setting('test.acme')::uuid;
+set role authenticated;
 select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
 select test.ok((select slug from organizations) = 'acme-ltd', 'Every company gets a link name from its name (acme-ltd)');
 update organizations set slug = 'acme', brand_color = '#0055aa';
 select test.ok((select slug = 'acme' and brand_color = '#0055aa' from organizations), 'Admin sets company link and colour');
+reset role;
+update subscriptions s set plan = a.plan, status = a.status, trial_ends_at = a.trial_ends_at, current_period_end = a.current_period_end
+  from acme_sub a where s.org_id = a.org_id;
+set role authenticated;
+select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
 select test.blocked($$update organizations set logo_url = 'https://cdn.example.com/acme.png'$$, 'permission denied', 'Admins cannot set the logo link directly (only the upload can)');
 reset role;
 update organizations set logo_url = 'https://abc123.supabase.co/storage/v1/object/public/logos/acme.png' where slug = 'acme';

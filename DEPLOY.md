@@ -59,6 +59,7 @@ bash ~/vps-check.sh
    14. `supabase/migrations/0014_rate_limits_and_hardening.sql`
    15. `supabase/migrations/0015_premium_visitor_management.sql`
    16. `supabase/migrations/0016_visitor_checkin_desk_audit.sql`
+   17. `supabase/migrations/0017_brand_kit.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.

@@ -113,13 +113,18 @@ export const VisitPass = z.object({
   location: z.object({ name: str, address: opt(str), lat: opt(num), lng: opt(num) }).nullable(),
   arrived_at: opt(str), walk_in: z.boolean().optional(), phone: opt(str), company: opt(str), reason: opt(str), host_hint: opt(str),
   rules_text: opt(str), privacy_notice: opt(str), retention_days: opt(num),
+  brand: z.object({ logo_url: str.nullable().optional(), primary: str.nullable().optional(), accent: str.nullable().optional() }).nullable().optional(),
 });
 export type VisitPass = z.infer<typeof VisitPass>;
+
+// org_brand / my_org_brand: logo always; colours only on plans that include them
+export const BrandShape = z.object({ logo_url: opt(str), primary: opt(str), accent: opt(str) });
 
 // walkin_context(link): the office behind a visitor QR poster
 export const WalkinContext = z.object({
   org: z.object({ name: str, logo_url: opt(str), timezone: str }),
   location: opt(str), open: z.boolean(), rules_text: str, privacy_notice: str, retention_days: num,
+  brand: z.object({ logo_url: str.nullable().optional(), primary: str.nullable().optional(), accent: str.nullable().optional() }).nullable().optional(),
 });
 export type WalkinContext = z.infer<typeof WalkinContext>;
 
@@ -152,7 +157,7 @@ export type VisitorReport = z.infer<typeof VisitorReport>;
 // kiosk_context(token)
 export const KioskContext = z.object({
   device: str, device_name: str, org_id: str,
-  org: z.object({ name: str, logo_url: opt(str), brand_color: opt(str), timezone: str }),
+  org: z.object({ name: str, logo_url: opt(str), brand_color: opt(str), accent_color: opt(str), timezone: str }),
   location: z.object({ id: str, name: str }).nullable(),
   photo_required: z.boolean(), rules_text: str,
 });

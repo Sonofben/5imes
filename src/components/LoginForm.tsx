@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { PasswordField } from "@/components/PasswordField";
 import { BRAND, isPublicEmail } from "@/lib/constants";
 import { useCaptcha, isCaptchaError, CAPTCHA_MESSAGE } from "@/components/Captcha";
+import { brandTheme } from "@/lib/brand";
 
 const authConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -14,11 +15,12 @@ function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
 }
 
-export type LoginBrand = { name: string; slug: string; logo_url: string | null; brand_color: string | null; domain: string };
+export type LoginBrand = { name: string; slug: string; logo_url: string | null; brand_color: string | null; accent_color?: string | null; domain: string };
 
 type Mode = "password" | "code-request" | "code-verify";
 
 export function LoginForm({ brand, initialError, initialNotice }: { brand?: LoginBrand; initialError?: string; initialNotice?: string }) {
+  const theme = brand ? brandTheme({ primary: brand.brand_color, accent: brand.accent_color }) : null;
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -116,15 +118,15 @@ export function LoginForm({ brand, initialError, initialNotice }: { brand?: Logi
 
   return <main className="min-h-screen bg-[#faf9f6] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(420px,.9fr)]">
     {brand ? (
-      <aside className="relative hidden overflow-hidden px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-20" style={{ background: brand.brand_color ?? "#192522" }}>
+      <aside className="relative hidden overflow-hidden px-12 py-10 lg:flex lg:flex-col lg:justify-between xl:px-20" style={{ background: theme!.primary, color: theme!.onPrimary }}>
         <div className="relative">
           {brand.logo_url
             ? <img src={brand.logo_url} alt={`${brand.name} logo`} className="h-14 w-auto max-w-[220px] rounded-lg bg-white/95 object-contain p-2" />
             : <p className="text-3xl font-bold">{brand.name}</p>}
           <p className="mt-16 max-w-lg text-4xl font-semibold leading-tight tracking-tight">{brand.name} staff portal</p>
-          <p className="mt-4 max-w-md text-sm leading-7 text-white/80">Sign in with your @{brand.domain} work account to check in from the office or your approved home.</p>
+          <p className="mt-4 max-w-md text-sm leading-7 opacity-80">Sign in with your @{brand.domain} work account to check in from the office or your approved home.</p>
         </div>
-        <p className="relative text-xs text-white/60">Powered by 5ime · {BRAND.tagline}</p>
+        <p className="relative text-xs opacity-60">Powered by 5ime · {BRAND.tagline}</p>{brand.accent_color && <span aria-hidden className="absolute inset-x-0 bottom-0 h-2" style={{ background: theme!.accent }} />}
       </aside>
     ) : (
       <aside className="relative hidden overflow-hidden bg-[#192522] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-20">

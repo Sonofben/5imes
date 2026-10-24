@@ -382,6 +382,7 @@ export type Database = {
           brand_color: string | null;
           suspended_at: string | null;
           archived_at: string | null;
+          accent_color: string | null;
         };
         Insert: {
           id?: string;
@@ -398,6 +399,7 @@ export type Database = {
           brand_color?: string | null;
           suspended_at?: string | null;
           archived_at?: string | null;
+          accent_color?: string | null;
         };
         Update: {
           id?: string;
@@ -414,6 +416,7 @@ export type Database = {
           brand_color?: string | null;
           suspended_at?: string | null;
           archived_at?: string | null;
+          accent_color?: string | null;
         };
         Relationships: [];
       };
@@ -1259,6 +1262,7 @@ export type Database = {
       my_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; maintenance: boolean }[] };
       my_line_manager: { Args: Record<PropertyKey, never>; Returns: { id: string; full_name: string; email: string }[] };
       my_member_id: { Args: Record<PropertyKey, never>; Returns: string };
+      my_org_brand: { Args: Record<PropertyKey, never>; Returns: Json };
       my_org_id: { Args: Record<PropertyKey, never>; Returns: string };
       my_primary_role: { Args: Record<PropertyKey, never>; Returns: string };
       my_role: { Args: Record<PropertyKey, never>; Returns: string };
@@ -1267,7 +1271,9 @@ export type Database = {
       norm_email: { Args: { p: string | null }; Returns: string };
       norm_name: { Args: { p: string | null }; Returns: string };
       norm_phone: { Args: { p: string | null }; Returns: string };
-      org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; domain: string }[] };
+      org_brand: { Args: { p_org: string | null }; Returns: Json };
+      org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; accent_color: string; domain: string }[] };
+      org_has_brand_colors: { Args: { p_org: string | null }; Returns: boolean };
       org_has_premium: { Args: { p_org: string | null }; Returns: boolean };
       plan_price: { Args: { p_plan: string | null }; Returns: number };
       platform_trial_days: { Args: Record<PropertyKey, never>; Returns: number };

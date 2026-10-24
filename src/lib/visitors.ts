@@ -4,7 +4,8 @@ import type { Database } from "./database.types.ts";
 import { emailLayout, esc, sendEmail } from "./email.ts";
 import { log } from "./log.ts";
 import { siteUrl } from "./site.ts";
-import { Invitation, type Admission } from "./jsonShapes.ts";
+import { BrandShape, Invitation, parseOrNull, type Admission } from "./jsonShapes.ts";
+import { brandTheme, type Brand } from "./brand.ts";
 import { createHash } from "node:crypto";
 
 export const PHOTO_BUCKET = "visitor-photos";
@@ -18,8 +19,10 @@ export function visitTime(iso: string | null | undefined, timezone: string) {
 export async function sendVisitorInvite(p: {
   to: string; visitorName: string; orgName: string; hostName: string; officeName: string; address: string | null;
   lat: number | null; lng: number | null; expectedAt: string; timezone: string; code: string; passToken: string; purpose: string | null;
+  brand?: Brand | null;
 }) {
   const base = siteUrl();
+  const theme = brandTheme(p.brand);
   const passUrl = `${base}/v/${encodeURIComponent(p.passToken)}`;
   const map = p.lat != null && p.lng != null ? `https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=17/${p.lat}/${p.lng}` : null;
   const when = visitTime(p.expectedAt, p.timezone);
@@ -31,10 +34,11 @@ export async function sendVisitorInvite(p: {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff5e8;border:1px solid #f3d9b5;border-radius:12px"><tr><td align="center" style="padding:16px">
       <p style="margin:0 0 8px;font-weight:bold">When you arrive, tap the button below. Your code is filled in for you.</p>
       <p style="margin:0 0 12px;font-size:24px;font-weight:800;letter-spacing:4px">${esc(shownCode)}</p>
-      <a href="${passUrl}" style="display:inline-block;background:#182126;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold">I’ve arrived — check in</a>
+      <a href="${passUrl}" style="display:inline-block;background:${theme.primary};color:${theme.onPrimary};padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold">I’ve arrived — check in</a>
     </td></tr></table>
-    ${map ? `<p style="text-align:center;margin-top:14px"><a href="${map}" style="color:#bd4528">Map and directions</a></p>` : ""}
-    <p style="color:#68737a;font-size:12px">Keep this email private: the code lets you sign in as this visitor.</p>`);
+    ${map ? `<p style="text-align:center;margin-top:14px"><a href="${map}" style="color:${theme.branded ? theme.accentText : "#bd4528"}">Map and directions</a></p>` : ""}
+    <p style="color:#68737a;font-size:12px">Keep this email private: the code lets you sign in as this visitor.</p>`,
+    p.brand ? { logoUrl: p.brand.logo_url, name: p.orgName, accent: theme.branded ? theme.accent : null } : undefined);
   const text = `${p.hostName} has invited you to visit ${p.orgName}.\nWhen: ${when}\nWhere: ${p.officeName}${p.address ? `, ${p.address}` : ""}\nYour code: ${shownCode}\nWhen you arrive, check in here: ${passUrl}${map ? `\nMap: ${map}` : ""}`;
   return sendEmail({ to: p.to, subject: `Your visit to ${p.orgName} — ${when}`, html, text });
 }
@@ -117,7 +121,9 @@ export async function createInvitation(supabase: SupabaseClient<Database>, org: 
     const h = (hosts ?? []).find((x) => x.id === visit.host_member_id);
     if (h) host = { full_name: h.name, email: "" };
   }
+  const { data: brandRaw } = await supabase.rpc("my_org_brand");
   const sent = await sendVisitorInvite({
+    brand: parseOrNull(BrandShape, brandRaw, "visitors/invite.brand"),
     to: input.email, visitorName: input.name, orgName: org.name, hostName: host?.full_name || host?.email || "Your host",
     officeName: loc?.name ?? "our office", address: loc?.address ?? null, lat: loc?.lat ?? null, lng: loc?.lng ?? null,
     expectedAt: input.expectedAt, timezone: org.timezone, code: inv.data.code, passToken: inv.data.pass_token, purpose: input.purpose,

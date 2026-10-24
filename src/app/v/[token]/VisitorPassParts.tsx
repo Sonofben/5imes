@@ -15,7 +15,7 @@ export function RulesAndNotice({ rules, notice }: { rules: string; notice: strin
 }
 
 /** "Arrived? Check in" — the code is filled in from the link; the visitor can still type it. */
-export function CheckInCard({ token, code, phone, company, rules, notice }: { token: string; code: string; phone: string; company: string; rules: string; notice: string }) {
+export function CheckInCard({ token, code, phone, company, rules, notice, theme }: { token: string; code: string; phone: string; company: string; rules: string; notice: string; theme?: { primary: string; onPrimary: string } }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export function CheckInCard({ token, code, phone, company, rules, notice }: { to
   }
 
   return (
-    <form onSubmit={submit} className="card space-y-4 border-2 border-ink">
+    <form onSubmit={submit} className="card space-y-4 border-2 border-ink" style={theme ? { borderColor: theme.primary } : undefined}>
       <div><h2 className="text-xl font-bold">Arrived? Check in</h2>
         <p className="text-sm text-muted">Reception will be told you’re here.</p></div>
       <div><label className="label" htmlFor="ci-code">Invitation code</label>
@@ -48,7 +48,7 @@ export function CheckInCard({ token, code, phone, company, rules, notice }: { to
       <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="rules" required className="mt-0.5 h-5 w-5" />
         <span>I accept the visitor rules and the privacy notice.</span></label>
       {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-bad">{error}</p>}
-      <button disabled={busy} className="btn-primary w-full py-3.5 text-base">{busy ? "Sending…" : "Send to reception"}</button>
+      <button disabled={busy} className="btn-primary w-full py-3.5 text-base" style={theme ? { background: theme.primary, color: theme.onPrimary } : undefined}>{busy ? "Sending…" : "Send to reception"}</button>
     </form>
   );
 }

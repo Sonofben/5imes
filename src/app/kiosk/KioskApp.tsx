@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { brandTheme } from "@/lib/brand";
 
 /**
  * The reception tablet. One screen at a time, big touch targets, and it always returns to the
  * start screen on its own, so the next visitor never sees the previous visitor's details.
  */
-type Ctx = { deviceName: string; timezone: string; orgName: string; logoUrl: string | null; brandColor: string | null; office: string; photoRequired: boolean; rulesText: string };
+type Ctx = { deviceName: string; timezone: string; orgName: string; logoUrl: string | null; brandColor: string | null; accentColor?: string | null; office: string; photoRequired: boolean; rulesText: string };
 type Visit = { id: string; name: string; company?: string | null; host?: string | null };
 type Host = { id: string; name: string; team: string | null };
 type Badge = { visitor: string; company?: string | null; host?: string | null; office?: string | null; code?: string | null; signedInAt?: string | null };
@@ -80,18 +81,18 @@ export function KioskApp({ ctx }: { ctx: Ctx }) {
     else setScreen({ s: "badge", badge: body });
   }
 
-  const accent = ctx.brandColor ?? "#182126";
+  const theme = brandTheme({ primary: ctx.brandColor, accent: ctx.accentColor });
   return (
     <main className="flex min-h-screen flex-col bg-paper text-ink select-none">
       <style>{`@media print { body * { visibility: hidden !important; } .kiosk-badge, .kiosk-badge * { visibility: visible !important; } .kiosk-badge { position: fixed; inset: 0; margin: auto; width: 86mm; height: 54mm; box-shadow: none !important; } }`}</style>
-      <header className="flex items-center justify-between px-6 py-4 text-white" style={{ background: accent }}>
+      <header className="flex items-center justify-between px-6 py-4" style={{ background: theme.primary, color: theme.onPrimary }}>
         <div className="flex items-center gap-3">
           {ctx.logoUrl && <img src={ctx.logoUrl} alt="" className="h-10 w-auto rounded bg-white/95 p-1" />}
           <div><p className="text-lg font-bold leading-tight">{ctx.orgName}</p><p className="text-xs opacity-80">{ctx.office} · Visitor sign-in</p></div>
         </div>
         {screen.s === "home"
-          ? <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-lg border border-white/40 px-3 py-1.5 text-xs">Full screen</button>
-          : <button onClick={home} className="rounded-lg border border-white/40 px-4 py-2 text-sm font-semibold">Start again</button>}
+          ? <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-lg border border-current/40 px-3 py-1.5 text-xs">Full screen</button>
+          : <button onClick={home} className="rounded-lg border border-current/40 px-4 py-2 text-sm font-semibold">Start again</button>}
       </header>
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-8">
@@ -128,8 +129,8 @@ export function KioskApp({ ctx }: { ctx: Ctx }) {
 
         {screen.s === "badge" && <div className="space-y-5">
           <p className="text-center text-2xl font-bold text-ok">You’re signed in{screen.badge.host ? `. We’ve let ${screen.badge.host} know you’re here.` : "."}</p>
-          <div className="kiosk-badge mx-auto w-full max-w-sm rounded-2xl border-2 bg-white p-6 shadow-lg" style={{ borderColor: accent }}>
-            <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: accent }}>Visitor · {ctx.orgName}</p>
+          <div className="kiosk-badge mx-auto w-full max-w-sm rounded-2xl border-2 bg-white p-6 shadow-lg" style={{ borderColor: theme.accent }}>
+            <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: theme.accentText }}>Visitor · {ctx.orgName}</p>
             <p className="mt-3 text-3xl font-extrabold leading-tight">{screen.badge.visitor}</p>
             {screen.badge.company && <p className="text-lg text-muted">{screen.badge.company}</p>}
             <p className="mt-4 text-sm">Host: <b>{screen.badge.host ?? "—"}</b></p>

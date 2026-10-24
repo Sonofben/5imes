@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { parseOrNull, VisitPass } from "@/lib/jsonShapes";
 import { reasonLabel, visitTime } from "@/lib/visitors";
 import { CheckInCard, LiveStatus, SignOutButton } from "./VisitorPassParts";
+import { brandTheme } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Visitor pass", robots: { index: false, follow: false } };
@@ -20,17 +21,19 @@ export default async function VisitorPassPage({ params }: { params: Promise<{ to
   const admin = createAdminClient();
   if (!admin) notFound();
   const { data } = await admin.rpc("visit_pass", { p_token: token });
+  if (!data) notFound(); // unknown or expired pass link
   const pass = parseOrNull(VisitPass, data, "v/pass");
   if (!pass) notFound();
   const loc = pass.location;
   const map = loc?.lat != null && loc?.lng != null ? `https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lng}#map=17/${loc.lat}/${loc.lng}` : null;
   const firstName = pass.name.split(" ")[0];
   const shownCode = `${pass.code.slice(0, 4)} ${pass.code.slice(4)}`;
+  const theme = brandTheme(pass.brand);
 
   return (
     <main className="min-h-screen bg-paper px-4 py-7">
       <div className="mx-auto max-w-sm space-y-4">
-        <div className="text-center"><Logo /></div>
+        <div className="flex justify-center">{pass.brand?.logo_url ? <img src={pass.brand.logo_url} alt={`${pass.org} logo`} className="h-12 w-auto max-w-[180px] object-contain" /> : <Logo />}</div>
 
         {pass.status === "expected" && <>
           <section className="card space-y-3 text-center">
@@ -45,7 +48,7 @@ export default async function VisitorPassPage({ params }: { params: Promise<{ to
             </div>
           </section>
           <CheckInCard token={token} code={pass.code} phone={pass.phone ?? ""} company={pass.company ?? ""}
-            rules={pass.rules_text ?? ""} notice={pass.privacy_notice ?? ""} />
+            rules={pass.rules_text ?? ""} notice={pass.privacy_notice ?? ""} theme={{ primary: theme.primary, onPrimary: theme.onPrimary }} />
         </>}
 
         {pass.status === "waiting" && (
@@ -72,7 +75,7 @@ export default async function VisitorPassPage({ params }: { params: Promise<{ to
             </div>
             <h1 className="text-2xl font-bold">You’re in. Welcome, {firstName}.</h1>
             <p className="text-sm text-muted">{pass.host ? `${pass.host} has been told you’re here.` : "Reception will show you the way."}</p>
-            <div className="rounded-2xl border border-line bg-white p-4 text-left">
+            <div className="rounded-2xl border border-line bg-white p-4 text-left" style={{ borderLeft: `6px solid ${theme.accent}` }}>
               <p className="eyebrow">Visitor · {pass.org}</p>
               <p className="mt-1 text-xl font-bold">{pass.name}</p>
               <p className="text-sm text-muted">{[pass.company, pass.host ? `Visiting ${pass.host}` : null].filter(Boolean).join(" · ")}</p>

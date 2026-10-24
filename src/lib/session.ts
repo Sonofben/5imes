@@ -40,6 +40,7 @@ export type Org = {
   slug: string;
   logo_url: string | null;
   brand_color: string | null;
+  accent_color?: string | null;
   suspended_at: string | null;
 };
 

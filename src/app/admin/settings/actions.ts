@@ -27,10 +27,12 @@ export async function saveBranding(formData: FormData) {
   const supabase = await createClient();
   const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
   const color = String(formData.get("brand_color") ?? "").trim();
+  const accent = String(formData.get("accent_color") ?? "").trim();
   if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug)) back({ error: "Company link: 3–40 lowercase letters, numbers or dashes." });
-  if (color && !/^#[0-9a-fA-F]{6}$/.test(color)) back({ error: "Choose a valid colour." });
+  if ((color && !/^#[0-9a-fA-F]{6}$/.test(color)) || (accent && !/^#[0-9a-fA-F]{6}$/.test(accent))) back({ error: "Choose a valid colour." });
 
-  const update: { slug: string; brand_color: string | null } = { slug, brand_color: color || null };
+  // Colours are part of Pro and Premium; the database refuses them on other plans with a clear message.
+  const update: { slug: string; brand_color: string | null; accent_color: string | null } = { slug, brand_color: color || null, accent_color: accent || null };
   // The logo link is set only by the server after an upload (admins cannot write it directly).
   let logoUrl: string | null | undefined;
   const file = formData.get("logo");
@@ -57,6 +59,7 @@ export async function saveBranding(formData: FormData) {
 
   const { error } = await supabase.from("organizations").update(update).eq("id", org.id);
   if (error) back({ error: error.message.includes("organizations_slug_key") ? "That company link is already taken." : friendly(error, "admin/settings") });
+  revalidatePath("/", "layout");
   if (logoUrl !== undefined) {
     const admin = createAdminClient();
     if (!admin) back({ error: "Logo upload is not configured on the server." });

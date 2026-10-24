@@ -4,6 +4,8 @@ import QRCode from "qrcode";
 import { requireMember } from "@/lib/session";
 import { visitorLinkUrl } from "@/lib/visitors";
 import { PrintButton } from "../on-site/PrintButton";
+import { brandTheme } from "@/lib/brand";
+import { BrandShape, parseOrNull } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +16,13 @@ export default async function PosterPage({ searchParams }: { searchParams: Promi
   if (!(await requireMember({ desk: true })).isAdmin) redirect("/visitors");
   const { supabase, org } = await requireMember({ admin: true });
   if (!sp.office || !/^[0-9a-f-]{36}$/.test(sp.office)) notFound();
-  const [{ data: office }, { data: link }] = await Promise.all([
+  const [{ data: office }, { data: link }, { data: brandRaw }] = await Promise.all([
     supabase.from("locations").select("id,name").eq("org_id", org.id).eq("id", sp.office).maybeSingle(),
     supabase.from("visitor_links").select("token").eq("org_id", org.id).eq("location_id", sp.office).is("revoked_at", null).maybeSingle(),
+    supabase.rpc("my_org_brand"),
   ]);
+  const brand = parseOrNull(BrandShape, brandRaw, "visitors/poster");
+  const theme = brandTheme(brand);
   if (!office || !link) notFound();
   const url = visitorLinkUrl(org.slug, link.token);
   // Our own URL encoded as an SVG by the qrcode library; nothing from the visitor goes into it.
@@ -32,10 +37,11 @@ export default async function PosterPage({ searchParams }: { searchParams: Promi
         <PrintButton />
       </div>
       <article className="poster mx-auto flex max-w-[640px] flex-col overflow-hidden rounded-3xl border border-line bg-paper shadow-sm">
-        <header className="bg-[#1b2127] px-10 py-7 text-white">
-          <p className="text-3xl font-extrabold">{org.name}</p>
-          <p className="text-base text-[#d6dbde]">{office.name} · Visitor sign-in</p>
+        <header className="flex items-center gap-4 px-10 py-7 print:[-webkit-print-color-adjust:exact] print:[print-color-adjust:exact]" style={{ background: theme.primary, color: theme.onPrimary }}>
+          {brand?.logo_url && <img src={brand.logo_url} alt="" className="h-14 w-auto max-w-[160px] rounded-lg bg-white/95 object-contain p-1.5" />}
+          <div><p className="text-3xl font-extrabold">{org.name}</p><p className="text-base opacity-80">{office.name} · Visitor sign-in</p></div>
         </header>
+        {theme.branded && <div aria-hidden className="h-2 print:[print-color-adjust:exact]" style={{ background: theme.accent }} />}
         <div className="flex flex-col items-center gap-5 px-10 py-9 text-center">
           <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight">No invitation?<br />Scan to sign in.</h1>
           <p className="text-lg text-muted">Open your phone camera and point it here.<br />Fill in your details and reception will let you in.</p>

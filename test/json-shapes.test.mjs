@@ -23,6 +23,7 @@ const cases = {
   "walkin_context.json": S.WalkinContext,
   "visit_checkin.json": S.Admission,
   "vms_admit.json": S.Admission,
+  "my_org_brand.json": S.BrandShape,
 };
 
 for (const [file, schema] of Object.entries(cases)) {

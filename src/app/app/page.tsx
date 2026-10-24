@@ -1,3 +1,5 @@
+import { brandTheme } from "@/lib/brand";
+import { BrandShape, parseOrNull } from "@/lib/jsonShapes";
 import Link from "next/link";
 import { requireMember, todayIn, timeIn, isoWeekdayIn, expectedMode } from "@/lib/session";
 import { CompanyMark } from "@/components/CompanyMark";
@@ -19,7 +21,7 @@ export default async function StaffApp() {
   const today = todayIn(org.timezone);
   const weekday = isoWeekdayIn(org.timezone);
 
-  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }] = await Promise.all([
+  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }, { data: brandRaw }] = await Promise.all([
     supabase.from("schedules").select("member_id,weekday,mode").eq("org_id", org.id),
     supabase.from("attendance").select("id,kind,at,location_type,flags,distance_m").eq("member_id", me.id).eq("local_date", today).order("at", { ascending: true }),
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date").eq("member_id", me.id).maybeSingle<LatestAttendance>(),
@@ -31,7 +33,9 @@ export default async function StaffApp() {
     supabase.from("visits").select("id,visitor_name,visitor_company,signed_in_at").eq("host_member_id", me.id).eq("status", "on_site")
       .gte("signed_in_at", new Date(Date.now() - 3 * 3600 * 1000).toISOString()).order("signed_in_at", { ascending: false }).limit(5),
     supabase.rpc("org_has_premium", { p_org: org.id }),
+    supabase.rpc("my_org_brand"),
   ]);
+  const brand = brandTheme(parseOrNull(BrandShape, brandRaw, "app/brand"));
   const approverName = lineManager ? lineManager.full_name || lineManager.email : "your admin";
 
   const expected = expectedMode(schedules ?? [], me.id, weekday);
@@ -46,6 +50,7 @@ export default async function StaffApp() {
 
   return (
     <main className="mx-auto max-w-lg px-4 pb-12 sm:px-6">
+      {brand.branded && <div aria-hidden className="-mx-4 flex h-1.5 sm:-mx-6"><span className="flex-[3]" style={{ background: brand.primary }} /><span className="flex-1" style={{ background: brand.accent }} /></div>}
       <header className="flex items-center justify-between gap-3 border-b border-line py-4">
         <CompanyMark name={org.name} logoUrl={org.logo_url} href="/app" />
         <div className="flex items-center gap-2">

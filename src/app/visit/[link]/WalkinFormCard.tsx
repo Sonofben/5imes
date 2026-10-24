@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RulesAndNotice } from "@/app/v/[token]/VisitorPassParts";
 
-export function WalkinFormCard({ link, reasons, rules, notice }: { link: string; reasons: { id: string; label: string }[]; rules: string; notice: string }) {
+export function WalkinFormCard({ link, reasons, rules, notice, button }: { link: string; reasons: { id: string; label: string }[]; rules: string; notice: string; button?: React.CSSProperties }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function WalkinFormCard({ link, reasons, rules, notice }: { link: string;
       <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="rules" required className="mt-0.5 h-5 w-5" />
         <span>I accept the visitor rules and the privacy notice.</span></label>
       {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-bad">{error}</p>}
-      <button disabled={busy} className="btn-primary w-full py-3.5 text-base">{busy ? "Sending…" : "Send to reception"}</button>
+      <button disabled={busy} style={button} className="btn-primary w-full py-3.5 text-base">{busy ? "Sending…" : "Send to reception"}</button>
     </form>
   );
 }

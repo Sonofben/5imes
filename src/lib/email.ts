@@ -38,15 +38,19 @@ export function esc(s: string | null | undefined) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-/** A plain, branded wrapper that renders well in Gmail and Outlook. */
-export function emailLayout(title: string, body: string) {
+/** A plain, branded wrapper that renders well in Gmail and Outlook. With a company brand, its logo and accent replace the 5ime mark. */
+export function emailLayout(title: string, body: string, brand?: { logoUrl?: string | null; name?: string; accent?: string | null }) {
+  const head = brand?.logoUrl
+    ? `<img src="${esc(brand.logoUrl)}" alt="${esc(brand.name ?? "")}" height="40" style="height:40px;max-width:200px;border:0">`
+    : brand?.name ? esc(brand.name) : `<span style="color:#e65b35">5</span>ime`;
+  const stripe = brand?.accent && /^#[0-9a-fA-F]{6}$/.test(brand.accent) ? `<tr><td style="height:6px;background:${brand.accent};border-radius:16px 16px 0 0;font-size:0;line-height:0">&nbsp;</td></tr>` : "";
   return `<!doctype html><html><body style="margin:0;background:#f4f3ef;font-family:Arial,Helvetica,sans-serif;color:#182126">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid #e1e5e2">
-<tr><td style="padding:24px 24px 8px;font-size:22px;font-weight:800"><span style="color:#e65b35">5</span>ime</td></tr>
+${stripe}<tr><td style="padding:24px 24px 8px;font-size:22px;font-weight:800">${head}</td></tr>
 <tr><td style="padding:0 24px 8px;font-size:18px;font-weight:700">${esc(title)}</td></tr>
 <tr><td style="padding:0 24px 24px;font-size:14px;line-height:22px">${body}</td></tr>
 </table>
-<p style="font-size:11px;color:#68737a;margin:12px 0 0">Sent by 5ime, a Kora Forge product.</p>
+<p style="font-size:11px;color:#68737a;margin:12px 0 0">Sent by 5imes, a Kora Forge product.</p>
 </td></tr></table></body></html>`;
 }

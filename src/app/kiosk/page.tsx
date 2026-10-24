@@ -18,7 +18,7 @@ export default async function Kiosk() {
     return <PairTablet notice={premium ? "Visitor management needs the Premium plan. Ask an admin to upgrade, then pair this tablet again." : "This tablet was switched off or needs to be set up again."} />;
   }
   return <KioskApp ctx={{
-    deviceName: ctx.device_name, timezone: ctx.org.timezone, orgName: ctx.org.name, logoUrl: ctx.org.logo_url ?? null, brandColor: ctx.org.brand_color ?? null,
+    deviceName: ctx.device_name, timezone: ctx.org.timezone, orgName: ctx.org.name, logoUrl: ctx.org.logo_url ?? null, brandColor: ctx.org.brand_color ?? null, accentColor: ctx.org.accent_color ?? null,
     office: ctx.location?.name ?? "Reception", photoRequired: ctx.photo_required, rulesText: ctx.rules_text,
   }} />;
 }

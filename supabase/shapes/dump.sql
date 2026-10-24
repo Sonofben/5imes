@@ -55,5 +55,7 @@ set role authenticated;
 select test.as_console('00000000-0000-0000-0000-00000000f901', 'boss@visit.ng');
 \o supabase/shapes/out/vms_admit.json
 select public.vms_admit(:'vid');
+\o supabase/shapes/out/my_org_brand.json
+select public.my_org_brand();
 \o
 reset role;
