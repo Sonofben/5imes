@@ -93,8 +93,12 @@ export default async function StaffApp() {
         <Link href="/app/corrections" className="btn-ghost">Request correction</Link>
       </section>
 
+      {premium && me.can_reception && !isViewer && <section className="card mb-4 flex flex-wrap items-center justify-between gap-3 border-2 border-ink">
+        <div><h2 className="font-bold">Reception desk</h2><p className="mt-1 text-sm text-muted">Admit visitors, see who’s waiting and who’s on site.</p></div>
+        <Link href="/visitors" className="btn-primary">Open the desk</Link>
+      </section>}
       {premium && <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="font-bold">Expecting a visitor?</h2><p className="mt-1 text-sm text-muted">Send them a pass for the reception tablet. You’ll get an email when they arrive.</p></div>
+        <div><h2 className="font-bold">Expecting a visitor?</h2><p className="mt-1 text-sm text-muted">Send them an invitation with an “I’ve arrived” link. You’ll get an email when reception lets them in.</p></div>
         <Link href="/app/visitors" className="btn-ghost">My visitors</Link>
       </section>}
 

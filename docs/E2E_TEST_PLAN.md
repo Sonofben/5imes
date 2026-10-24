@@ -231,28 +231,34 @@ Needs an account on the Global Admin team (first one added with the SQL in DEPLO
 | H4 | A new person signs up with `@trostechnologies.com` without an invite | Goes to “waiting for approval”; admin sees them under “People waiting for approval” |
 | H5 | `/auth/challenge?next=https://google.com` after sign-in | Does **not** redirect to google.com |
 
-## 10d. Visitor management (Premium, migration 0015)
+## 10d. Visitor management (Premium, migrations 0015–0016)
 
-Needs a company on Premium (or on its free trial), an office, and a tablet or phone browser for the reception screen.
+Test on **staging** first. Needs a company on Premium (or its free trial), an office, a laptop for the desk and two phones.
 
 | ID | Steps | Expected |
 |---|---|---|
-| V1 | Company on paid **Pro** opens Admin → Visitors | “Part of the Premium plan” with an Upgrade button; no visitor screens |
-| V2 | Premium (or trial) admin → Visitors → Settings → Add tablet (office, name) | A message with an 8-character pairing code |
-| V3 | On the tablet open `/kiosk`, type a wrong code, then the right one | Wrong: “wrong or has expired”. Right: “Welcome to <company>” |
-| V4 | Visitors → Invite a visitor: name, **your own** email, date today, office | “Invitation emailed …” and the email arrives with a QR image, code, address, map link and “Open your visitor pass” |
-| V5 | Open the pass link from the email on a phone | Pass page with QR, code, time, office, host |
-| V6 | Tablet → I have an invitation → scan the QR from the phone (Android Chrome) or type the code → That’s me → I accept | Badge screen with name, host, office, time, code; host gets “Your visitor has arrived” email; host’s `/app` shows the arrival notice |
-| V7 | Tablet → I don’t have an invitation → name, phone, type 2+ letters of a staff name, pick them → accept | Signed in as walk-in; host emailed |
-| V8 | Admin → Visitors → Blocklist → add a phone number; walk-in with that number | Tablet: “Please speak to reception” (no reason shown); host emailed “refused” |
-| V9 | Settings → tick “Take a photo”, save; sign in another walk-in | Tablet asks for a photo (front camera); the photo shows in the Visitor log for admins only |
-| V10 | Tablet → Sign out → tap your name (first name + initial), and another visitor by typing their code | “Goodbye …”; Visitor log shows the out time |
-| V11 | Admin → Visitors → Who’s on site (print) | Staff checked in and visitors on site per office; Print works |
-| V12 | Visitor log → Download CSV | CSV opens in Excel/Sheets |
-| V13 | Staff (non-admin) → `/app` → “My visitors” → invite a visitor | Works; staff cannot pick a different host and cannot open Admin → Visitors |
-| V14 | Admin → Settings → Switch off the tablet; tap anything on the tablet | Tablet returns to the pairing screen |
-| V15 | Print a badge from the tablet | Only the badge prints (not the whole screen) |
-| V16 | Billing page and landing page | Three plans: Basic ₦250, Pro ₦500, Premium ₦1,000 |
+| V1 | Company on paid **Pro**: click **Visitors** in the header | “Visitor management is part of the Premium plan” with an Upgrade button |
+| V2 | Premium admin → Visitors → Settings → Create link → Print poster | Poster with the company name, office, QR code and short link; prints on one A4 page |
+| V3 | Settings → Reception desk access → Give desk access to a staff member; sign in as them | Their home screen shows “Reception desk”; Visitors shows only **Desk** and **Invitations**; opening Settings sends them back to the Desk |
+| V4 | Visitors → Invitations → invite with **your own** email | “Invitation emailed…”; the email shows date, office, map link, the code and an “I’ve arrived — check in” button (no QR) |
+| V5 | Tap the button on a phone | Visitor pass with “Arrived? Check in”, the code already filled in, phone and company |
+| V6 | Send without ticking the box; then tick it and send | First: the browser asks you to tick it. Then “Please wait at reception” with the code and QR |
+| V7 | Desk (laptop) | The visitor appears under **Waiting at reception** within 15 seconds; the Desk tab shows a count |
+| V8 | Desk → type the code (any case, with or without a space) → Find visitor → Admit | “… is in”; host gets “Your visitor has arrived”; the phone changes to “You’re in” by itself within 5 seconds |
+| V9 | Phone → “I’m leaving — sign me out” | “Visit finished”; the Desk no longer lists them on site |
+| V10 | Second phone: scan the poster QR | The walk-in form opens straight away (no “do you have an invitation?” question) |
+| V11 | Fill it with a host name like “Bisi”, send | Waiting screen; on the Desk the host box suggests the matching colleague; Admit works |
+| V12 | Another walk-in → Desk → Turn away | The phone shows “Please speak to reception” |
+| V13 | Blocklist a phone number; walk in with it | Refused at once (“Please speak to reception”), never reaches the queue as waiting |
+| V14 | Settings → untick “Reception must admit…” or tick “Let invited visitors in…”; repeat V5–V6 | Invited visitors go straight to “You’re in” |
+| V15 | Settings → “Only accept walk-in sign-ins around office hours”, outside those hours open the poster link | “Visitor sign-in is closed right now” |
+| V16 | Settings → Make a new link; open the old poster link | “Page not found”; the new poster works |
+| V17 | Reports | Counts, weekday chart, reasons, most-visited hosts; Audit trail lists each action with who did it — never visitor names |
+| V18 | Reports → A visitor’s data request → search their email → Erase | Their records listed; after Erase the Visitor log shows “Deleted visitor”; the audit trail shows the erasure |
+| V19 | Visitor log → Download CSV | CSV opens; Reports → Audit trail shows “Exported” |
+| V20 | Tablet (`/kiosk`) walk-in with “Reception must admit” on | “Please wait here” instead of a badge; appears in the Desk queue |
+| V21 | Desk → Print evacuation list | Staff and visitors on site per office |
+| V22 | Billing page and landing page | Three plans: Basic ₦250, Pro ₦500, Premium ₦1,000 |
 
 ## 11b. Security hardening (migration 0014)
 

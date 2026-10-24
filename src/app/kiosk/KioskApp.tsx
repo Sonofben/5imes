@@ -14,7 +14,7 @@ type Walkin = { name: string; phone: string; email: string; company: string; pur
 type Screen =
   | { s: "home" } | { s: "scan" } | { s: "confirm"; visit: Visit } | { s: "walkin" }
   | { s: "rules"; visit?: Visit; walkin?: Walkin } | { s: "photo"; visit?: Visit; walkin?: Walkin }
-  | { s: "badge"; badge: Badge } | { s: "denied" } | { s: "signout" } | { s: "bye"; name: string };
+  | { s: "badge"; badge: Badge } | { s: "denied" } | { s: "waiting"; name: string; code?: string | null } | { s: "signout" } | { s: "bye"; name: string };
 
 const IDLE_MS = 90_000;
 const EMPTY_WALKIN: Walkin = { name: "", phone: "", email: "", company: "", purpose: "", host: null };
@@ -32,7 +32,7 @@ export function KioskApp({ ctx }: { ctx: Ctx }) {
     const reset = () => {
       if (idle.current) clearTimeout(idle.current);
       if (screen.s === "home") return;
-      const ms = screen.s === "badge" ? 45_000 : screen.s === "bye" || screen.s === "denied" ? 10_000 : IDLE_MS;
+      const ms = screen.s === "badge" ? 45_000 : screen.s === "bye" || screen.s === "denied" ? 10_000 : screen.s === "waiting" ? 20_000 : IDLE_MS;
       idle.current = setTimeout(home, ms);
     };
     reset();
@@ -59,6 +59,7 @@ export function KioskApp({ ctx }: { ctx: Ctx }) {
     const body = await call<{ visit: Visit & { status: string } }>("/api/kiosk/find", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
     if (!body) return;
     if (body.visit.status === "on_site") { setError("You’re already signed in. To leave, choose “Sign out”."); return; }
+    if (body.visit.status === "waiting") { setError("You’re already checked in. Please wait — reception will let you in."); return; }
     setScreen({ s: "confirm", visit: body.visit });
   }
 
@@ -75,6 +76,7 @@ export function KioskApp({ ctx }: { ctx: Ctx }) {
     const body = await call<{ status: string } & Badge>("/api/kiosk/sign-in", { method: "POST", body: fd });
     if (!body) return;
     if (body.status === "denied") setScreen({ s: "denied" });
+    else if (body.status === "waiting") setScreen({ s: "waiting", name: body.visitor, code: body.code });
     else setScreen({ s: "badge", badge: body });
   }
 
@@ -142,6 +144,13 @@ export function KioskApp({ ctx }: { ctx: Ctx }) {
           <h1 className="text-3xl font-bold">Please speak to reception</h1>
           <p className="text-lg text-muted">We can’t complete your sign-in on this tablet.</p>
           <Big onClick={home}>OK</Big>
+        </div>}
+
+        {screen.s === "waiting" && <div className="space-y-5 text-center">
+          <h1 className="text-3xl font-bold">Thanks, {screen.name.split(" ")[0]}. Please wait here.</h1>
+          <p className="text-lg text-muted">Reception has your details and will let you in shortly.</p>
+          {screen.code && <p className="font-mono text-3xl font-extrabold tracking-[0.18em]">{screen.code.slice(0, 4)} {screen.code.slice(4)}</p>}
+          <Big onClick={home}>Done</Big>
         </div>}
 
         {screen.s === "signout" && <SignOut busy={busy} call={call} onDone={(name) => setScreen({ s: "bye", name })} />}

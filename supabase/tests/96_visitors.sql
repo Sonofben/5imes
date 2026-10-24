@@ -109,6 +109,11 @@ select test.ok((public.kiosk_context(current_setting('test.tok')) ->> 'photo_req
 select test.blocked($$select public.kiosk_context('not-a-token')$$, 'not set up', 'An unknown tablet is refused');
 
 \echo '--- signing in an invited visitor'
+-- These checks cover the tablet letting visitors straight in; 97_visitor_desk.sql covers reception approval.
+reset role;
+insert into public.visitor_settings (org_id, require_admit) values (current_setting('test.vorg')::uuid, false)
+  on conflict (org_id) do update set require_admit = false;
+set role service_role;
 select test.ok((public.kiosk_find_visit(current_setting('test.tok'), current_setting('test.inv')::jsonb ->> 'code') ->> 'host') = 'Ade',
   'The tablet finds the invitation by code and shows the host');
 select test.blocked(format($$select public.kiosk_sign_in(%L, %L, null, null, null, null, null, null, false, null)$$,
@@ -157,7 +162,7 @@ set role authenticated;
 select test.as_console('00000000-0000-0000-0000-00000000f901', 'boss@visit.ng');
 select test.ok((select count(*) from public.vms_on_site() where kind = 'visitor') = 3, 'Admin sees all three visitors on site');
 select test.as_console('00000000-0000-0000-0000-00000000f902', 'ade@visit.ng');
-select test.blocked($$select * from public.vms_on_site()$$, 'Only admins and managers', 'Staff cannot see the full on-site list');
+select test.blocked($$select * from public.vms_on_site()$$, 'see who is on site', 'Staff cannot see the full on-site list');
 reset role;
 set role service_role;
 select test.ok((public.kiosk_sign_out(current_setting('test.tok'), lower(current_setting('test.inv')::jsonb ->> 'code'), null) ->> 'status') = 'left',

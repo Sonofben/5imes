@@ -15,3 +15,11 @@ export function siteUrl(request?: Request) {
 export function publicOrigin() {
   return process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "") || "http://localhost:3000";
 }
+
+/**
+ * True on the staging copy (APP_ENV=staging in its .env). Staging shows a banner on every page,
+ * tells search engines to stay away and marks its emails, so nobody mistakes it for the live site.
+ */
+export function isStaging() {
+  return process.env.APP_ENV === "staging";
+}

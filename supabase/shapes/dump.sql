@@ -26,3 +26,34 @@ select public.console_company_snapshot(:'grant_org');
 select public.public_plans();
 \o
 reset role;
+
+-- Visitor management (0015/0016), as the Visit Ltd admin from supabase/tests/96–97.
+set role authenticated;
+select test.as_console('00000000-0000-0000-0000-00000000f901', 'boss@visit.ng');
+select id as vloc from public.locations where name = 'Ikoyi Office' \gset
+select public.vms_invite(:'vloc', 'Shape Visitor', 'shape@example.com', '0801 000 0000', 'Shape Co', 'Shapes', now()) as inv \gset
+select :'inv'::jsonb ->> 'pass_token' as pass_token, :'inv'::jsonb ->> 'code' as vcode, :'inv'::jsonb ->> 'id' as vid \gset
+select public.vms_visitor_link(:'vloc') as vlink \gset
+\o supabase/shapes/out/invitation.json
+select :'inv';
+\o supabase/shapes/out/vms_report.json
+select public.vms_report(current_date - 30, current_date);
+\o supabase/shapes/out/vms_desk_find.json
+select public.vms_desk_find(:'vcode');
+\o
+reset role;
+set role service_role;
+\o supabase/shapes/out/visit_pass.json
+select public.visit_pass(:'pass_token');
+\o supabase/shapes/out/walkin_context.json
+select public.walkin_context(:'vlink');
+\o supabase/shapes/out/visit_checkin.json
+select public.visit_checkin(:'pass_token', :'vcode', null, null, true);
+\o
+reset role;
+set role authenticated;
+select test.as_console('00000000-0000-0000-0000-00000000f901', 'boss@visit.ng');
+\o supabase/shapes/out/vms_admit.json
+select public.vms_admit(:'vid');
+\o
+reset role;

@@ -111,7 +111,43 @@ export const VisitPass = z.object({
   name: str, code: str, status: str, expected_at: opt(str), signed_in_at: opt(str), purpose: opt(str),
   org: str, timezone: str, host: opt(str),
   location: z.object({ name: str, address: opt(str), lat: opt(num), lng: opt(num) }).nullable(),
+  arrived_at: opt(str), walk_in: z.boolean().optional(), phone: opt(str), company: opt(str), reason: opt(str), host_hint: opt(str),
+  rules_text: opt(str), privacy_notice: opt(str), retention_days: opt(num),
 });
+export type VisitPass = z.infer<typeof VisitPass>;
+
+// walkin_context(link): the office behind a visitor QR poster
+export const WalkinContext = z.object({
+  org: z.object({ name: str, logo_url: opt(str), timezone: str }),
+  location: opt(str), open: z.boolean(), rules_text: str, privacy_notice: str, retention_days: num,
+});
+export type WalkinContext = z.infer<typeof WalkinContext>;
+
+// walkin_submit
+export const WalkinResult = z.object({ pass_token: str, status: z.enum(["waiting", "on_site", "denied"]) });
+
+// visit_checkin, vms_admit: "waiting"/"denied" carry only the visit; "on_site" adds what the host alert needs
+export const Admission = z.object({
+  status: z.enum(["waiting", "on_site", "denied", "left"]), visit: str, code: opt(str), visitor: opt(str), company: opt(str),
+  signed_in_at: opt(str), location: opt(str), host_name: opt(str), host_email: opt(str), reason: opt(str),
+});
+export type Admission = z.infer<typeof Admission>;
+
+// vms_desk_find
+export const DeskVisit = z.object({
+  id: str, status: str, name: str, company: opt(str), phone: opt(str), walk_in: z.boolean(), reason: opt(str), purpose: opt(str),
+  host_hint: opt(str), expected_at: opt(str), arrived_at: opt(str), signed_in_at: opt(str), code: str, host: opt(str), location: opt(str),
+});
+export type DeskVisit = z.infer<typeof DeskVisit>;
+
+// vms_report
+export const VisitorReport = z.object({
+  total: num, previous_total: num, walk_ins: num, invited: num, avg_minutes: opt(num), longest_minutes: opt(num),
+  turned_away: num, auto_signed_out: num, no_shows: num, by_weekday: z.array(num),
+  by_reason: z.array(z.object({ reason: str, count: num })), by_day: z.array(z.object({ day: str, count: num })),
+  top_hosts: z.array(z.object({ name: str, count: num })),
+});
+export type VisitorReport = z.infer<typeof VisitorReport>;
 
 // kiosk_context(token)
 export const KioskContext = z.object({
@@ -128,7 +164,7 @@ export type KioskVisit = z.infer<typeof KioskVisit>;
 
 // kiosk_sign_in
 export const KioskSignIn = z.object({
-  status: z.enum(["on_site", "denied"]), visit: str, visitor: str, code: opt(str), company: opt(str), signed_in_at: opt(str),
+  status: z.enum(["on_site", "denied", "waiting"]), visit: str, visitor: str, code: opt(str), company: opt(str), signed_in_at: opt(str),
   location: opt(str), host_name: opt(str), host_email: opt(str),
 });
 export type KioskSignIn = z.infer<typeof KioskSignIn>;

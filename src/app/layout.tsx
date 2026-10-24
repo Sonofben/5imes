@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import "./globals.css";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BRAND } from "@/lib/constants";
-import { publicOrigin } from "@/lib/site";
+import { isStaging, publicOrigin } from "@/lib/site";
 
 const description = `${BRAND.tagline} GPS check-in at approved offices and approved homes on scheduled days. From ₦250 per employee per month.`;
 
@@ -45,6 +45,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="min-h-screen">
+        {isStaging() && (
+          <div role="status" className="sticky top-0 z-[100] bg-amber-400 px-4 py-1.5 text-center text-xs font-bold text-ink print:hidden">
+            STAGING — test copy of 5imes. Data here is not real and may be wiped.
+          </div>
+        )}
         {children}
         <PWAInstallPrompt />
       </body>

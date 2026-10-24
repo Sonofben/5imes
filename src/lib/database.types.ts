@@ -330,6 +330,7 @@ export type Database = {
           onboarded_at: string | null;
           mfa_last_enrolled_at: string | null;
           line_manager_id: string | null;
+          can_reception: boolean;
         };
         Insert: {
           id?: string;
@@ -345,6 +346,7 @@ export type Database = {
           onboarded_at?: string | null;
           mfa_last_enrolled_at?: string | null;
           line_manager_id?: string | null;
+          can_reception?: boolean;
         };
         Update: {
           id?: string;
@@ -360,6 +362,7 @@ export type Database = {
           onboarded_at?: string | null;
           mfa_last_enrolled_at?: string | null;
           line_manager_id?: string | null;
+          can_reception?: boolean;
         };
         Relationships: [];
       };
@@ -855,6 +858,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      visitor_audit: {
+        Row: {
+          id: string;
+          org_id: string;
+          at: string;
+          actor: "staff" | "visitor" | "tablet" | "system";
+          member_id: string | null;
+          action: "invited" | "cancelled" | "arrived" | "admitted" | "turned_away" | "signed_out" | "auto_signed_out" | "blocked" | "unblocked" | "exported" | "settings_changed" | "link_changed" | "reception_access" | "data_lookup" | "data_deleted" | "retention_purge";
+          visit_id: string | null;
+          detail: string | null;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          at?: string;
+          actor: "staff" | "visitor" | "tablet" | "system";
+          member_id?: string | null;
+          action: "invited" | "cancelled" | "arrived" | "admitted" | "turned_away" | "signed_out" | "auto_signed_out" | "blocked" | "unblocked" | "exported" | "settings_changed" | "link_changed" | "reception_access" | "data_lookup" | "data_deleted" | "retention_purge";
+          visit_id?: string | null;
+          detail?: string | null;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          at?: string;
+          actor?: "staff" | "visitor" | "tablet" | "system";
+          member_id?: string | null;
+          action?: "invited" | "cancelled" | "arrived" | "admitted" | "turned_away" | "signed_out" | "auto_signed_out" | "blocked" | "unblocked" | "exported" | "settings_changed" | "link_changed" | "reception_access" | "data_lookup" | "data_deleted" | "retention_purge";
+          visit_id?: string | null;
+          detail?: string | null;
+        };
+        Relationships: [];
+      };
       visitor_blocklist: {
         Row: {
           id: string;
@@ -888,6 +924,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      visitor_links: {
+        Row: {
+          id: string;
+          org_id: string;
+          location_id: string;
+          token: string;
+          created_by: string | null;
+          created_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          location_id: string;
+          token: string;
+          created_by?: string | null;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          location_id?: string;
+          token?: string;
+          created_by?: string | null;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
       visitor_settings: {
         Row: {
           org_id: string;
@@ -896,6 +962,11 @@ export type Database = {
           retention_days: number;
           notify_host: boolean;
           updated_at: string;
+          require_admit: boolean;
+          auto_admit_invited: boolean;
+          office_hours_only: boolean;
+          photo_retention_days: number;
+          privacy_notice: string;
         };
         Insert: {
           org_id: string;
@@ -904,6 +975,11 @@ export type Database = {
           retention_days?: number;
           notify_host?: boolean;
           updated_at?: string;
+          require_admit?: boolean;
+          auto_admit_invited?: boolean;
+          office_hours_only?: boolean;
+          photo_retention_days?: number;
+          privacy_notice?: string;
         };
         Update: {
           org_id?: string;
@@ -912,6 +988,11 @@ export type Database = {
           retention_days?: number;
           notify_host?: boolean;
           updated_at?: string;
+          require_admit?: boolean;
+          auto_admit_invited?: boolean;
+          office_hours_only?: boolean;
+          photo_retention_days?: number;
+          privacy_notice?: string;
         };
         Relationships: [];
       };
@@ -929,7 +1010,7 @@ export type Database = {
           expected_at: string | null;
           code: string;
           pass_token_hash: string | null;
-          status: "expected" | "on_site" | "left" | "cancelled" | "denied";
+          status: "expected" | "waiting" | "on_site" | "left" | "cancelled" | "denied";
           walk_in: boolean;
           signed_in_at: string | null;
           signed_out_at: string | null;
@@ -940,6 +1021,12 @@ export type Database = {
           personal_data_deleted_at: string | null;
           created_by: string | null;
           created_at: string;
+          arrived_at: string | null;
+          arrival_source: string | null;
+          reason: string | null;
+          host_hint: string | null;
+          decided_by: string | null;
+          auto_signed_out: boolean;
         };
         Insert: {
           id?: string;
@@ -954,7 +1041,7 @@ export type Database = {
           expected_at?: string | null;
           code: string;
           pass_token_hash?: string | null;
-          status?: "expected" | "on_site" | "left" | "cancelled" | "denied";
+          status?: "expected" | "waiting" | "on_site" | "left" | "cancelled" | "denied";
           walk_in?: boolean;
           signed_in_at?: string | null;
           signed_out_at?: string | null;
@@ -965,6 +1052,12 @@ export type Database = {
           personal_data_deleted_at?: string | null;
           created_by?: string | null;
           created_at?: string;
+          arrived_at?: string | null;
+          arrival_source?: string | null;
+          reason?: string | null;
+          host_hint?: string | null;
+          decided_by?: string | null;
+          auto_signed_out?: boolean;
         };
         Update: {
           id?: string;
@@ -979,7 +1072,7 @@ export type Database = {
           expected_at?: string | null;
           code?: string;
           pass_token_hash?: string | null;
-          status?: "expected" | "on_site" | "left" | "cancelled" | "denied";
+          status?: "expected" | "waiting" | "on_site" | "left" | "cancelled" | "denied";
           walk_in?: boolean;
           signed_in_at?: string | null;
           signed_out_at?: string | null;
@@ -990,6 +1083,12 @@ export type Database = {
           personal_data_deleted_at?: string | null;
           created_by?: string | null;
           created_at?: string;
+          arrived_at?: string | null;
+          arrival_source?: string | null;
+          reason?: string | null;
+          host_hint?: string | null;
+          decided_by?: string | null;
+          auto_signed_out?: boolean;
         };
         Relationships: [];
       };
@@ -1144,6 +1243,7 @@ export type Database = {
       is_org_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_org_viewer: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_public_email_domain: { Args: { d: string | null }; Returns: boolean };
+      is_visitor_desk: { Args: Record<PropertyKey, never>; Returns: boolean };
       join_organization: { Args: Record<PropertyKey, never>; Returns: Json };
       kiosk_context: { Args: { p_token: string | null }; Returns: Json };
       kiosk_device: { Args: { p_token: string | null }; Returns: Database["public"]["Tables"]["kiosk_devices"]["Row"] };
@@ -1193,18 +1293,37 @@ export type Database = {
       throttle: { Args: { p_bucket: string | null }; Returns: undefined };
       unique_org_slug: { Args: { p_name: string | null }; Returns: string };
       verify_and_consume_recovery_code: { Args: { p_code: string | null }; Returns: boolean };
+      visit_checkin: { Args: { p_token: string | null; p_code: string | null; p_phone: string | null; p_company: string | null; p_rules_accepted: boolean | null }; Returns: Json };
       visit_pass: { Args: { p_token: string | null }; Returns: Json };
+      visit_sign_out: { Args: { p_token: string | null }; Returns: undefined };
+      vms_admit: { Args: { p_visit: string | null; p_host?: string | null }; Returns: Json };
+      vms_admitted_json: { Args: { p_visit: string | null }; Returns: Json };
       vms_block: { Args: { p_name: string | null; p_email: string | null; p_phone: string | null; p_reason: string | null }; Returns: undefined };
+      vms_blocked: { Args: { p_org: string | null; p_name: string | null; p_email: string | null; p_phone: string | null }; Returns: Database["public"]["Tables"]["visitor_blocklist"]["Row"] };
       vms_cancel: { Args: { p_visit: string | null }; Returns: undefined };
+      vms_desk_find: { Args: { p_code: string | null }; Returns: Json };
+      vms_find_visitor: { Args: { p_query: string | null }; Returns: { id: string; name: string; email: string; phone: string; company: string; status: string; at: string }[] };
+      vms_forget_visitor: { Args: { p_query: string | null }; Returns: { photo_path: string }[] };
+      vms_hosts: { Args: Record<PropertyKey, never>; Returns: { id: string; name: string; team: string }[] };
       vms_invite: { Args: { p_location: string | null; p_name: string | null; p_email: string | null; p_phone: string | null; p_company: string | null; p_purpose: string | null; p_expected_at: string | null; p_host?: string | null }; Returns: Json };
       vms_kiosk_pairing_code: { Args: { p_location: string | null; p_name: string | null; p_device?: string | null }; Returns: string };
       vms_kiosk_revoke: { Args: { p_device: string | null }; Returns: undefined };
+      vms_log_export: { Args: { p_from: string | null; p_to: string | null }; Returns: undefined };
       vms_on_site: { Args: { p_location?: string | null }; Returns: { kind: string; name: string; detail: string; since: string; location_id: string }[] };
+      vms_open_now: { Args: { p_org: string | null }; Returns: boolean };
       vms_purge_expired: { Args: { p_limit?: number | null }; Returns: { photo_path: string }[] };
+      vms_report: { Args: { p_from: string | null; p_to: string | null; p_location?: string | null }; Returns: Json };
+      vms_rotate_visitor_link: { Args: { p_location: string | null }; Returns: string };
       vms_save_settings: { Args: { p_photo_required: boolean | null; p_rules: string | null; p_retention_days: number | null; p_notify_host: boolean | null }; Returns: undefined };
+      vms_set_reception: { Args: { p_member: string | null; p_on: boolean | null }; Returns: undefined };
       vms_settings_for: { Args: { p_org: string | null }; Returns: Database["public"]["Tables"]["visitor_settings"]["Row"] };
       vms_staff_sign: { Args: { p_visit: string | null; p_in: boolean | null }; Returns: Json };
+      vms_turn_away: { Args: { p_visit: string | null; p_reason?: string | null }; Returns: undefined };
       vms_unblock: { Args: { p_id: string | null }; Returns: undefined };
+      vms_update_settings: { Args: { p_photo_required: boolean | null; p_rules: string | null; p_retention_days: number | null; p_notify_host: boolean | null; p_require_admit: boolean | null; p_auto_admit_invited: boolean | null; p_office_hours_only: boolean | null; p_privacy_notice: string | null; p_photo_retention_days: number | null }; Returns: undefined };
+      vms_visitor_link: { Args: { p_location: string | null }; Returns: string };
+      walkin_context: { Args: { p_link: string | null }; Returns: Json };
+      walkin_submit: { Args: { p_link: string | null; p_client: string | null; p_name: string | null; p_phone: string | null; p_email: string | null; p_company: string | null; p_reason: string | null; p_purpose: string | null; p_host_hint: string | null; p_rules_accepted: boolean | null }; Returns: Json };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

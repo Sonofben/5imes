@@ -3,7 +3,7 @@ import { requireMember, todayIn } from "@/lib/session";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
 import { visitTime } from "@/lib/visitors";
-import { InviteFormCard } from "@/app/admin/visitors/InviteFormCard";
+import { InviteFormCard } from "@/app/visitors/InviteFormCard";
 import { inviteMyVisitor, cancelMyVisit } from "./actions";
 
 export const dynamic = "force-dynamic";

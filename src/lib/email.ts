@@ -19,7 +19,7 @@ export async function sendEmail(p: { to: string; subject: string; html: string; 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [p.to], subject: p.subject, html: p.html, text: p.text, reply_to: p.replyTo }),
+      body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [p.to], subject: (process.env.APP_ENV === "staging" ? "[Staging] " : "") + p.subject, html: p.html, text: p.text, reply_to: p.replyTo }),
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {

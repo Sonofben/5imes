@@ -81,6 +81,20 @@ test("tablet and visitor endpoints refuse requests without a valid tablet or pas
   expect((await request.get("/v/NOTAREALTOKEN")).status()).toBe(404);
 });
 
+test("visitor phone pages and endpoints refuse made-up links and bad input", async ({ request }) => {
+  expect((await request.get("/visit/somecompany-AAAAAAAAAA")).status()).toBe(404);
+  expect((await request.get("/visit/not-a-link")).status()).toBe(404);
+  expect((await request.get("/api/visit/status?t=nonsense")).status()).toBe(404);
+  expect((await request.post("/api/visit/walk-in", { data: {} })).status()).toBe(400);
+  expect((await request.post("/api/visit/checkin", { data: { token: "x" } })).status()).toBe(400);
+  expect((await request.post("/api/visit/sign-out", { data: {} })).status()).toBe(400);
+});
+
+test("the Visitors module needs a signed-in member", async ({ page }) => {
+  await page.goto("/visitors");
+  await expect(page).toHaveURL(/\/login/);
+});
+
 test("the camera is allowed only for our own pages (reception tablet)", async ({ request }) => {
   const h = (await request.get("/login")).headers();
   expect(h["permissions-policy"]).toContain("camera=(self)");

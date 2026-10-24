@@ -21,6 +21,7 @@ export type Member = {
   home_req_address?: string | null;
   created_at: string;
   onboarded_at?: string | null;
+  can_reception?: boolean;
 };
 
 type MemberRow = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at" | "home_address" | "home_req_address">;
@@ -85,7 +86,7 @@ function decodeJwtPayload(token: string): { session_id?: string } | null {
   }
 }
 
-export async function requireMember(opts: { admin?: boolean; viewer?: boolean; allowAal1?: boolean } = {}) {
+export async function requireMember(opts: { admin?: boolean; viewer?: boolean; allowAal1?: boolean; desk?: boolean } = {}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -94,7 +95,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
 
   const { data: memberRow, error: memberError } = await supabase
     .from("members")
-    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,onboarded_at")
+    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,onboarded_at,can_reception")
     .eq("user_id", user.id)
     .maybeSingle<MemberRow>();
   // A failed lookup must not bounce to /start: /start would send an owner straight
@@ -108,6 +109,9 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
   const isViewer = isAdmin || memberRow.role === "manager";
   if (opts.admin && !isAdmin) redirect(isViewer ? "/admin" : "/app");
   if (opts.viewer && !isViewer) redirect("/app");
+  // The visitor desk: admins, managers and staff an admin gave reception access (members.can_reception).
+  const isDesk = isViewer || !!memberRow.can_reception;
+  if (opts.desk && !isDesk) redirect("/app");
 
   // Enforce two-factor for admin pages, unless the caller explicitly opts out
   // (the enrolment / challenge pages have to be reachable without aal2).
@@ -161,7 +165,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
     home_address: privateLocation?.home_address ?? null,
     home_req_address: privateLocation?.home_req_address ?? null,
   };
-  return { supabase, user, me, member: me, org, isAdmin, isViewer };
+  return { supabase, user, me, member: me, org, isAdmin, isViewer, isDesk };
 }
 
 /** Today's date (YYYY-MM-DD) in the company's time zone. */

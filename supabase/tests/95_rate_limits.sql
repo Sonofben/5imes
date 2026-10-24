@@ -33,7 +33,13 @@ select test.ok(position('rate_limit_hit(' in pg_get_functiondef(f::regprocedure)
     'public.console_invite_member(uuid,text,text,text)', 'public.console_create_company(text,text,text,text,integer,text)',
     'public.console_team_add(text,text,text)', 'public.console_company_export(uuid,text)', 'public.console_company_snapshot(uuid)',
     'public.console_find_person(text)', 'public.console_force_signout(uuid,text)', 'public.console_set_locked(uuid,boolean,text)',
-    'public.console_reset_mfa(uuid,text)']) as f;
+    'public.console_reset_mfa(uuid,text)',
+    'public.vms_desk_find(text)', 'public.vms_admit(uuid,uuid)', 'public.vms_turn_away(uuid,text)', 'public.vms_set_reception(uuid,boolean)',
+    'public.vms_visitor_link(uuid)', 'public.vms_rotate_visitor_link(uuid)', 'public.vms_log_export(date,date)',
+    'public.vms_update_settings(boolean,text,integer,boolean,boolean,boolean,boolean,text,integer)',
+    'public.vms_find_visitor(text)', 'public.vms_forget_visitor(text)', 'public.vms_cancel(uuid)',
+    'public.walkin_submit(text,text,text,text,text,text,text,text,text,boolean)', 'public.visit_checkin(text,text,text,text,boolean)',
+    'public.visit_sign_out(text)']) as f;
 
 \echo '--- the counters are private'
 set role authenticated;

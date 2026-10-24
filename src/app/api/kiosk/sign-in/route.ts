@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   if (!result) return NextResponse.json({ error: "Something went wrong. Please see reception." }, { status: 500 });
 
   let hostEmailed = false;
-  if (result.host_email) {
+  if (result.host_email && result.status !== "waiting") {
     hostEmailed = await sendHostAlert({
       to: result.host_email, hostName: result.host_name ?? "there", visitorName: result.visitor, company: result.company,
       officeName: result.location ?? ctx.location?.name, at: result.signed_in_at ?? new Date().toISOString(), timezone: ctx.org.timezone,
@@ -71,6 +71,8 @@ export async function POST(request: Request) {
     });
   }
   if (result.status === "denied") return NextResponse.json({ status: "denied" });
+  // The company wants reception to let visitors in: the tablet just says "please wait".
+  if (result.status === "waiting") return NextResponse.json({ status: "waiting", visitor: result.visitor, code: result.code });
   return NextResponse.json({
     status: "on_site", visitor: result.visitor, company: result.company, host: result.host_name, office: result.location,
     code: result.code, signedInAt: result.signed_in_at, hostEmailed,

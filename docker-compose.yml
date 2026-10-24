@@ -1,7 +1,10 @@
 # 5ime on the shared VPS.
-# - Listens ONLY on 127.0.0.1:3005 — the host's Nginx is the single public front door.
+# - Listens ONLY on 127.0.0.1 — the host's Nginx is the single public front door.
 # - Memory/CPU capped so it can never starve other apps (e.g. CACTS) on the same server.
 # Usage (in this folder, with a filled-in .env):  docker compose up -d --build
+#
+# The same file runs production and staging. Production uses the defaults below; the staging
+# folder's .env sets COMPOSE_PROJECT_NAME, CONTAINER_NAME, IMAGE_NAME and APP_PORT (DEPLOY.md §14).
 name: fivetime
 
 services:
@@ -14,11 +17,11 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
         APP_VERSION: ${APP_VERSION:-dev}
-    image: fivetime-web:latest
-    container_name: fivetime-web
+    image: ${IMAGE_NAME:-fivetime-web}:latest
+    container_name: ${CONTAINER_NAME:-fivetime-web}
     env_file: .env
     ports:
-      - "127.0.0.1:3005:3000"
+      - "127.0.0.1:${APP_PORT:-3005}:3000"
     restart: unless-stopped
     # Headroom for the SSR path: /admin and /console each run several Supabase
     # queries plus heavy page composition. 512m was triggering OOM kills under

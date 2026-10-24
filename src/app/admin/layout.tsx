@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireMember, type Subscription } from "@/lib/session";
 import { CompanyMark } from "@/components/CompanyMark";
 import { AdminNav } from "./AdminNav";
+import { ModuleSwitch } from "@/components/ModuleSwitch";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 
 export const dynamic = "force-dynamic";
@@ -38,10 +39,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 pb-12 sm:px-6 lg:px-8">
-      <header className="flex min-h-[76px] items-center justify-between gap-4 border-b border-line py-4">
+      <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-line py-4">
         <div className="flex min-w-0 items-center gap-3">
           <CompanyMark name={org.name} logoUrl={org.logo_url} href="/admin" />
-          <span className="hidden truncate border-l border-line pl-3 text-sm font-medium text-muted sm:inline">{org.name}</span>
+          <span className="hidden truncate border-l border-line pl-3 text-sm font-medium text-muted md:inline">{org.name}</span>
+          <ModuleSwitch current="attendance" attendanceHref="/admin" />
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Link href="/app" className="btn-ghost btn-sm">My check-in</Link>

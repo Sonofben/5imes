@@ -58,6 +58,7 @@ bash ~/vps-check.sh
    13. `supabase/migrations/0013_reserved_links.sql`
    14. `supabase/migrations/0014_rate_limits_and_hardening.sql`
    15. `supabase/migrations/0015_premium_visitor_management.sql`
+   16. `supabase/migrations/0016_visitor_checkin_desk_audit.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -316,27 +317,37 @@ self-hosted) or use Sentry, and put the project DSN in `.env` as `ERROR_TRACKING
 
 ## 12. Visitor management (Premium plan)
 
-Migration 0015 adds the **Premium** plan (₦1,000 per seat to start — change it any time in
-Global Admin → Plans & pricing) and visitor management. Companies on a free trial can use it too.
-`scripts/deploy.sh` applies the migration.
+Migrations 0015 and 0016 add the **Premium** plan (₦1,000 per seat to start — change it any time in
+Global Admin → Plans & pricing) and the **Visitors** module (header switch: *Attendance | Visitors*).
+Companies on a free trial can use it too. `scripts/deploy.sh` applies the migrations.
 
-1. **Visitor emails.** Invitations (with the QR pass) and host alerts are sent with Resend's API.
-   In `/opt/apps/5ime/.env` add (use the same Resend account as Supabase's SMTP):
+How it works:
+- **Invited visitors** get an email with the office address, a map, their code and an **“I’ve arrived — check in”**
+  button. On arrival they tap it on their phone (the code is filled in), confirm their details and accept the
+  rules and privacy notice. Reception then admits them.
+- **Walk-in visitors** scan the **QR poster** at reception, fill in a short form on their phone and wait.
+- **Reception** works from **Visitors → Desk** on a laptop or tablet: the waiting queue (Admit / Turn away),
+  find a visitor by code or by scanning the QR on their phone, expected today, on site now. The host is emailed
+  when their visitor is let in. Staff who work at reception get **desk access** (Visitors → Settings) without being admins.
+- A **reception tablet** (`/kiosk`) is still available for visitors without a smartphone.
+
+Setup:
+1. **Visitor emails.** Invitations and host alerts are sent with Resend's API. In `/opt/apps/5ime/.env` add
+   (the same Resend account as Supabase's SMTP):
    ```
    RESEND_API_KEY=re_...
-   EMAIL_FROM=5ime <no-reply@koraforge.com.ng>
+   EMAIL_FROM=5imes <no-reply@5imes.click>
    ```
    The sender must be on a domain verified in Resend. Then `docker compose up -d` (no rebuild needed).
-   Without these, invitations still work — the admin sees the visitor's code to pass on.
-2. **Reception tablet.** In 5ime as a company admin: **Visitors → Settings → Reception tablets → Add tablet**.
-   On the tablet, open `https://<host>/kiosk`, type the 8-character code (valid 15 minutes, works once),
-   then tap **Full screen**. Android tablets with Chrome can scan the QR code with the camera;
-   on other tablets visitors type the code. An admin can switch a tablet off at any time.
-3. **Optional visitor photo.** Off by default. Turn it on in Visitors → Settings. Photos go to a private
-   Supabase Storage bucket `visitor-photos` (created automatically) and are deleted with the visitor's
-   details after the retention period (default 90 days).
-4. **Badges.** The tablet shows a badge with a **Print badge** button; it prints on any printer the
-   tablet can reach (a small label printer works best). Without a printer, visitors keep the code on their pass.
+   Without these, invitations still work — the desk shows the visitor's code to pass on.
+2. **Poster.** Visitors → Settings → *Visitor link and QR poster* → **Create link** → **Print poster** for each office.
+   If a link is ever shared where it shouldn't be, **Make a new link** and print the new poster (the old one stops working).
+3. **Reception staff.** Visitors → Settings → *Reception desk access* → **Give desk access** to the people at reception.
+4. **Privacy (NDPA).** Visitors → Settings: edit the privacy notice, how long details and photos are kept, and
+   whether reception must admit every visitor (on by default). Reports → *Audit trail* and *A visitor's data request*
+   are the records to show how visitor data is handled.
+5. **Optional tablet.** Visitors → Settings → *Reception tablets* → **Add tablet**; on the tablet open `/kiosk` and type
+   the code (valid 15 minutes). Photos (off by default) go to the private Storage bucket `visitor-photos`.
 
 ## 13. Keeping the site up (target: 99%+ of the time)
 
@@ -398,6 +409,78 @@ server or Contabo, not the app.
 - Supabase's free plan has no uptime promise. When paying clients rely on 5ime, move the
   project to Supabase Pro.
 - Beyond ~99.9% you need a second server and a load balancer — not worth it at this stage.
+
+## 14. Staging: a test copy at staging.5imes.click
+
+Staging is a second, complete copy of 5imes with **its own database**. New features go there
+first; you test them; only then do they go to the live site. Nothing you do on staging touches
+real companies or real data.
+
+| | Live | Staging |
+|---|---|---|
+| Address | `https://5imes.click` | `https://staging.5imes.click` |
+| Folder on the VPS | `/opt/apps/5ime` | `/opt/apps/5ime-staging` |
+| Container / port | `fivetime-web` / 3005 | `fivetime-staging-web` / 3006 |
+| Supabase project | the live one | a **separate free project** |
+| Payments | live keys | Paystack **test** keys (or none: demo mode) |
+| Looks like | normal | yellow "STAGING" bar on every page, `[Staging]` in email subjects, hidden from Google |
+
+The VPS needs about 800 MB more memory for the second container. Check first: `free -h`
+("available" should be over 1.5 GB). If it is tight, stop staging when you are not testing:
+`cd /opt/apps/5ime-staging && docker compose stop`.
+
+### 14a. One-time setup (≈30 min)
+
+1. **Supabase:** create a new project named `5imes-staging` (free plan). Then repeat section 1
+   steps 3–5 for it, with Site URL `https://staging.5imes.click` and redirect URL
+   `https://staging.5imes.click/auth/callback**`. Same Resend SMTP settings and email templates.
+   (Google sign-in is optional on staging; email + password is enough for testing.)
+2. **DNS:** add an `A` record `staging` → `185.214.134.44`.
+3. **Code** on the VPS:
+   ```bash
+   sudo git clone github-5imes:Sonofben/5imes.git /opt/apps/5ime-staging   # same deploy key as live
+   cd /opt/apps/5ime-staging
+   cp .env.example .env && chmod 600 .env && nano .env
+   ```
+   In `.env` fill in the **staging** Supabase URL and keys, the staging `DATABASE_URL`, and set:
+   ```
+   NEXT_PUBLIC_SITE_URL=https://staging.5imes.click
+   APP_ENV=staging
+   COMPOSE_PROJECT_NAME=fivetime-staging
+   CONTAINER_NAME=fivetime-staging-web
+   IMAGE_NAME=fivetime-staging-web
+   APP_PORT=3006
+   ```
+   Leave `PAYSTACK_SECRET_KEY` empty (demo mode) or use a Paystack **test** key (`sk_test_…`).
+   `RESEND_API_KEY` and `EMAIL_FROM` can be the same as live.
+4. **Database and app:** `scripts/deploy.sh` — it creates every table in the new project and starts the container.
+5. **Nginx + HTTPS:**
+   ```bash
+   sudo cp deploy/nginx/5ime-limits-http.conf /etc/nginx/conf.d/5ime-limits.conf   # harmless if already there
+   sudo cp deploy/nginx-5ime-staging.conf /etc/nginx/sites-available/5ime-staging
+   sudo ln -s /etc/nginx/sites-available/5ime-staging /etc/nginx/sites-enabled/
+   sudo nginx -t && sudo systemctl reload nginx
+   sudo certbot --nginx -d staging.5imes.click
+   ```
+6. **First admin:** sign up on staging with a company email, then make yourself Global admin as in section 7
+   (in the staging project's SQL editor). Use made-up companies and people for testing.
+
+### 14b. Every new feature
+
+```bash
+# 1. put the new version on staging (any branch, tag or commit)
+cd /opt/apps/5ime-staging && scripts/deploy.sh origin/main
+# 2. test it at https://staging.5imes.click (docs/E2E_TEST_PLAN.md)
+# 3. when you are happy, release the SAME version to live
+cd /opt/apps/5ime && scripts/deploy.sh <the commit staging printed, e.g. 3f2a9c1>
+```
+
+Releasing the exact commit you tested (not "whatever main is now") means live gets precisely
+what you approved. Staging's database gets each migration first, so a migration that fails
+fails there, not on live.
+
+To wipe staging's test data and start clean: delete and recreate the `5imes-staging` project in
+Supabase, update its keys in `.env`, and run `scripts/deploy.sh` again.
 
 ## Everyday operations
 

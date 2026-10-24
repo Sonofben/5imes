@@ -4,7 +4,8 @@ import type { Database } from "./database.types.ts";
 import { emailLayout, esc, sendEmail } from "./email.ts";
 import { log } from "./log.ts";
 import { siteUrl } from "./site.ts";
-import { Invitation } from "./jsonShapes.ts";
+import { Invitation, type Admission } from "./jsonShapes.ts";
+import { createHash } from "node:crypto";
 
 export const PHOTO_BUCKET = "visitor-photos";
 
@@ -13,27 +14,28 @@ export function visitTime(iso: string | null | undefined, timezone: string) {
   return new Intl.DateTimeFormat("en-NG", { timeZone: timezone, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 }
 
-/** Email the visitor their pass: QR code, office address and map link. */
+/** Email the visitor their invitation: when and where, their code, and the link they tap on arrival to check in. */
 export async function sendVisitorInvite(p: {
   to: string; visitorName: string; orgName: string; hostName: string; officeName: string; address: string | null;
   lat: number | null; lng: number | null; expectedAt: string; timezone: string; code: string; passToken: string; purpose: string | null;
 }) {
   const base = siteUrl();
   const passUrl = `${base}/v/${encodeURIComponent(p.passToken)}`;
-  const qrUrl = `${base}/api/visit-qr?t=${encodeURIComponent(p.passToken)}`;
   const map = p.lat != null && p.lng != null ? `https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=17/${p.lat}/${p.lng}` : null;
   const when = visitTime(p.expectedAt, p.timezone);
+  const shownCode = `${p.code.slice(0, 4)} ${p.code.slice(4)}`;
   const html = emailLayout(`You’re invited to ${p.orgName}`, `
     <p>Hello ${esc(p.visitorName)},</p>
     <p><b>${esc(p.hostName)}</b> has invited you to visit <b>${esc(p.orgName)}</b>.</p>
     <p style="margin:12px 0"><b>When:</b> ${esc(when)}<br><b>Where:</b> ${esc(p.officeName)}${p.address ? `<br>${esc(p.address)}` : ""}${p.purpose ? `<br><b>Purpose:</b> ${esc(p.purpose)}` : ""}</p>
-    <p>When you arrive, scan this code at the reception tablet, or type the code below it.</p>
-    <p style="text-align:center;margin:16px 0"><img src="${qrUrl}" width="200" height="200" alt="Your visitor QR code" style="border:1px solid #e1e5e2;border-radius:12px"><br>
-    <span style="font-size:22px;font-weight:800;letter-spacing:4px">${esc(p.code)}</span></p>
-    <p style="text-align:center"><a href="${passUrl}" style="display:inline-block;background:#182126;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none">Open your visitor pass</a></p>
-    ${map ? `<p style="text-align:center"><a href="${map}" style="color:#bd4528">Map and directions</a></p>` : ""}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff5e8;border:1px solid #f3d9b5;border-radius:12px"><tr><td align="center" style="padding:16px">
+      <p style="margin:0 0 8px;font-weight:bold">When you arrive, tap the button below. Your code is filled in for you.</p>
+      <p style="margin:0 0 12px;font-size:24px;font-weight:800;letter-spacing:4px">${esc(shownCode)}</p>
+      <a href="${passUrl}" style="display:inline-block;background:#182126;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:bold">I’ve arrived — check in</a>
+    </td></tr></table>
+    ${map ? `<p style="text-align:center;margin-top:14px"><a href="${map}" style="color:#bd4528">Map and directions</a></p>` : ""}
     <p style="color:#68737a;font-size:12px">Keep this email private: the code lets you sign in as this visitor.</p>`);
-  const text = `${p.hostName} has invited you to visit ${p.orgName}.\nWhen: ${when}\nWhere: ${p.officeName}${p.address ? `, ${p.address}` : ""}\nYour code at reception: ${p.code}\nYour pass: ${passUrl}${map ? `\nMap: ${map}` : ""}`;
+  const text = `${p.hostName} has invited you to visit ${p.orgName}.\nWhen: ${when}\nWhere: ${p.officeName}${p.address ? `, ${p.address}` : ""}\nYour code: ${shownCode}\nWhen you arrive, check in here: ${passUrl}${map ? `\nMap: ${map}` : ""}`;
   return sendEmail({ to: p.to, subject: `Your visit to ${p.orgName} — ${when}`, html, text });
 }
 
@@ -100,15 +102,21 @@ export async function createInvitation(supabase: SupabaseClient<Database>, org: 
   if (error) return { ok: false, error };
   const inv = Invitation.safeParse(data);
   if (!inv.success) return { ok: false, error: new Error("Unexpected invitation result") };
-  if (!input.email) return { ok: true, msg: `${input.name} is invited. Their code at the reception tablet is ${inv.data.code}.` };
+  if (!input.email) return { ok: true, msg: `${input.name} is invited. Give them their code: ${inv.data.code}.` };
 
   const [{ data: loc }, { data: visit }] = await Promise.all([
     supabase.from("locations").select("name,address,lat,lng").eq("id", input.location).maybeSingle(),
     supabase.from("visits").select("host_member_id").eq("id", inv.data.id).maybeSingle(),
   ]);
-  const { data: host } = visit?.host_member_id
+  let { data: host } = visit?.host_member_id
     ? await supabase.from("members").select("full_name,email").eq("id", visit.host_member_id).maybeSingle()
     : { data: null };
+  if (!host && visit?.host_member_id) {
+    // Reception staff can't read the staff table; the desk's host list gives them names.
+    const { data: hosts } = await supabase.rpc("vms_hosts");
+    const h = (hosts ?? []).find((x) => x.id === visit.host_member_id);
+    if (h) host = { full_name: h.name, email: "" };
+  }
   const sent = await sendVisitorInvite({
     to: input.email, visitorName: input.name, orgName: org.name, hostName: host?.full_name || host?.email || "Your host",
     officeName: loc?.name ?? "our office", address: loc?.address ?? null, lat: loc?.lat ?? null, lng: loc?.lng ?? null,
@@ -128,4 +136,43 @@ export function zonedIso(date: string, time: string, timezone: string): string |
     .formatToParts(asUtc).reduce<Record<string, string>>((a, p) => ({ ...a, [p.type]: p.value }), {});
   const shown = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
   return new Date(asUtc.getTime() - (shown - asUtc.getTime())).toISOString();
+}
+
+/** Reasons a walk-in visitor can choose (the database accepts exactly these). */
+export const VISIT_REASONS = [
+  { id: "meeting", label: "Meeting" }, { id: "delivery", label: "Delivery" }, { id: "interview", label: "Interview" },
+  { id: "contractor", label: "Contractor" }, { id: "other", label: "Other" },
+] as const;
+export function reasonLabel(id: string | null | undefined) {
+  if (id === "invited") return "Invited";
+  return VISIT_REASONS.find((r) => r.id === id)?.label ?? (id ? id : "—");
+}
+
+/**
+ * A stable, anonymous key for the device sending a public form (for rate limits only): a hash of
+ * the visitor's IP address as Nginx reports it, mixed with a server secret so it can't be reversed.
+ */
+export function clientKey(request: Request) {
+  const ip = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const secret = process.env.FLASH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  return createHash("sha256").update(`${secret}|${ip}`).digest("hex").slice(0, 32);
+}
+
+/** Email the host once their visitor is let in (no-op when the company turned alerts off). */
+export async function alertHostAdmitted(result: Admission, timezone: string) {
+  if (result.status !== "on_site" || !result.host_email || !result.visitor) return false;
+  return sendHostAlert({
+    to: result.host_email, hostName: result.host_name ?? "there", visitorName: result.visitor, company: result.company,
+    officeName: result.location, at: result.signed_in_at ?? new Date().toISOString(), timezone,
+  });
+}
+
+/** The office link printed as a QR code on the reception poster: "/visit/<company-slug>-<TOKEN>". */
+export function visitorLinkUrl(orgSlug: string, token: string) {
+  return `${siteUrl()}/visit/${encodeURIComponent(orgSlug)}-${token}`;
+}
+/** Only the token after the last "-" identifies the office; the company name is there for people. */
+export function linkToken(link: string) {
+  const token = decodeURIComponent(link).split("-").pop() ?? "";
+  return /^[A-Za-z2-9]{10}$/.test(token) ? token.toUpperCase() : null;
 }

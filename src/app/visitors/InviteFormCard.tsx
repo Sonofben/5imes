@@ -5,7 +5,7 @@ export function InviteFormCard({ action, offices, people, meId, today }: {
 }) {
   return (
     <form action={action} className="card max-w-2xl space-y-4">
-      <div><h2 className="font-bold">Invite a visitor</h2><p className="text-sm text-muted">With an email address, they get a pass with a QR code, the office address and a map link. They scan it at the reception tablet.</p></div>
+      <div><h2 className="font-bold">Invite a visitor</h2><p className="text-sm text-muted">With an email address, they get the date, office address and map, their code, and an “I’ve arrived” link to check in when they get here.</p></div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div><label className="label" htmlFor="v-name">Visitor’s full name</label><input id="v-name" name="name" required maxLength={120} className="input" /></div>
         <div><label className="label" htmlFor="v-email">Email (to send the pass)</label><input id="v-email" name="email" type="email" maxLength={254} className="input" /></div>

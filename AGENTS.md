@@ -63,10 +63,13 @@ docs/                 E2E test plan, email templates
    Never render text taken straight from the URL. **[CI]** e2e test "a message typed into a link is not shown".
 9. **Content-Security-Policy** with a per-request nonce (`src/lib/csp.ts`, set in `src/proxy.ts`).
    A new outside service must be added there; never add `'unsafe-inline'` to `script-src`. **[CI]**
-10. **Reception tablet (kiosk)**: a paired tablet is identified only by its random token in an httpOnly
-    cookie; `/api/kiosk/*` routes pass it to `kiosk_*` functions (service_role only), which derive the company
-    and office from it. Tablet screens show the minimum (first name + initial in lists) and reset themselves.
-    Never add a kiosk function that takes a company or office id from the request. **[CI]** `supabase/tests/96_visitors.sql`.
+10. **Visitors without an account** (reception tablet, the visitor's own phone): a paired tablet is identified only
+    by its random token in an httpOnly cookie; a visitor only by the unguessable token in their pass link or the
+    office's poster link. `/api/kiosk/*` and `/api/visit/*` pass those tokens to `kiosk_*`, `visit_*` and `walkin_*`
+    functions (service_role only), which derive the company and office from them. Never add one that takes a company,
+    office or visit id from the request. Public forms are rate-limited per device (hashed IP) and per link, list no
+    staff, and nothing is let in until reception admits it (unless the company turns that off). Every action on visitor
+    data is written to `visitor_audit` without visitor names. **[CI]** `supabase/tests/96_visitors.sql`, `97_visitor_desk.sql`.
 11. **Uploads**: check size, the declared type and the file's first bytes; store under a path the
     server chooses; only the server writes the stored URL. **[review]**
 12. **Webhooks** verify the provider's signature; payments are confirmed by asking the provider,

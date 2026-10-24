@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /** Everyone on site now — staff checked in at an office and signed-in visitors — for fire drills and emergencies. */
 export default async function OnSitePage() {
-  const { supabase, org } = await requireMember({ viewer: true });
+  const { supabase, org } = await requireMember({ desk: true });
   const [{ data: rows, error }, { data: locations }] = await Promise.all([
     supabase.rpc("vms_on_site", { p_location: null }),
     supabase.from("locations").select("id,name").eq("org_id", org.id).order("name"),
@@ -17,7 +17,7 @@ export default async function OnSitePage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3 print:hidden">
-        <div><Link href="/admin/visitors" className="text-sm text-muted underline">← Visitors</Link><h1 className="page-heading mt-1">Who’s on site</h1></div>
+        <div><Link href="/visitors" className="text-sm text-muted underline">← Desk</Link><h1 className="page-heading mt-1">Who’s on site</h1></div>
         <PrintButton />
       </div>
       <p className="text-sm text-muted">{org.name} · as of {now}. Staff are those checked in at an office in the last 18 hours; visitors are those signed in and not yet signed out.</p>

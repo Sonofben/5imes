@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { buildCsp, newNonce } from "@/lib/csp";
 
-const PROTECTED = ["/app", "/admin", "/console", "/start", "/onboarding", "/pending"];
+const PROTECTED = ["/app", "/admin", "/visitors", "/console", "/start", "/onboarding", "/pending"];
 
 export async function proxy(request: NextRequest) {
   // A fresh nonce per request. Next.js reads the policy from the request headers and adds
@@ -15,7 +15,12 @@ export async function proxy(request: NextRequest) {
     headers.set("content-security-policy", csp);
     return NextResponse.next({ request: { headers } });
   };
-  const done = (res: NextResponse) => { res.headers.set("Content-Security-Policy", csp); return res; };
+  const done = (res: NextResponse) => {
+    res.headers.set("Content-Security-Policy", csp);
+    // The staging copy must never appear in search results.
+    if (process.env.APP_ENV === "staging") res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
+  };
   return done(await route(request, next));
 }
 

@@ -16,6 +16,13 @@ const cases = {
   "console_security.json": S.ConsoleSecurity,
   "console_company.json": S.ConsoleCompany,
   "console_company_snapshot.json": S.ConsoleSnapshot,
+  "invitation.json": S.Invitation,
+  "vms_report.json": S.VisitorReport,
+  "vms_desk_find.json": S.DeskVisit,
+  "visit_pass.json": S.VisitPass,
+  "walkin_context.json": S.WalkinContext,
+  "visit_checkin.json": S.Admission,
+  "vms_admit.json": S.Admission,
 };
 
 for (const [file, schema] of Object.entries(cases)) {
