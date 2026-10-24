@@ -53,7 +53,7 @@ export const ConsoleRevenue = z.object({
   this_month_kobo: num, last_month_kobo: num, year_kobo: num, all_time_kobo: num, monthly_run_rate_kobo: num,
   paying_companies: num, pending_count: num, failed_count_30d: num,
   by_month: z.array(z.object({ month: str, kobo: num, payments: num })),
-  by_plan: z.record(num), by_provider: z.record(num),
+  by_plan: z.record(z.string(), num), by_provider: z.record(z.string(), num),
 });
 
 // console_company(id)
