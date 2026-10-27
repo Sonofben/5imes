@@ -24,12 +24,22 @@ export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  // People with two-factor on must confirm it before Supabase lets them change the password.
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
 
   useEffect(() => {
     (async () => {
-      const { data } = await createClient().auth.getUser();
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
       if (!data.user) {
         setError("This reset link has expired. Request a new one from the sign-in page.");
+      } else {
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          setFactorId(factors?.totp.find((f) => f.status === "verified")?.id ?? null);
+        }
       }
       setReady(true);
     })();
@@ -43,7 +53,13 @@ export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
     if (issues.length) { setError(issues[0]); return; }
 
     setBusy(true);
-    const { error } = await createClient().auth.updateUser({ password });
+    const supabase = createClient();
+    if (factorId) {
+      const { error: mfaError } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: mfaCode.trim() });
+      if (mfaError) { setBusy(false); setError(friendly(mfaError, "auth/reset-mfa")); return; }
+      setFactorId(null); // verified; don't ask again if the password step fails
+    }
+    const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
     if (error) { setError(friendly(error, "auth/reset")); return; }
     // Log the event (silently; failure here does not block the user).
@@ -98,6 +114,13 @@ export function ResetPasswordForm({ mode }: { mode: "reset" | "invite" }) {
                 value={confirm}
                 onChange={setConfirm}
               />
+              {factorId && (
+                <div className="space-y-1">
+                  <label className="label" htmlFor="np-mfa">Two-factor code</label>
+                  <input id="np-mfa" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} className="input text-center text-lg tracking-[0.4em]" placeholder="000000" />
+                  <p className="text-xs text-muted">Your account has two-factor on. Enter the current 6-digit code from your authenticator app. Lost your phone? Contact 5ime support to reset two-factor.</p>
+                </div>
+              )}
               {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2.5 text-sm leading-5 text-bad">{error}</p>}
               <button className="btn-primary w-full" disabled={busy}>{busy ? "Saving…" : "Save new password"}</button>
             </form>
