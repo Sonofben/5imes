@@ -29,11 +29,20 @@ export async function GET(request: Request) {
   const tokenHash = url.searchParams.get("token_hash");
   const supabase = await createClient();
 
+  let landed = type;
   if (tokenHash && type && OTP_TYPES.has(type)) {
     // Email links built from {{ .TokenHash }} work on any device: unlike ?code=,
     // they don't need the PKCE verifier cookie from the browser that asked.
     // Admin invitations have no verifier at all, so they must use this path.
-    const { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
+    // Supabase sometimes sends a different email than the one asked for (an invitee who asks for a
+    // reset gets the invite email), so if the link's type doesn't match, try the other email types
+    // and send the person on according to the one that worked.
+    let { error } = await supabase.auth.verifyOtp({ type: type as EmailOtpType, token_hash: tokenHash });
+    for (const other of LINK_TYPES) {
+      if (!error || other === type || !/expired|invalid|not found/i.test(error.message)) continue;
+      ({ error } = await supabase.auth.verifyOtp({ type: other, token_hash: tokenHash }));
+      if (!error) landed = other;
+    }
     if (error) return NextResponse.redirect(`${base}/login?${flashQuery({ error: linkError(error) })}`);
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -51,11 +60,12 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${base}/login?${flashQuery({ error: "That sign-in link is invalid or has expired. Try again." })}`);
   }
 
-  if (type === "recovery") return NextResponse.redirect(`${base}/auth/reset`);
-  if (type === "invite") return NextResponse.redirect(`${base}/auth/invite`);
+  if (landed === "recovery") return NextResponse.redirect(`${base}/auth/reset`);
+  if (landed === "invite") return NextResponse.redirect(`${base}/auth/invite`);
   return NextResponse.redirect(`${base}${next || "/start"}`);
 }
 
+const LINK_TYPES: EmailOtpType[] = ["recovery", "invite", "magiclink", "signup", "email_change"];
 const OTP_TYPES = new Set(["signup", "invite", "magiclink", "recovery", "email_change", "email"]);
 
 function isMissingVerifier(message: string) {

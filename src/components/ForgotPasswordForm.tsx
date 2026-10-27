@@ -32,7 +32,10 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
     setBusy(false);
     // The security check and rate limits are the only failures we report; neither reveals whether the account exists.
     if (result?.error && isCaptchaError(result.error.message)) { setError(CAPTCHA_MESSAGE); return; }
-    if (result?.error && /rate|too many/i.test(result.error.message)) { setError("Too many requests. Wait a few minutes and try again."); return; }
+    if (result?.error && /rate|too many|security purposes|seconds/i.test(result.error.message)) { setError("Too many requests. Wait a few minutes and try again."); return; }
+    // Supabase answers the same for unknown emails, so any other failure is a real sending problem
+    // (email settings, network) — say so instead of pretending it was sent.
+    if (!result || result.error) { setError("We couldn’t send the email just now. Try again in a minute, or ask your admin to send you a reset link."); return; }
     setSent(true);
   }
 
