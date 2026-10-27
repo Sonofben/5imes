@@ -16,11 +16,7 @@
           <tr><td style="padding:8px 0 4px">
             <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email" style="display:inline-block;background:#bd4528;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;line-height:1;padding:15px 26px;border-radius:12px">Confirm my email</a>
           </td></tr>
-          <tr><td style="padding:18px 0 4px">
-            <p style="margin:0 0 8px;font-size:14px;color:#68737a">Or enter this code on the 5ime sign-in page:</p>
-            <p style="margin:0;font-family:Menlo,Consolas,monospace;font-size:30px;letter-spacing:8px;font-weight:700;color:#182126">{{ .Token }}</p>
-          </td></tr>
-          <tr><td style="padding:22px 0 0"><p style="margin:0;font-size:13px;line-height:20px;color:#68737a">The link and code work once and expire in 1 hour. After confirming you’ll check your workspace name and start your free trial.</p></td></tr>
+          <tr><td style="padding:22px 0 0"><p style="margin:0;font-size:13px;line-height:20px;color:#68737a">This link expires in 24 hours. After confirming you’ll check your workspace name and start your free trial.</p></td></tr>
           <tr><td style="padding:22px 0 0">
             <p style="margin:0;font-size:12px;line-height:18px;color:#68737a">Button not working? Copy this link into your browser:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email" style="color:#68737a;word-break:break-all">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email</a></p>
           </td></tr>

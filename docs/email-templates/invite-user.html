@@ -16,10 +16,6 @@
           <tr><td style="padding:8px 0 4px">
             <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="display:inline-block;background:#bd4528;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;line-height:1;padding:15px 26px;border-radius:12px">Accept invitation</a>
           </td></tr>
-          <tr><td style="padding:18px 0 4px">
-            <p style="margin:0 0 8px;font-size:14px;color:#68737a">Or sign in with this one-time code on the 5ime sign-in page:</p>
-            <p style="margin:0;font-family:Menlo,Consolas,monospace;font-size:30px;letter-spacing:8px;font-weight:700;color:#182126">{{ .Token }}</p>
-          </td></tr>
           <tr><td style="padding:22px 0 0"><p style="margin:0;font-size:13px;line-height:20px;color:#68737a">After setting your password, 5ime shows you how to allow location, pin your home (if you have home days) and add the app to your phone.</p></td></tr>
           <tr><td style="padding:22px 0 0">
             <p style="margin:0;font-size:12px;line-height:18px;color:#68737a">Button not working? Copy this link into your browser:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite" style="color:#68737a;word-break:break-all">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite</a></p>
