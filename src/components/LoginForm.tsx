@@ -84,18 +84,22 @@ export function LoginForm({ brand, initialError, initialNotice }: { brand?: Logi
     setBusy(false);
     if (error) { setError(mapAuthError(error.message)); return; }
     setMode("code-verify");
-    setNotice(`We sent a 6-digit code to ${email}. It expires in 10 minutes.`);
+    setNotice(`We sent a sign-in code to ${email}. Check your inbox (and spam). It expires in 1 hour.`);
   }
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setBusy(true);
-    const { data, error } = await createClient().auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: code.trim(),
-      type: "email",
-    });
+    // "email" covers ordinary sign-in codes. Someone who was invited, or signed up but never
+    // confirmed, is sent the invite / confirm-signup email instead, and its code is checked as that type.
+    const supabase = createClient();
+    const who = { email: email.trim().toLowerCase(), token: code.replace(/\s/g, "") };
+    let { data, error } = await supabase.auth.verifyOtp({ ...who, type: "email" });
+    for (const type of ["signup", "invite"] as const) {
+      if (!error || !/expired|invalid/i.test(error.message)) break;
+      ({ data, error } = await supabase.auth.verifyOtp({ ...who, type }));
+    }
     setBusy(false);
     if (error) { setError(mapAuthError(error.message)); return; }
     if (!data.session) { setError("Could not sign you in. Try again."); return; }
@@ -173,7 +177,7 @@ export function LoginForm({ brand, initialError, initialNotice }: { brand?: Logi
 
           {mode === "code-request" && (
             <form onSubmit={requestCode} className="space-y-3">
-              <p className="text-sm text-muted">We’ll email you a 6-digit code. Use this if your admin hasn’t set a password for you yet or you’ve forgotten it.</p>
+              <p className="text-sm text-muted">We’ll email you a one-time code. Use this if your admin hasn’t set a password for you yet or you’ve forgotten it.</p>
               <div>
                 <label className="label" htmlFor="work-email">Work email</label>
                 <input id="work-email" className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)}/>
@@ -185,8 +189,8 @@ export function LoginForm({ brand, initialError, initialNotice }: { brand?: Logi
 
           {mode === "code-verify" && (
             <form onSubmit={verifyCode} className="space-y-3">
-              <p className="text-sm text-muted">Enter the 6-digit code we just emailed to <b>{email}</b>.</p>
-              <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value)} className="input text-center text-lg tracking-[0.4em]" placeholder="000000"/>
+              <p className="text-sm text-muted">Enter the code we just emailed to <b>{email}</b>.</p>
+              <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" maxLength={8} required value={code} onChange={(e) => setCode(e.target.value)} className="input text-center text-lg tracking-[0.4em]" placeholder="000000"/>
               <button className="btn-primary w-full" disabled={busy || !authConfigured || code.length !== 6}>{busy ? "Verifying…" : "Sign in"}</button>
               <button type="button" onClick={() => { setMode("code-request"); setCode(""); }} className="w-full text-xs text-muted underline">Send another code</button>
             </form>
