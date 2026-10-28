@@ -41,3 +41,16 @@ export function getBestPosition(ms = 10000, goodEnough = 25): Promise<Fix> {
 export function mapsLink(lat: number, lng: number) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
+
+/** "±35 m" or "±20 km" — readable accuracy. */
+export function accuracyLabel(m: number) {
+  return m >= 1000 ? `±${Math.round(m / 1000)} km` : `±${Math.round(m)} m`;
+}
+
+/** Readings worse than this are too rough to pin a home or trust a check-in. */
+export const ROUGH_ACCURACY_M = 100;
+
+/** What to tell someone whose reading is too rough — usually a laptop or desktop with no GPS. */
+export function roughLocationMessage(m: number) {
+  return `Your location is only accurate to ${accuracyLabel(m)}. This usually happens on a laptop or desktop, which has no GPS. Use 5ime on your phone with location turned on, ideally near a window.`;
+}

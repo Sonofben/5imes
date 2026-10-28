@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getBestPosition } from "@/lib/geo";
+import { getBestPosition, accuracyLabel, roughLocationMessage, ROUGH_ACCURACY_M } from "@/lib/geo";
 import { reverseGeocode } from "@/lib/geocode";
 import { friendly, UserError } from "@/lib/errors";
 
@@ -28,7 +28,9 @@ export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { 
     setBusy(true); setNote(null);
     try {
       const fix = await getBestPosition(10000, 50);
-      setNote({ ok: true, text: `Location works (±${Math.round(fix.accuracy)}m).` });
+      setNote(fix.accuracy > ROUGH_ACCURACY_M
+        ? { ok: false, text: roughLocationMessage(fix.accuracy) }
+        : { ok: true, text: `Location works (${accuracyLabel(fix.accuracy)}).` });
     } catch (e) { setNote({ ok: false, text: friendly(e, "app/welcome", "Could not get location.") }); }
     finally { setBusy(false); }
   }
@@ -37,6 +39,7 @@ export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { 
     setBusy(true); setNote(null);
     try {
       const fix = await getBestPosition(15000, 20);
+      if (fix.accuracy > ROUGH_ACCURACY_M) throw new UserError(roughLocationMessage(fix.accuracy));
       const address = await reverseGeocode(fix.lat, fix.lng);
       const { error } = await createClient().rpc("request_home_location", { p_lat: fix.lat, p_lng: fix.lng, p_accuracy: fix.accuracy, p_address: address ?? "" });
       if (error) throw new UserError(friendly(error, "app/welcome"));

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getBestPosition } from "@/lib/geo";
+import { getBestPosition, accuracyLabel, roughLocationMessage, ROUGH_ACCURACY_M } from "@/lib/geo";
 import { reverseGeocode } from "@/lib/geocode";
 import { friendly, UserError } from "@/lib/errors";
 
@@ -17,6 +17,7 @@ export function HomeLocationPanel({ status, hasApproved, hasPending }: { status:
     setBusy(true);
     try {
       const fix = await getBestPosition(15000, 20);
+      if (fix.accuracy > ROUGH_ACCURACY_M) throw new UserError(roughLocationMessage(fix.accuracy));
       const address = await reverseGeocode(fix.lat, fix.lng);
       const { error } = await createClient().rpc("request_home_location", {
         p_lat: fix.lat,
@@ -25,7 +26,7 @@ export function HomeLocationPanel({ status, hasApproved, hasPending }: { status:
         p_address: address ?? "",
       });
       if (error) throw new UserError(friendly(error, "app/home-location"));
-      setMsg({ ok: true, text: `Sent for approval (accuracy ±${Math.round(fix.accuracy)}m).` });
+      setMsg({ ok: true, text: `Sent for approval (accuracy ${accuracyLabel(fix.accuracy)}).` });
       router.refresh();
     } catch (e) {
       setMsg({ ok: false, text: friendly(e, "app/home-location", "Something went wrong") });
