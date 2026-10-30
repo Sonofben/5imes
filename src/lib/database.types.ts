@@ -571,6 +571,8 @@ export type Database = {
           max_locations: number | null;
           updated_at: string;
           updated_by: string | null;
+          max_seats: number | null;
+          max_visitors_month: number | null;
         };
         Insert: {
           plan: "basic" | "pro" | "premium";
@@ -581,6 +583,8 @@ export type Database = {
           max_locations?: number | null;
           updated_at?: string;
           updated_by?: string | null;
+          max_seats?: number | null;
+          max_visitors_month?: number | null;
         };
         Update: {
           plan?: "basic" | "pro" | "premium";
@@ -591,6 +595,8 @@ export type Database = {
           max_locations?: number | null;
           updated_at?: string;
           updated_by?: string | null;
+          max_seats?: number | null;
+          max_visitors_month?: number | null;
         };
         Relationships: [];
       };
@@ -1264,6 +1270,7 @@ export type Database = {
       my_member_id: { Args: Record<PropertyKey, never>; Returns: string };
       my_org_brand: { Args: Record<PropertyKey, never>; Returns: Json };
       my_org_id: { Args: Record<PropertyKey, never>; Returns: string };
+      my_plan_usage: { Args: Record<PropertyKey, never>; Returns: Json };
       my_primary_role: { Args: Record<PropertyKey, never>; Returns: string };
       my_role: { Args: Record<PropertyKey, never>; Returns: string };
       my_security_status_fn: { Args: Record<PropertyKey, never>; Returns: { user_id: string; totp_enrolled: boolean; unused_recovery_codes: number }[] };
@@ -1272,9 +1279,14 @@ export type Database = {
       norm_name: { Args: { p: string | null }; Returns: string };
       norm_phone: { Args: { p: string | null }; Returns: string };
       org_brand: { Args: { p_org: string | null }; Returns: Json };
+      org_brand_level: { Args: { p_slug: string | null }; Returns: string };
       org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; accent_color: string; domain: string }[] };
       org_has_brand_colors: { Args: { p_org: string | null }; Returns: boolean };
       org_has_premium: { Args: { p_org: string | null }; Returns: boolean };
+      org_has_visitors: { Args: { p_org: string | null }; Returns: boolean };
+      org_plan_now: { Args: { p_org: string | null }; Returns: string };
+      org_visitor_location: { Args: { p_org: string | null }; Returns: string };
+      org_visitor_tier: { Args: { p_org: string | null }; Returns: string };
       plan_price: { Args: { p_plan: string | null }; Returns: number };
       platform_trial_days: { Args: Record<PropertyKey, never>; Returns: number };
       post_auth_destination: { Args: Record<PropertyKey, never>; Returns: { destination: string; reason: string }[] };
@@ -1289,6 +1301,7 @@ export type Database = {
       request_attendance_correction: { Args: { p_work_date: string | null; p_check_in: string | null; p_check_out: string | null; p_reason: string | null }; Returns: string };
       request_home_location: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null } | { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_address: string | null }; Returns: undefined };
       request_work_elsewhere: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_reason: string | null; p_place_name?: string | null; p_address?: string | null }; Returns: string };
+      require_visitors: { Args: { p_org: string | null }; Returns: undefined };
       reserved_slugs: { Args: Record<PropertyKey, never>; Returns: string[] };
       review_attendance_correction: { Args: { p_request_id: string | null; p_approve: boolean | null; p_note?: string | null }; Returns: undefined };
       review_home_location: { Args: { p_member: string | null; p_approve: boolean | null }; Returns: undefined };

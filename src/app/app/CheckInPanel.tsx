@@ -9,7 +9,7 @@ import { friendly, UserError } from "@/lib/errors";
 
 type Result = { location_type: string; distance_m: number | null; flags: string[]; kind: string };
 
-export function CheckInPanel({ checkedIn, expected, sessionLabel }: { checkedIn: boolean; expected: string; sessionLabel: string | null }) {
+export function CheckInPanel({ checkedIn, expected, sessionLabel, theme }: { checkedIn: boolean; expected: string; sessionLabel: string | null; theme?: { primary: string; onPrimary: string } }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +48,11 @@ export function CheckInPanel({ checkedIn, expected, sessionLabel }: { checkedIn:
         disabled={!!busy}
         aria-busy={!!busy}
         aria-label={busy ? busy : checkedIn ? "Check out of your current work session" : "Check in to your work session"}
-        className={`flex min-h-[116px] w-full items-center justify-between gap-4 rounded-2xl px-5 py-5 text-left text-white shadow-sm transition hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-75 sm:px-6 ${checkedIn ? "bg-ink" : "bg-brand"}`}
+        className={`flex min-h-[116px] w-full items-center justify-between gap-4 rounded-2xl px-5 py-5 text-left text-white shadow-sm transition hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-75 sm:px-6 ${checkedIn ? "bg-ink" : theme ? "" : "bg-brand"}`}
+        style={!checkedIn && theme ? { background: theme.primary, color: theme.onPrimary } : undefined}
       >
-        <span><span className="block text-xl font-bold sm:text-2xl">{busy ?? (checkedIn ? "Check out" : "Check in")}</span><span className="mt-1 block text-sm text-white/80">{busy ? "Please keep this screen open" : checkedIn ? "End your current session" : expected === "off" ? "Today is a non-working day" : `Scheduled: ${expected}`}</span></span>
-        <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/15 text-2xl">{checkedIn ? "↗" : "→"}</span>
+        <span><span className="block text-xl font-bold sm:text-2xl">{busy ?? (checkedIn ? "Check out" : "Check in")}</span><span className="mt-1 block text-sm opacity-80">{busy ? "Please keep this screen open" : checkedIn ? "End your current session" : expected === "off" ? "Today is a non-working day" : `Scheduled: ${expected}`}</span></span>
+        <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-current/15 text-2xl">{checkedIn ? "↗" : "→"}</span>
       </button>
       {checkedIn && sessionLabel && <p className="text-center text-xs text-muted">Current session · {sessionLabel}</p>}
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-bad">{error}</p>}

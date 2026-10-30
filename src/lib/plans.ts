@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { PLANS, TRIAL_DAYS, type PlanId } from "@/lib/constants";
 import { PublicPlans } from "./jsonShapes.ts";
 
-export type PlanInfo = { id: PlanId; name: string; pricePerSeat: number; blurb: string; features: readonly string[]; maxLocations?: number | null };
+export type PlanInfo = { id: PlanId; name: string; pricePerSeat: number; blurb: string; features: readonly string[]; maxLocations?: number | null; maxSeats?: number | null; maxVisitorsMonth?: number | null };
 export type PlanCatalog = { plans: Record<PlanId, PlanInfo>; trialDays: number };
 
 /**
@@ -20,7 +20,8 @@ export async function loadPlans(supabase: SupabaseClient): Promise<PlanCatalog> 
     const plans = { ...fallback.plans };
     for (const p of raw.plans ?? []) {
       if (p.id in plans && Number.isSafeInteger(p.pricePerSeat) && p.pricePerSeat > 0) {
-        plans[p.id] = { id: p.id, name: p.name, pricePerSeat: p.pricePerSeat, blurb: p.blurb, features: p.features?.length ? p.features : plans[p.id].features, maxLocations: p.maxLocations ?? null };
+        plans[p.id] = { id: p.id, name: p.name, pricePerSeat: p.pricePerSeat, blurb: p.blurb, features: p.features?.length ? p.features : plans[p.id].features, maxLocations: p.maxLocations ?? null,
+          maxSeats: p.maxSeats === undefined ? plans[p.id].maxSeats : p.maxSeats, maxVisitorsMonth: p.maxVisitorsMonth === undefined ? plans[p.id].maxVisitorsMonth : p.maxVisitorsMonth };
       }
     }
     return { plans, trialDays: raw.trial_days ?? TRIAL_DAYS };
@@ -47,4 +48,12 @@ async function fetchPublicPlans(): Promise<PlanCatalog> {
   const { createClient } = await import("@supabase/supabase-js");
   if (!url || !key) return loadPlans(null as unknown as SupabaseClient);
   return loadPlans(createClient(url, key, { auth: { persistSession: false } }));
+}
+
+export type VisitorTier = "none" | "pro" | "premium";
+
+/** Visitor management level for a company: none (Basic or lapsed), pro (one office, monthly allowance) or premium. */
+export async function visitorTier(supabase: SupabaseClient, orgId: string): Promise<VisitorTier> {
+  const { data } = await supabase.rpc("org_visitor_tier", { p_org: orgId });
+  return data === "pro" || data === "premium" ? data : "none";
 }

@@ -15,7 +15,7 @@ export default async function Kiosk() {
   const ctx = error ? null : parseOrNull(KioskContext, data, "kiosk/page");
   if (!ctx) {
     const premium = (error as { code?: string } | null)?.code === "KF403";
-    return <PairTablet notice={premium ? "Visitor management needs the Premium plan. Ask an admin to upgrade, then pair this tablet again." : "This tablet was switched off or needs to be set up again."} />;
+    return <PairTablet notice={premium ? "Reception tablets are part of the Premium plan. Ask an admin to upgrade, then pair this tablet again." : "This tablet was switched off or needs to be set up again."} />;
   }
   return <KioskApp ctx={{
     deviceName: ctx.device_name, timezone: ctx.org.timezone, orgName: ctx.org.name, logoUrl: ctx.org.logo_url ?? null, brandColor: ctx.org.brand_color ?? null, accentColor: ctx.org.accent_color ?? null,

@@ -5,6 +5,8 @@ import { parseOrNull, VisitorReport } from "@/lib/jsonShapes";
 import { reasonLabel, visitTime, zonedIso } from "@/lib/visitors";
 import { DataRequestPanel } from "./DataRequestPanel";
 
+import { PlanLock } from "@/components/PlanLock";
+import { visitorTier } from "@/lib/plans";
 export const dynamic = "force-dynamic";
 
 const ACTIONS: Record<string, string> = {
@@ -23,6 +25,23 @@ export default async function VisitorReportsPage({ searchParams }: { searchParam
   const sp = await searchParams;
   const { supabase, org, isAdmin, isViewer } = await requireMember({ desk: true });
   if (!isViewer) redirect("/visitors");
+  if ((await visitorTier(supabase, org.id)) !== "premium") {
+    const { data: kept } = await supabase.from("visitor_settings").select("retention_days,photo_retention_days").eq("org_id", org.id).maybeSingle();
+    return (
+      <div className="space-y-5">
+        <PlanLock isAdmin={isAdmin} plan="Premium" title="Visitor reports are part of Premium" points={[
+          "Visitors by weekday, reason and most-visited people, for any period and office.",
+          "Average and longest visits, walk-ins, no-shows and visitors turned away.",
+          "A full audit trail of every action on visitor data.",
+        ]} />
+        <section className="card space-y-1 text-sm">
+          <h2 className="font-bold">Retention</h2>
+          <p className="text-muted">Visitor details are kept <b className="text-ink">{kept?.retention_days ?? 90} days</b> and photos <b className="text-ink">{kept?.photo_retention_days ?? 30} days</b>, then deleted automatically. {isAdmin && "Change this under Settings."}</p>
+        </section>
+        {isAdmin && <DataRequestPanel />}
+      </div>
+    );
+  }
   const today = todayIn(org.timezone);
   const valid = (d?: string) => (d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null);
   const to = valid(sp.to) ?? today;

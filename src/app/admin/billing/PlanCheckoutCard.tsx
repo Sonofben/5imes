@@ -16,7 +16,7 @@ export function PlanCheckoutCard({
 }: {
   /** Payment providers switched on, in display order. */
   providers?: ("paystack" | "monnify")[];
-  plan: { id: PlanId; name: string; pricePerSeat: number; blurb: string; features: readonly string[] };
+  plan: { id: PlanId; name: string; pricePerSeat: number; blurb: string; features: readonly string[]; maxSeats?: number | null };
   minSeats: number;
   defaultCycle: BillingCycleId;
   enabled: boolean;
@@ -28,7 +28,9 @@ export function PlanCheckoutCard({
   const [cycle, setCycle] = useState<BillingCycleId>(defaultCycle);
   const [seats, setSeats] = useState(minSeats);
   const [submitting, setSubmitting] = useState(false);
-  const safeSeats = Number.isSafeInteger(seats) && seats >= minSeats ? seats : minSeats;
+  const maxSeats = plan.maxSeats ?? 10000;
+  const tooMany = minSeats > maxSeats;
+  const safeSeats = Number.isSafeInteger(seats) && seats >= minSeats ? Math.min(seats, maxSeats) : minSeats;
   const amountNaira = billingAmountKobo(plan.pricePerSeat, safeSeats, cycle) / 100;
   const months = BILLING_CYCLES[cycle].months;
 
@@ -42,7 +44,7 @@ export function PlanCheckoutCard({
       <div className="mt-auto space-y-4 border-t border-line pt-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className="label" htmlFor={`${plan.id}-cycle`}>Billing period</label><select id={`${plan.id}-cycle`} name="cycle" className="input" value={cycle} onChange={(event) => setCycle(event.target.value as BillingCycleId)}>{CYCLE_OPTIONS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div>
-          <div><label className="label" htmlFor={`${plan.id}-seats`}>Seats to purchase</label><input id={`${plan.id}-seats`} name="seats" type="number" min={minSeats} max={10000} required className="input tabular-nums" value={safeSeats} onChange={(event) => setSeats(Number(event.target.value))}/><p className="mt-1 text-[11px] text-muted">Minimum {minSeats} active + invited</p></div>
+          <div><label className="label" htmlFor={`${plan.id}-seats`}>Seats to purchase</label><input id={`${plan.id}-seats`} name="seats" type="number" min={minSeats} max={maxSeats} required className="input tabular-nums" value={safeSeats} onChange={(event) => setSeats(Number(event.target.value))}/><p className="mt-1 text-[11px] text-muted">Minimum {minSeats} active + invited{plan.maxSeats ? ` · up to ${plan.maxSeats} on ${plan.name}` : ""}</p></div>
         </div>
         {allowAutoRenew && providers.includes("paystack") ? (
           <label className="flex items-start gap-3 rounded-xl border border-line p-3 text-sm">
@@ -55,7 +57,9 @@ export function PlanCheckoutCard({
         <div className="rounded-xl border border-line bg-[#fafbf9] p-4">
           <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
         </div>
-        {!enabled ? (
+        {tooMany ? (
+          <p className="rounded-xl bg-amber-50 p-3 text-sm text-warn">You have {minSeats} staff. {plan.name} includes up to {maxSeats}, so choose Pro or Premium.</p>
+        ) : !enabled ? (
           <button disabled className="btn-primary w-full">Online payment coming soon</button>
         ) : (
           <div className="grid gap-2">

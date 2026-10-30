@@ -21,12 +21,19 @@ export function parseOrNull<T extends z.ZodTypeAny>(schema: T, data: unknown, wh
   return null;
 }
 
+// my_plan_usage()
+export const PlanUsage = z.object({
+  plan: str.nullable().optional(), staff: num, max_staff: opt(num),
+  visitor_tier: z.enum(["none", "pro", "premium"]), visits_this_month: num, max_visits_month: opt(num),
+});
+
 // public_plans()
 export const PublicPlans = z.object({
   trial_days: num.optional(),
   plans: z.array(z.object({
     id: z.enum(["basic", "pro", "premium"]), name: str, pricePerSeat: num, blurb: str,
     features: z.array(str).nullable().optional(), maxLocations: opt(num),
+    maxSeats: opt(num), maxVisitorsMonth: opt(num),
   })).optional(),
 });
 

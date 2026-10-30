@@ -34,13 +34,18 @@ async function sendInviteEmail(email: string, companyName?: string) {
   return !error;
 }
 
+/** The plan's staff limit was hit: reopen the staff page with the Pro tour showing. */
+function upgradeHint(error: { message?: string }): Record<string, string> {
+  return /Upgrade to Pro/i.test(error.message ?? "") ? { upgrade: "staff" } : {};
+}
+
 export async function inviteOne(formData: FormData) {
   const { supabase, org } = await requireMember({ admin: true });
   const parsed = parseForm(Invite, formData);
   if (!parsed.ok) back({ error: parsed.error });
   const { email, name, role, team } = parsed.data;
   const { error } = await supabase.rpc("invite_member", { p_email: email, p_name: name, p_role: role, p_team: team });
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   const emailed = await sendInviteEmail(email, org.name);
   back({ msg: emailed ? `Invitation emailed to ${email}.` : `${email} was added. Ask them to sign in with that address.` });
 }
@@ -74,7 +79,7 @@ export async function inviteBulk(formData: FormData) {
   if (problems.length) back({ error: problems.slice(0, 6).join(" · ") + (problems.length > 6 ? ` · and ${problems.length - 6} more` : "") });
 
   const { data: added, error } = await supabase.rpc("invite_members_bulk", { p_members: people });
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   let emailCount = 0;
   for (const person of people) if (await sendInviteEmail(person.email, org.name)) emailCount++;
   back({ msg: `${Number(added ?? people.length)} invitations created${emailCount ? `; ${emailCount} emails sent` : ""}.` });
@@ -83,7 +88,7 @@ export async function inviteBulk(formData: FormData) {
 export async function setStatus(id: string, status: "active" | "disabled") {
   const supabase = await createClient();
   const { error } = await supabase.from("members").update({ status }).eq("id", id);
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: status === "active" ? "Access approved." : "Access disabled." });
 }
 
@@ -92,21 +97,21 @@ export async function setRole(id: string, formData: FormData) {
   const parsed = staffRole.safeParse(formData.get("role"));
   if (!parsed.success) back({ error: "Choose a valid role." });
   const { error } = await supabase.from("members").update({ role: parsed.data }).eq("id", id);
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: "Role updated." });
 }
 
 export async function removeMember(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("members").delete().eq("id", id);
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: "Person removed." });
 }
 
 export async function reviewHome(id: string, approve: boolean) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("review_home_location", { p_member: id, p_approve: approve });
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: approve ? "Home location approved." : "Home location rejected." });
 }
 
@@ -116,6 +121,6 @@ export async function setLineManager(id: string, formData: FormData) {
   const manager = raw && uuid.safeParse(raw).success ? raw : "";
   if (raw && !manager) back({ error: "Choose a line manager from the list." });
   const { error } = await supabase.rpc("set_line_manager", { p_member: id, p_manager: manager || null });
-  if (error) back({ error: friendly(error, "admin/staff") });
+  if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: manager ? "Line manager saved." : "Line manager cleared. Their requests go to admins." });
 }

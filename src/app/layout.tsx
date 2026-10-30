@@ -5,7 +5,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BRAND } from "@/lib/constants";
 import { isStaging, publicOrigin } from "@/lib/site";
 
-const description = `${BRAND.tagline} GPS check-in at approved offices and approved homes on scheduled days. From ₦250 per employee per month.`;
+const description = `${BRAND.tagline} GPS check-in at approved offices and approved homes on scheduled days. From ₦300 per employee per month.`;
 
 export const metadata: Metadata = {
   title: { default: `${BRAND.name} — scheduled attendance`, template: `%s · ${BRAND.name}` },

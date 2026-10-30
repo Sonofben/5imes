@@ -8,6 +8,8 @@ import {
   addTablet, createVisitorLink, repairTablet, replaceVisitorLink, saveVisitorSettings, setReceptionAccess, switchOffTablet,
 } from "../actions";
 
+import { PlanLock } from "@/components/PlanLock";
+import { visitorTier } from "@/lib/plans";
 export const dynamic = "force-dynamic";
 
 const DEFAULTS = {
@@ -23,7 +25,9 @@ export default async function VisitorSettingsPage({ searchParams }: { searchPara
   if (!(await requireMember({ desk: true })).isAdmin) redirect("/visitors");
   const { supabase, org } = await requireMember({ admin: true });
   const flash = readFlash(sp);
-  const [{ data: settings }, { data: locations }, { data: links }, { data: tablets }, { data: staff }] = await Promise.all([
+  const [tier, { data: visitorOffice }, { data: settings }, { data: locations }, { data: links }, { data: tablets }, { data: staff }] = await Promise.all([
+    visitorTier(supabase, org.id),
+    supabase.rpc("org_visitor_location", { p_org: org.id }),
     supabase.from("visitor_settings").select("photo_required,rules_text,retention_days,notify_host,require_admit,auto_admit_invited,office_hours_only,privacy_notice,photo_retention_days").eq("org_id", org.id).maybeSingle(),
     supabase.from("locations").select("id,name").eq("org_id", org.id).order("name"),
     supabase.from("visitor_links").select("location_id,token,created_at").eq("org_id", org.id).is("revoked_at", null),
@@ -46,6 +50,9 @@ export default async function VisitorSettingsPage({ searchParams }: { searchPara
         {offices.length === 0 ? <p className="text-sm text-muted">Add an office under <Link className="underline" href="/admin/locations">Locations</Link> first.</p> :
           <ul className="divide-y divide-line">{offices.map((o) => {
             const l = linkOf.get(o.id);
+            if (tier === "pro" && o.id !== visitorOffice) return <li key={o.id} className="flex flex-wrap items-center gap-3 py-3">
+              <div className="min-w-48 flex-1"><b>{o.name}</b><p className="text-sm text-muted">Pro includes visitors at one office. <Link className="font-semibold underline" href="/admin/billing?plan=premium">Premium</Link> covers every office.</p></div>
+            </li>;
             return <li key={o.id} className="flex flex-wrap items-center gap-3 py-3">
               <div className="min-w-48 flex-1"><b>{o.name}</b>
                 {l ? <input readOnly aria-label={`Visitor link for ${o.name}`} value={visitorLinkUrl(org.slug, l.token)} className="input mt-1 font-mono text-xs" /> : <p className="text-sm text-muted">No visitor link yet.</p>}</div>
@@ -92,7 +99,7 @@ export default async function VisitorSettingsPage({ searchParams }: { searchPara
           </li>)}</ul>}
       </section>
 
-      <section className="card space-y-4">
+      {tier === "premium" ? <section className="card space-y-4">
         <div><h2 className="font-bold">Reception tablets (optional)</h2><p className="text-sm text-muted">For visitors without a smartphone. On the tablet, open <b>/kiosk</b> on this site, then type the pairing code you get here. Each tablet belongs to one office.</p></div>
         {(tablets ?? []).length > 0 && <ul className="divide-y divide-line">{(tablets ?? []).map((t) => <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
           <div><b>{t.name}</b> · {officeOf.get(t.location_id) ?? "—"}<div className="text-xs text-muted">{t.revoked_at ? "Switched off" : t.paired_at ? `Paired · last used ${visitTime(t.last_seen_at ?? t.paired_at, org.timezone)}` : t.pairing_expires_at && new Date(t.pairing_expires_at) > new Date() ? "Waiting for the pairing code" : "Not paired"}</div></div>
@@ -104,7 +111,7 @@ export default async function VisitorSettingsPage({ searchParams }: { searchPara
           <div><label className="label" htmlFor="t-office">Office</label><select id="t-office" name="location" className="input">{offices.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
           <button className="btn-primary">Add tablet</button>
         </form> : null}
-      </section>
+      </section> : <PlanLock compact isAdmin plan="Premium" title="Reception tablets are part of Premium" points={["A tablet at reception for visitors without a smartphone, with optional badge printing."]} />}
     </div>
   );
 }

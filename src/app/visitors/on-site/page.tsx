@@ -3,11 +3,19 @@ import { requireMember } from "@/lib/session";
 import { visitTime } from "@/lib/visitors";
 import { PrintButton } from "./PrintButton";
 
+import { PlanLock } from "@/components/PlanLock";
+import { visitorTier } from "@/lib/plans";
 export const dynamic = "force-dynamic";
 
 /** Everyone on site now — staff checked in at an office and signed-in visitors — for fire drills and emergencies. */
 export default async function OnSitePage() {
-  const { supabase, org } = await requireMember({ desk: true });
+  const { supabase, org, isAdmin } = await requireMember({ desk: true });
+  if ((await visitorTier(supabase, org.id)) !== "premium") {
+    return <PlanLock isAdmin={isAdmin} plan="Premium" title="Fire-drill roll call is part of Premium" points={[
+      "One printable list of everyone on site right now: staff checked in at the office and visitors signed in.",
+      "Grouped by office, ready for a fire drill or an emergency.",
+    ]} />;
+  }
   const [{ data: rows, error }, { data: locations }] = await Promise.all([
     supabase.rpc("vms_on_site", { p_location: null }),
     supabase.from("locations").select("id,name").eq("org_id", org.id).order("name"),

@@ -75,7 +75,7 @@ select test.blocked($$select * from console_staff_list(current_setting('test.acm
 \echo '--- Console actions (logged, need a reason)'
 select test.blocked($$select console_extend_trial(current_setting('test.acme')::uuid, 14, '')$$, 'reason', 'Actions require a reason');
 select test.ok(console_extend_trial(current_setting('test.acme')::uuid, 14, 'Client demo extension') > now() + interval '13 days', 'Owner extends a trial by 14 days');
-select test.ok(console_grant_complimentary(current_setting('test.acme')::uuid, 'basic', 30, 1, 'Launch partner goodwill') > now(), 'Owner grants a complimentary month');
+select test.ok(console_grant_complimentary(current_setting('test.acme')::uuid, 'pro', 30, 1, 'Launch partner goodwill') > now(), 'Owner grants a complimentary month');
 select test.ok((select count(*) from jsonb_array_elements(console_company(current_setting('test.acme')::uuid) -> 'payments') p where p ->> 'provider' = 'complimentary' and (p ->> 'amount_kobo')::int = 0) = 1,
                'Complimentary term is recorded as a ₦0 payment');
 select test.ok(console_invite_member(current_setting('test.acme')::uuid, 'newhire@acme.ng', 'New Hire', 'Admin could not add user') is not null, 'Support can add a person for a company');

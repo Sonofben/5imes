@@ -32,7 +32,7 @@ export default async function StaffApp() {
     supabase.rpc("my_line_manager").maybeSingle<{ id: string; full_name: string | null; email: string }>(),
     supabase.from("visits").select("id,visitor_name,visitor_company,signed_in_at").eq("host_member_id", me.id).eq("status", "on_site")
       .gte("signed_in_at", new Date(Date.now() - 3 * 3600 * 1000).toISOString()).order("signed_in_at", { ascending: false }).limit(5),
-    supabase.rpc("org_has_premium", { p_org: org.id }),
+    supabase.rpc("org_has_visitors", { p_org: org.id }),
     supabase.rpc("my_org_brand"),
   ]);
   const brand = brandTheme(parseOrNull(BrandShape, brandRaw, "app/brand"));
@@ -50,14 +50,23 @@ export default async function StaffApp() {
 
   return (
     <main className="mx-auto max-w-lg px-4 pb-12 sm:px-6">
-      {brand.branded && <div aria-hidden className="-mx-4 flex h-1.5 sm:-mx-6"><span className="flex-[3]" style={{ background: brand.primary }} /><span className="flex-1" style={{ background: brand.accent }} /></div>}
-      <header className="flex items-center justify-between gap-3 border-b border-line py-4">
-        <CompanyMark name={org.name} logoUrl={org.logo_url} href="/app" />
-        <div className="flex items-center gap-2">
-          {isViewer && <Link href="/admin" className="btn-ghost btn-sm">Admin</Link>}
-          <form action="/auth/signout" method="post"><button className="btn-ghost btn-sm">Sign out</button></form>
-        </div>
-      </header>
+      {brand.branded ? (
+        <header className="-mx-4 flex items-center justify-between gap-3 px-4 py-3 sm:-mx-6 sm:rounded-b-2xl sm:px-6" style={{ background: brand.primary, color: brand.onPrimary, borderBottom: `4px solid ${brand.accent}` }}>
+          <CompanyMark name={org.name} logoUrl={org.logo_url} href="/app" onBrand />
+          <div className="flex items-center gap-2">
+            {isViewer && <Link href="/admin" className="rounded-xl border border-current/30 px-3 py-1.5 text-sm font-semibold">Admin</Link>}
+            <form action="/auth/signout" method="post"><button className="rounded-xl border border-current/30 px-3 py-1.5 text-sm font-semibold">Sign out</button></form>
+          </div>
+        </header>
+      ) : (
+        <header className="flex items-center justify-between gap-3 border-b border-line py-4">
+          <CompanyMark name={org.name} logoUrl={org.logo_url} href="/app" />
+          <div className="flex items-center gap-2">
+            {isViewer && <Link href="/admin" className="btn-ghost btn-sm">Admin</Link>}
+            <form action="/auth/signout" method="post"><button className="btn-ghost btn-sm">Sign out</button></form>
+          </div>
+        </header>
+      )}
 
       <AnnouncementBanner supabase={supabase} />
       {(arrived ?? []).map((v) => <p key={v.id} role="status" className="my-3 rounded-2xl border border-[#c8dfd1] bg-[#f1f8f3] px-4 py-3 text-sm text-[#245c3e]"><b>{v.visitor_name}</b>{v.visitor_company ? ` (${v.visitor_company})` : ""} has arrived at reception · {timeIn(v.signed_in_at!, org.timezone)}</p>)}
@@ -75,7 +84,7 @@ export default async function StaffApp() {
           <div><p className="eyebrow">Your workday</p><h2 className="mt-1 font-bold">{openSession ? "You’re currently checked in" : "Ready to check in?"}</h2></div>
           <span className={`chip shrink-0 ${expected === "off" ? "bg-paper text-muted" : expected === "home" ? "bg-brand/10 text-brand-dark" : "bg-ink/5 text-ink"}`}>{expected === "off" ? "Non-working day" : `Expected: ${expected}`}</span>
         </div>
-        <CheckInPanel checkedIn={!!openSession} expected={expected} sessionLabel={sessionLabel} />
+        <CheckInPanel checkedIn={!!openSession} expected={expected} sessionLabel={sessionLabel} theme={brand.branded ? { primary: brand.primary, onPrimary: brand.onPrimary } : undefined} />
       </section>
 
       {openSession && <PresenceWatcher timezone={org.timezone} />}
@@ -128,6 +137,7 @@ export default async function StaffApp() {
         />
       </div>}
       <p className="mt-5 text-center text-xs leading-5 text-muted">Check in only at a manager-approved office or your approved home on days scheduled for that place. This is not unrestricted “work from anywhere” tracking.</p>
+      {org.logo_url && <p className="mt-3 text-center text-[11px] text-muted">Powered by 5ime</p>}
     </main>
   );
 }

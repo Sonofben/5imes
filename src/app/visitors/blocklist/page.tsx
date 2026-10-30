@@ -5,6 +5,8 @@ import { readFlash } from "@/lib/flash";
 import { visitTime } from "@/lib/visitors";
 import { blockVisitor, unblockVisitor } from "../actions";
 
+import { PlanLock } from "@/components/PlanLock";
+import { visitorTier } from "@/lib/plans";
 export const dynamic = "force-dynamic";
 
 /** People who must not be let in. Matching ignores capitals, spaces and phone formatting. */
@@ -13,6 +15,12 @@ export default async function BlocklistPage({ searchParams }: { searchParams: Pr
   // Reception-only staff go back to the desk; admins must also pass two-factor (requireMember admin).
   if (!(await requireMember({ desk: true })).isAdmin) redirect("/visitors");
   const { supabase, org } = await requireMember({ admin: true });
+  if ((await visitorTier(supabase, org.id)) !== "premium") {
+    return <PlanLock isAdmin plan="Premium" title="The visitor blocklist is part of Premium" points={[
+      "Keep a list of people who must not be let in.",
+      "Reception is warned automatically when one of them checks in, by name, email or phone.",
+    ]} />;
+  }
   const flash = readFlash(sp);
   const { data: rows } = await supabase.from("visitor_blocklist").select("id,name,email,phone,reason,created_at").eq("org_id", org.id).order("created_at", { ascending: false });
   return (

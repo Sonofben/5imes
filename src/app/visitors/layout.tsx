@@ -4,6 +4,8 @@ import { CompanyMark } from "@/components/CompanyMark";
 import { ModuleSwitch } from "@/components/ModuleSwitch";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { VisitorsNav } from "./VisitorsNav";
+import { PlanLock } from "@/components/PlanLock";
+import { visitorTier } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -14,15 +16,15 @@ export const dynamic = "force-dynamic";
  */
 export default async function VisitorsLayout({ children }: { children: React.ReactNode }) {
   const { supabase, org, isAdmin, isViewer } = await requireMember({ desk: true });
-  const [{ data: premium }, { count: waiting }] = await Promise.all([
-    supabase.rpc("org_has_premium", { p_org: org.id }),
+  const [tier, { count: waiting }] = await Promise.all([
+    visitorTier(supabase, org.id),
     supabase.from("visits").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "waiting"),
   ]);
   const items = [
     { href: "/visitors", label: "Desk" },
     { href: "/visitors/invitations", label: "Invitations" },
     ...(isViewer ? [{ href: "/visitors/log", label: "Visitor log" }, { href: "/visitors/reports", label: "Reports" }] : []),
-    ...(isAdmin ? [{ href: "/visitors/blocklist", label: "Blocklist" }, { href: "/visitors/settings", label: "Settings" }] : []),
+    ...(isAdmin ? [{ href: "/visitors/blocklist", label: tier === "premium" ? "Blocklist" : "Blocklist · Premium" }, { href: "/visitors/settings", label: "Settings" }] : []),
   ];
 
   return (
@@ -40,24 +42,19 @@ export default async function VisitorsLayout({ children }: { children: React.Rea
         </div>
       </header>
       <div className="print:hidden"><AnnouncementBanner supabase={supabase} /></div>
-      {premium ? (
+      {tier !== "none" ? (
         <div className="space-y-6 pt-4">
           <VisitorsNav items={items} waiting={waiting ?? 0} />
           <main className="min-w-0">{children}</main>
         </div>
       ) : (
         <main className="pt-6">
-          <section className="card max-w-2xl space-y-3">
-            <p className="eyebrow">Visitors</p>
-            <h1 className="text-xl font-bold">Visitor management is part of the Premium plan</h1>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-              <li>Invite visitors: they get the office address, a map and an “I’ve arrived” check-in link.</li>
-              <li>Walk-ins scan a QR poster at reception and fill in their details on their own phone.</li>
-              <li>Reception admits each visitor from one desk screen; the host gets an email.</li>
-              <li>Who’s on site for fire drills, a blocklist, reports and an audit trail for NDPA records.</li>
-            </ul>
-            {isAdmin ? <Link href="/admin/billing" className="btn-primary inline-flex">Upgrade to Premium</Link> : <p className="text-sm text-muted">Ask an admin to upgrade under Billing.</p>}
-          </section>
+          <PlanLock isAdmin={isAdmin} plan="Pro" title="Visitor management is part of the Pro and Premium plans" points={[
+            "Invite visitors: they get the office address, a map and an “I’ve arrived” check-in link.",
+            "Walk-ins scan a QR poster at reception and fill in their details on their own phone.",
+            "Reception admits each visitor from one desk screen; the host gets an email.",
+            "Pro: one office, up to 100 visits a month. Premium: every office, unlimited, plus the reception tablet, fire-drill roll call, blocklist and reports.",
+          ]} />
         </main>
       )}
     </div>

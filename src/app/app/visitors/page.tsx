@@ -14,7 +14,7 @@ const LABEL: Record<string, string> = { expected: "Expected", on_site: "Arrived"
 export default async function MyVisitors({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const flash = readFlash(await searchParams);
   const { supabase, org, me } = await requireMember();
-  const { data: premium } = await supabase.rpc("org_has_premium", { p_org: org.id });
+  const { data: premium } = await supabase.rpc("org_has_visitors", { p_org: org.id });
   const [{ data: offices }, { data: visits }] = await Promise.all([
     supabase.from("locations").select("id,name").eq("org_id", org.id).order("name"),
     supabase.from("visits").select("id,visitor_name,visitor_company,status,expected_at,signed_in_at,code,location_id")
@@ -26,7 +26,7 @@ export default async function MyVisitors({ searchParams }: { searchParams: Promi
       <Link href="/app" className="text-sm text-muted underline">← Back</Link>
       <h1 className="page-heading">My visitors</h1>
       <Flash {...flash} />
-      {!premium ? <p className="card text-sm text-muted">Visitor management isn’t switched on for {org.name}. An admin can turn it on with the Premium plan.</p> : <>
+      {!premium ? <p className="card text-sm text-muted">Visitor management isn’t switched on for {org.name}. An admin can turn it on with the Pro or Premium plan.</p> : <>
         {(offices ?? []).length > 0
           ? <InviteFormCard action={inviteMyVisitor} offices={offices ?? []} meId={me.id} today={todayIn(org.timezone)} />
           : <p className="card text-sm text-muted">Your company hasn’t added an office yet.</p>}

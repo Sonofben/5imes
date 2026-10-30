@@ -78,3 +78,28 @@ function colourDistance(a: string, b: string) {
   const [r1, g1, b1] = rgb(a), [r2, g2, b2] = rgb(b);
   return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
 }
+
+/** How colourful a colour is (0 = grey, 1 = fully saturated). */
+export function saturation(hex: string) {
+  const [r, g, b] = rgb(hex).map((v) => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === min) return 0;
+  const l = (max + min) / 2;
+  return (max - min) / (l > 0.5 ? 2 - max - min : max + min);
+}
+
+/**
+ * Give the logo's colours their jobs. The palette comes most-used first. The main colour is the
+ * most-used colour that has real colour in it (not grey, not near-white); if the logo is all
+ * greys or black, that colour is used as it is. The accent is the next colour that looks clearly
+ * different. Returns nulls when the logo had nothing usable.
+ */
+export function pickBrandColours(palette: string[]): { main: string | null; accent: string | null } {
+  const usable = palette.filter((c) => isHex(c) && luminance(c) < 0.85);
+  const colourful = usable.filter((c) => saturation(c) >= 0.25);
+  const main = colourful[0] ?? usable[0] ?? null;
+  if (!main) return { main: null, accent: null };
+  const rest = (colourful.length > 1 ? colourful : usable).filter((c) => c !== main);
+  const accent = rest.find((c) => colourDistance(c, main) > 90) ?? null;
+  return { main, accent };
+}

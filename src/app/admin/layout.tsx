@@ -4,12 +4,14 @@ import { CompanyMark } from "@/components/CompanyMark";
 import { AdminNav } from "./AdminNav";
 import { ModuleSwitch } from "@/components/ModuleSwitch";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { brandTheme } from "@/lib/brand";
+import { BrandShape, parseOrNull } from "@/lib/jsonShapes";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { supabase, org, isAdmin, me } = await requireMember({ viewer: true });
-  const [{ count: pendingPeople }, { count: pendingHomes }, { data: sub }, { count: pendingCorrections }, { count: pendingPlaces }] = await Promise.all([
+  const [{ count: pendingPeople }, { count: pendingHomes }, { data: sub }, { count: pendingCorrections }, { count: pendingPlaces }, { data: brandRaw }] = await Promise.all([
     supabase.from("members").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending"),
     isAdmin
       ? supabase.from("member_private_locations").select("member_id", { count: "exact", head: true }).eq("org_id", org.id).not("home_req_lat", "is", null)
@@ -18,7 +20,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     supabase.from("attendance_correction_requests").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending"),
     // RLS limits this to people the viewer line-manages (or everyone, for admins).
     supabase.from("work_location_requests").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending").neq("member_id", me.id),
+    supabase.rpc("my_org_brand"),
   ]);
+  // Pro and Premium: the header carries the company's colours (my_org_brand returns none on Basic).
+  const brand = brandTheme(parseOrNull(BrandShape, brandRaw, "admin/brand"));
 
   let banner: React.ReactNode = null;
   if (org.suspended_at) {
@@ -39,17 +44,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 pb-12 sm:px-6 lg:px-8">
-      <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-line py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <CompanyMark name={org.name} logoUrl={org.logo_url} href="/admin" />
-          <span className="hidden truncate border-l border-line pl-3 text-sm font-medium text-muted md:inline">{org.name}</span>
-          <ModuleSwitch current="attendance" attendanceHref="/admin" />
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link href="/app" className="btn-ghost btn-sm">My check-in</Link>
-          <form action="/auth/signout" method="post"><button className="btn-ghost btn-sm">Sign out</button></form>
-        </div>
-      </header>
+      {brand.branded ? (
+        <header className="-mx-4 flex min-h-[72px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8" style={{ background: brand.primary, color: brand.onPrimary, borderBottom: `4px solid ${brand.accent}` }}>
+          <div className="flex min-w-0 items-center gap-3">
+            <CompanyMark name={org.name} logoUrl={org.logo_url} href="/admin" onBrand />
+            <span className="hidden truncate border-l border-current/30 pl-3 text-sm font-semibold md:inline">{org.name}</span>
+            <span className="rounded-xl bg-white p-0.5 text-ink"><ModuleSwitch current="attendance" attendanceHref="/admin" /></span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/app" className="rounded-xl border border-current/30 px-3 py-1.5 text-sm font-semibold">My check-in</Link>
+            <form action="/auth/signout" method="post"><button className="rounded-xl border border-current/30 px-3 py-1.5 text-sm font-semibold">Sign out</button></form>
+          </div>
+        </header>
+      ) : (
+        <header className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 border-b border-line py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <CompanyMark name={org.name} logoUrl={org.logo_url} href="/admin" />
+            <span className="hidden truncate border-l border-line pl-3 text-sm font-medium text-muted md:inline">{org.name}</span>
+            <ModuleSwitch current="attendance" attendanceHref="/admin" />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/app" className="btn-ghost btn-sm">My check-in</Link>
+            <form action="/auth/signout" method="post"><button className="btn-ghost btn-sm">Sign out</button></form>
+          </div>
+        </header>
+      )}
       <AnnouncementBanner supabase={supabase} />
       {banner && (
         <div role="status" className="my-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ead8c0] bg-[#fff9ef] px-4 py-3 text-sm text-ink">

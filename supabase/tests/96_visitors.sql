@@ -38,15 +38,18 @@ select test.ok(position('''premium''' in pg_get_functiondef('public.prepare_pays
 select test.ok(position('''premium''' in pg_get_functiondef('public.replace_schedule(uuid,uuid,jsonb)'::regprocedure)) > 0,
   'Premium includes Pro features (per-person schedules)');
 select test.ok(public.org_has_premium(current_setting('test.vorg')::uuid), 'A company on its free trial can use visitor management');
-update public.subscriptions set plan = 'pro', status = 'active', trial_ends_at = null,
+update public.subscriptions set plan = 'basic', status = 'active', trial_ends_at = null,
        current_period_start = now() - interval '1 day', current_period_end = now() + interval '30 days', seats_paid = 10
  where org_id = current_setting('test.vorg')::uuid;
-select test.ok(not public.org_has_premium(current_setting('test.vorg')::uuid), 'A paid Pro company does not have visitor management');
+select test.ok(not public.org_has_visitors(current_setting('test.vorg')::uuid), 'A paid Basic company does not have visitor management');
 set role authenticated;
 select test.as_console('00000000-0000-0000-0000-00000000f901', 'boss@visit.ng');
 select test.blocked(format($$select public.vms_invite(%L, 'Tolu Ade', null, null, null, null, now() + interval '1 hour')$$, current_setting('test.vloc')),
-  'Premium plan', 'Pro companies are told visitor management is a Premium feature');
+  'Pro and Premium', 'Basic companies are told visitor management is a Pro and Premium feature');
 reset role;
+update public.subscriptions set plan = 'pro' where org_id = current_setting('test.vorg')::uuid;
+select test.ok(public.org_has_visitors(current_setting('test.vorg')::uuid) and not public.org_has_premium(current_setting('test.vorg')::uuid),
+  'A paid Pro company has visitor management, but not the Premium extras');
 update public.subscriptions set plan = 'premium' where org_id = current_setting('test.vorg')::uuid;
 select test.ok(public.org_has_premium(current_setting('test.vorg')::uuid), 'A paid Premium company has visitor management');
 

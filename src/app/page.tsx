@@ -126,9 +126,19 @@ export default async function Home() {
 
       <section id="visitors">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
-          <div className="flex flex-wrap items-end justify-between gap-5"><div className="max-w-2xl"><p className="eyebrow">Visitor management · Premium</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Welcome visitors the same way you manage your team.</h2></div><p className="max-w-md text-sm leading-6 text-muted">Invite a guest or let walk-ins scan the poster at reception. They check in on their phone, reception admits them, and the host is told — all in the same workspace as attendance.</p></div>
+          <div className="flex flex-wrap items-end justify-between gap-5"><div className="max-w-2xl"><p className="eyebrow">Visitor management · Pro and Premium</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Welcome visitors the same way you manage your team.</h2></div><p className="max-w-md text-sm leading-6 text-muted">Invite a guest or let walk-ins scan the poster at reception. They check in on their phone, reception admits them, and the host is told — all in the same workspace as attendance.</p></div>
           <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{visitorFeatures.map((feature) => <article key={feature.mark} className="rounded-2xl border border-line bg-white p-5"><p className="text-[11px] font-bold tracking-[0.12em] text-brand-dark">{feature.mark}</p><h3 className="mt-3 font-bold">{feature.title}</h3><p className="mt-1.5 text-sm leading-6 text-muted">{feature.text}</p></article>)}</div>
-          <p className="mt-6 text-sm text-muted">Included in Premium and in every free trial. Visitors are free — only your team uses seats.</p>
+          <p className="mt-6 text-sm text-muted">Pro covers one office and up to 100 visits a month; Premium covers every office with no limit, plus the reception tablet, roll call, blocklist and reports. Included in every free trial. Visitors are free — only your team uses seats.</p>
+        </div>
+      </section>
+
+      <section id="branding">
+        <div className="mx-auto max-w-7xl px-5 pb-16 sm:px-8 sm:pb-20">
+          <div className="grid gap-6 rounded-2xl border border-line bg-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
+            <div><p className="eyebrow">Your brand · Pro and Premium</p><h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Your staff see your company, not ours.</h2>
+              <p className="mt-3 text-sm leading-6 text-muted">Upload your logo and 5ime picks your brand colours from it, keeping every screen easy to read.</p></div>
+            <ul className="grid gap-2 text-sm sm:grid-cols-2">{["Your sign-in page at 5imes.click/your-company", "The staff app and admin area in your colours", "Your logo as the app icon on staff phones", "Your logo and colours on visitor pages and emails"].map((t) => <li key={t} className="flex gap-2"><span aria-hidden className="font-bold text-ok">✓</span><span>{t}</span></li>)}</ul>
+          </div>
         </div>
       </section>
 
@@ -137,12 +147,12 @@ export default async function Home() {
           <div className="max-w-2xl"><p className="eyebrow">Transparent per-seat pricing</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Simple plans. No long-term discount math.</h2><p className="mt-3 text-sm leading-6 text-muted">Pick the term that fits your budget. Active and invited team members both use a seat. Add seats mid-term and pay only for the remaining time.</p></div>
           <p className="mt-4 text-sm text-muted">Every organization starts with the {TRIAL_DAYS}-day Pro trial, then chooses Basic, Pro or Premium.</p>
           <div className="mt-6 grid gap-4 lg:grid-cols-3">{Object.values(PLANS).map((plan) => <article key={plan.id} className={`rounded-2xl border bg-[#faf9f6] p-5 sm:p-6 ${plan.id === "pro" ? "border-ink" : "border-line"}`}>
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="eyebrow">{plan.id === "basic" ? "For one location" : plan.id === "premium" ? "With visitor management" : "For growing teams"}</p><h3 className="mt-1 text-2xl font-bold">{plan.name}</h3><p className="mt-1 max-w-md text-sm text-muted">{plan.blurb}</p></div><p className="text-right"><span className="text-3xl font-extrabold tabular-nums">{naira(plan.pricePerSeat)}</span><span className="block text-xs text-muted">per seat / month</span></p></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="eyebrow">{plan.id === "basic" ? `Up to ${plan.maxSeats ?? 15} staff · one office` : plan.id === "premium" ? "Visitors at every office" : "For growing teams"}</p><h3 className="mt-1 text-2xl font-bold">{plan.name}</h3><p className="mt-1 max-w-md text-sm text-muted">{plan.blurb}</p></div><p className="text-right"><span className="text-3xl font-extrabold tabular-nums">{naira(plan.pricePerSeat)}</span><span className="block text-xs text-muted">per seat / month</span></p></div>
             <ul className="mt-5 grid gap-2 sm:grid-cols-2">{plan.features.map((feature) => <li key={feature} className="flex gap-2 text-sm"><span aria-hidden className="font-bold text-ok">✓</span><span>{feature}</span></li>)}</ul>
             <div className="mt-5 border-t border-line pt-4"><p className="eyebrow">Upfront price per seat</p><div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">{cycles.map((cycle) => <div key={cycle.label} className="rounded-xl border border-line bg-white px-3 py-2.5"><p className="text-[10px] font-semibold uppercase tracking-wide text-muted">{cycle.label}</p><p className="mt-1 text-sm font-bold tabular-nums">{naira(plan.pricePerSeat * cycle.months)}</p><p className="text-[10px] text-muted">{cycle.months} month{cycle.months === 1 ? "" : "s"}</p></div>)}</div></div>
             <Link href="/login" className={`${plan.id === "pro" ? "btn-brand" : "btn-primary"} mt-5 w-full`}>{plan.id === "pro" ? "Start Pro trial" : `Start trial · choose ${plan.name} after`}</Link>
           </article>)}</div>
-          <p className="mt-5 text-xs leading-5 text-muted">For example, 10 Basic seats are ₦2,500 monthly or ₦7,500 quarterly. Biannually means 6 months (₦15,000 for 10 Basic seats); yearly means 12 months (₦30,000). Totals are seats × per-seat monthly price × months. Pay per term with Paystack (card, bank transfer or USSD). Nothing renews automatically unless you choose to; we remind you before your term ends.</p>
+          <p className="mt-5 text-xs leading-5 text-muted">For example, 10 Basic seats are {naira(PLANS.basic.pricePerSeat * 10)} monthly or {naira(PLANS.basic.pricePerSeat * 30)} quarterly. Biannually means 6 months ({naira(PLANS.basic.pricePerSeat * 60)} for 10 Basic seats); yearly means 12 months ({naira(PLANS.basic.pricePerSeat * 120)}). Prices are per staff member per month. Totals are seats × per-seat monthly price × months. Pay per term with Paystack (card, bank transfer or USSD). Nothing renews automatically unless you choose to; we remind you before your term ends.</p>
         </div>
       </section>
 

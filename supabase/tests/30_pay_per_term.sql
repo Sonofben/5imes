@@ -21,7 +21,7 @@ select test.blocked($$select prepare_paystack_subscription('5ime-ppt-0', 'pro', 
 select test.blocked($$select prepare_paystack_subscription('5ime-ppt-0', 'basic', (select seats from test.snap), 3, true)$$,
                     'switched on when the current paid term ends', 'Auto-renew cannot start in the middle of a paid term');
 select test.ok((prepare_paystack_subscription('5ime-ppt-1', 'basic', (select seats from test.snap), 3) ->> 'amount_kobo')::bigint
-               = (select seats from test.snap) * 250 * 3 * 100, 'Admin can pay ahead for 3 months; amount = seats × ₦250 × 3');
+               = (select seats from test.snap) * public.plan_price('basic') * 3 * 100, 'Admin can pay ahead for 3 months; amount = seats × Basic price × 3');
 select test.blocked($$select prepare_paystack_subscription('5ime-ppt-2', 'basic', (select seats from test.snap), 1)$$,
                     'already pending', 'Only one pending payment at a time');
 
@@ -43,8 +43,8 @@ select test.ok(apply_paystack_payment('5ime-random-ref', 'success', 75000, 'NGN'
 reset role;
 set role authenticated;
 select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
-select test.ok((prepare_paystack_seat_increase('5ime-seat-1', (select seats from test.snap) + 2) ->> 'amount_kobo')::bigint = 2 * 250 * 3 * 100,
-               'Added seats cost the full price for the term: 2 × ₦250 × 3 months');
+select test.ok((prepare_paystack_seat_increase('5ime-seat-1', (select seats from test.snap) + 2) ->> 'amount_kobo')::bigint = 2 * public.plan_price('basic') * 3 * 100,
+               'Added seats cost the full price for the term: 2 × Basic price × 3 months');
 reset role;
 set role service_role;
 select test.ok((apply_paystack_payment('5ime-seat-1', 'success', (select amount_kobo from payments where reference = '5ime-seat-1'), 'NGN') ->> 'ok')::boolean,

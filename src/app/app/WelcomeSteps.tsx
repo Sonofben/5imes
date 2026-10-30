@@ -51,7 +51,7 @@ export function WelcomeSteps({ companyName, logoUrl, hasHomeDays, homeDone }: { 
   return (
     <section className="card mb-4 space-y-4 border-brand/30">
       <div className="flex items-center gap-3">
-        {logoUrl && <img src={logoUrl} alt="" className="h-10 w-auto max-w-[120px] object-contain" />}
+        {logoUrl && <span className="flex h-11 shrink-0 items-center rounded-xl border border-line bg-white px-2 py-1"><img src={logoUrl} alt="" className="h-7 w-auto max-w-[96px] object-contain" /></span>}
         <div><p className="eyebrow">Welcome to {companyName}</p><h2 className="text-lg font-bold">Let&apos;s get you set up · step {step + 1} of {steps.length}</h2></div>
       </div>
       {current === "location" && <div className="space-y-3"><p className="text-sm text-muted">5ime checks you&apos;re at your office or approved home when you check in. Allow location when your phone asks.</p><button onClick={allowLocation} disabled={busy} className="btn-primary w-full">{busy ? "Checking…" : "Allow location"}</button></div>}

@@ -60,6 +60,8 @@ bash ~/vps-check.sh
    15. `supabase/migrations/0015_premium_visitor_management.sql`
    16. `supabase/migrations/0016_visitor_checkin_desk_audit.sql`
    17. `supabase/migrations/0017_brand_kit.sql`
+   18. `supabase/migrations/0018_plan_tiers.sql`
+   19. `supabase/migrations/0019_brand_level.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -316,11 +318,19 @@ Errors are always written to `docker logs fivetime-web` as JSON lines with a ref
 same code users see on screen). To also collect them in a dashboard, run GlitchTip (free,
 self-hosted) or use Sentry, and put the project DSN in `.env` as `ERROR_TRACKING_DSN=…`, then `docker compose up -d`.
 
-## 12. Visitor management (Premium plan)
+## 12. Visitor management (Pro and Premium)
 
-Migrations 0015 and 0016 add the **Premium** plan (₦1,000 per seat to start — change it any time in
-Global Admin → Plans & pricing) and the **Visitors** module (header switch: *Attendance | Visitors*).
-Companies on a free trial can use it too. `scripts/deploy.sh` applies the migrations.
+Migrations 0015 and 0016 add the **Visitors** module (header switch: *Attendance | Visitors*).
+Migration 0018 sets the October 2026 plans (change prices any time in Global Admin → Plans & pricing):
+
+| | Basic ₦300 | Pro ₦600 | Premium ₦1,000 |
+|---|---|---|---|
+| Staff | up to 15 | unlimited | unlimited |
+| Branding | logo in the app | full brand (0019) | full brand |
+| Visitors | — | one office, 100 visits a month | every office, unlimited, tablet, roll call, blocklist, reports |
+
+The limits are enforced by the database (triggers on members, payments, subscriptions, visits and
+visitor_links). Companies on a free trial get everything. `scripts/deploy.sh` applies the migrations.
 
 How it works:
 - **Invited visitors** get an email with the office address, a map, their code and an **“I’ve arrived — check in”**

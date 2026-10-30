@@ -24,7 +24,7 @@ select test.ok((public.public_plans() -> 'plans' -> 0 ->> 'pricePerSeat')::int =
 select test.ok((public.public_plans() ->> 'trial_days')::int = 21, 'New trial length is public');
 reset role;
 select test.ok((select count(*) from public.platform_audit where action in ('pricing.update','platform.settings')) = 2, 'Both changes are logged');
-select test.ok(public.plan_price('basic') = 300 and public.plan_price('pro') = 500, 'plan_price reads the table');
+select test.ok(public.plan_price('basic') = 300 and public.plan_price('pro') = 600, 'plan_price reads the table');
 select test.ok(position('public.plan_price(p_plan)' in pg_get_functiondef('public.prepare_paystack_subscription(text,text,integer,integer,boolean)'::regprocedure)) > 0,
   'Checkout pricing now uses the settings table');
 select test.ok(position('platform_trial_days' in pg_get_functiondef('public.create_organization(text)'::regprocedure)) > 0,

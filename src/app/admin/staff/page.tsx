@@ -4,6 +4,8 @@ import { inviteOne, inviteBulk, setStatus, setRole, removeMember, reviewHome, se
 import { MapView } from "@/components/maps/MapView";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
+import { UpgradeTour } from "@/components/UpgradeTour";
+import { parseOrNull, PlanUsage } from "@/lib/jsonShapes";
 import { ConfirmAction } from "./ConfirmAction";
 
 export const dynamic = "force-dynamic";
@@ -19,16 +21,20 @@ type PrivateLocationRow = {
   home_req_address: string | null;
 };
 
-export default async function StaffPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
+export default async function StaffPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string; upgrade?: string }> }) {
   const sp = await searchParams;
   const { supabase, org, isAdmin, me } = await requireMember({ viewer: true });
-  const [{ data }, { data: privateRows }, { data: sub }] = await Promise.all([
+  const [{ data }, { data: privateRows }, { data: sub }, { data: usageRaw }] = await Promise.all([
     supabase.from("members").select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,line_manager_id").eq("org_id", org.id).order("created_at"),
     isAdmin
       ? supabase.from("member_private_locations").select("member_id,home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_address,home_req_address").eq("org_id", org.id)
       : Promise.resolve({ data: [] as PrivateLocationRow[] }),
     isAdmin ? supabase.from("subscriptions").select("plan").eq("org_id", org.id).maybeSingle<Pick<Subscription, "plan">>() : Promise.resolve({ data: null }),
+    isAdmin ? supabase.rpc("my_plan_usage") : Promise.resolve({ data: null }),
   ]);
+  const usage = usageRaw ? parseOrNull(PlanUsage, usageRaw, "admin/staff/usage") : null;
+  const staffLimit = usage?.max_staff ?? null;
+  const atLimit = staffLimit !== null && (usage?.staff ?? 0) >= staffLimit;
   const privateByMember = new Map((privateRows ?? []).map((row) => [row.member_id, row]));
   const members = (data ?? []).map((m) => {
     const location = privateByMember.get(m.id);
@@ -113,7 +119,15 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         </div>
       )}
 
-      {isAdmin && <div className="grid gap-4 xl:grid-cols-2">
+      {isAdmin && atLimit && <section className="card flex flex-wrap items-center justify-between gap-4 border-2 border-ink">
+        <div><p className="eyebrow">Basic plan</p><h2 className="mt-1 text-lg font-bold">You’ve reached {staffLimit} staff</h2>
+          <p className="mt-1 text-sm text-muted">Basic includes up to {staffLimit} staff. Upgrade to Pro to add more people — Pro has no staff limit.</p></div>
+        <UpgradeTour reason="staff" openAtStart={sp.upgrade === "staff"} />
+      </section>}
+      {isAdmin && !atLimit && sp.upgrade === "staff" && <div className="flex justify-end"><UpgradeTour reason="staff" openAtStart /></div>}
+      {isAdmin && !atLimit && staffLimit !== null && (usage?.staff ?? 0) >= staffLimit - 2 && <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">You’re using {usage?.staff} of the {staffLimit} staff places on Basic.</p>}
+
+      {isAdmin && !atLimit && <div className="grid gap-4 xl:grid-cols-2">
         <form action={inviteOne} className="card space-y-4">
           <div><p className="eyebrow">Add one</p><h2 className="mt-1 text-lg font-bold">Invite a person</h2><p className="mt-1 text-sm text-muted">Invites count toward your paid-seat allowance.</p></div>
           <div><label className="label" htmlFor="invite-email">Work email</label><input id="invite-email" name="email" type="email" required className="input" placeholder={`name@${org.domain}`} /></div>

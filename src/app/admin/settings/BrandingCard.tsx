@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { brandTheme, contrast, isHex, paletteFromPixels } from "@/lib/brand";
+import { brandTheme, contrast, isHex, paletteFromPixels, pickBrandColours } from "@/lib/brand";
+import { UpgradeTour } from "@/components/UpgradeTour";
 import { saveBranding } from "./actions";
 
 /** Read the colours out of an image the admin chose (or the current logo). */
@@ -25,6 +26,31 @@ function colours(src: string, onDone: (p: string[]) => void) {
 }
 
 /**
+ * Turn any chosen logo (PNG, JPG, WebP or SVG) into a PNG of at most 512 px before upload.
+ * An SVG is drawn as a picture, so anything hidden in it (scripts, links) is dropped, and the
+ * server only ever receives a plain PNG.
+ */
+function toPng(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 512, h = img.naturalHeight || 512;
+      const scale = Math.min(1, 512 / Math.max(w, h));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(w * scale)); c.height = Math.max(1, Math.round(h * scale));
+      const ctx = c.getContext("2d");
+      if (!ctx) { URL.revokeObjectURL(url); reject(new Error("canvas")); return; }
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob((b) => (b ? resolve(new File([b], "logo.png", { type: "image/png" })) : reject(new Error("png"))), "image/png");
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image")); };
+    img.src = url;
+  });
+}
+
+/**
  * Brand kit: company link, logo, and the two colours used on the staff sign-in page, the staff app,
  * visitors' phone pages, the reception poster and tablet, and invitation emails. Readable text is
  * chosen automatically. Colours are part of Pro and Premium (the database enforces this too).
@@ -36,8 +62,35 @@ export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, 
   const [palette, setPalette] = useState<string[]>([]);
   const [main, setMain] = useState(brandColor ?? "");
   const [accent, setAccent] = useState(accentColor ?? "");
+  const [autoPicked, setAutoPicked] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { if (preview) colours(preview, setPalette); }, [preview]);
+  async function chooseLogo(f: File | undefined) {
+    setFileError(null);
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { setFileError("That file is too big. Choose a logo under 5 MB."); return; }
+    try {
+      const png = await toPng(f);
+      if (png.size > 1024 * 1024) { setFileError("That logo is too detailed to use. Try a simpler PNG or SVG."); return; }
+      const dt = new DataTransfer(); dt.items.add(png);
+      if (fileRef.current) fileRef.current.files = dt.files;
+      const url = URL.createObjectURL(png);
+      setPreview(url);
+      colours(url, (p) => {
+        setPalette(p);
+        if (!colorsAllowed) return;
+        const picked = pickBrandColours(p);
+        if (picked.main) { setMain(picked.main); setAccent(picked.accent ?? ""); setAutoPicked(true); }
+      });
+    } catch {
+      setFileError("We couldn’t read that file. Upload a PNG, JPG, WebP or SVG logo.");
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  // Colours of the logo already saved (a newly chosen logo is read in chooseLogo).
+  useEffect(() => { if (logoUrl) colours(logoUrl, setPalette); }, [logoUrl]);
   const theme = useMemo(() => brandTheme({ primary: main || null, accent: accent || null }), [main, accent]);
   const ratio = contrast(theme.primary, theme.onPrimary);
   const choices = [...new Set([...palette, ...(isHex(brandColor) ? [brandColor] : []), ...(isHex(accentColor) ? [accentColor] : [])])];
@@ -50,7 +103,7 @@ export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, 
   return (
     <form action={saveBranding} className="card space-y-6">
       <div><p className="eyebrow">Branding</p><h2 className="mt-1 text-lg font-bold">Your brand kit</h2>
-        <p className="mt-1 text-sm text-muted">Your logo and colours appear on your staff sign-in page, the staff app, visitors’ phone pages, the reception poster and tablet, and invitation emails. Dashboards keep 5imes’ neutral colours so data stays easy to read.</p></div>
+        <p className="mt-1 text-sm text-muted">Upload your logo and 5ime picks your brand colours from it. On Pro and Premium they’re used on your staff sign-in page, the staff app, the admin area, the app icon on staff phones, the browser tab, visitors’ pages, the reception poster and emails. On Basic your logo shows in the app and admin area. Green, amber and red always keep their meaning: on time, late, absent.</p></div>
 
       <div>
         <label className="label" htmlFor="slug">Company link</label>
@@ -66,14 +119,24 @@ export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, 
           {preview ? <img src={preview} alt="Logo" className="max-h-full max-w-full object-contain" /> : <span className="text-xs text-muted">No logo yet</span>}
         </div>
         <div>
-          <label className="label" htmlFor="logo">Logo (PNG, JPG or WebP, max 1 MB)</label>
-          <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" className="input py-2"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) setPreview(URL.createObjectURL(f)); }} />
+          <label className="label" htmlFor="logo">Upload your logo</label>
+          <input ref={fileRef} id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="input py-2"
+            onChange={(e) => { void chooseLogo(e.target.files?.[0]); }} />
+          <div className="mt-2 rounded-xl bg-paper px-3 py-2 text-xs leading-5 text-muted">
+            <b className="text-ink">Best: a PNG with a transparent background</b>, at least 500 px wide.<br />
+            Also accepted: SVG, JPG or WebP on a white background. SVG logos are turned into a PNG automatically.<br />
+            Avoid logos on a coloured or photo background — we read your brand colours from the logo.
+          </div>
+          {fileError && <p role="alert" className="mt-2 text-sm text-bad">{fileError}</p>}
           {logoUrl && <label className="mt-2 flex items-center gap-2 text-xs text-muted"><input type="checkbox" name="remove_logo" /> Remove current logo</label>}
         </div>
       </div>
 
-      {!colorsAllowed && <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">Your logo works on every plan. Brand colours are part of Pro and Premium — <Link href="/admin/billing" className="font-semibold underline">see plans</Link>.</p>}
+      {!colorsAllowed && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">
+        <p>Your logo shows in the app on every plan. Your colours on the sign-in page, app icon, browser tab and emails are part of Pro and Premium — <Link href="/admin/billing" className="font-semibold underline">see plans</Link>.</p>
+        <UpgradeTour reason="branding" label="See what Pro adds" />
+      </div>}
+      {autoPicked && colorsAllowed && <p className="rounded-xl bg-[#eef6f1] px-4 py-3 text-sm text-ok">We picked these colours from your logo. Check the preview and change them if you like, then save.</p>}
 
       <div className="space-y-4">
         {choices.length > 0 && <p className="text-sm text-muted">Colours from your logo — click to use them:</p>}

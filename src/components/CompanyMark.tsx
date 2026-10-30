@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 
-/** Company logo (or name) with a small "5ime" mark — used in the staff and admin portals. */
-export function CompanyMark({ name, logoUrl, href }: { name: string; logoUrl: string | null; href: string }) {
-  if (!logoUrl) return <Logo href={href} />;
+/**
+ * Company logo (or 5ime's, when there is none) for the staff and admin portals. The logo sits in a
+ * small white badge so any logo — even a solid coloured rectangle — reads well on light and
+ * brand-coloured headers without taking over the screen.
+ */
+export function CompanyMark({ name, logoUrl, href, onBrand = false }: { name: string; logoUrl: string | null; href: string; onBrand?: boolean }) {
+  if (!logoUrl) return onBrand ? <Link href={href} className="text-lg font-extrabold">{name}</Link> : <Logo href={href} />;
   return (
     <Link href={href} className="flex min-w-0 items-center gap-2">
-      <img src={logoUrl} alt={`${name} logo`} className="h-9 w-auto max-w-[140px] object-contain" />
-      <span className="hidden text-[10px] font-medium uppercase tracking-wider text-muted sm:inline">on 5ime</span>
+      <span className="flex h-10 items-center rounded-xl border border-black/5 bg-white px-2 py-1 shadow-sm">
+        <img src={logoUrl} alt={`${name} logo`} className="h-7 w-auto max-w-[120px] object-contain" />
+      </span>
     </Link>
   );
 }
