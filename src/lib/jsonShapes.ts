@@ -38,7 +38,7 @@ export const PublicPlans = z.object({
 });
 
 // report_presence()
-export const Presence = z.object({ status: str, departed_at: opt(str), request_status: opt(str) }).passthrough();
+export const Presence = z.object({ status: str, departed_at: opt(str), request_status: opt(str), closing: z.boolean().optional(), at: opt(str) }).passthrough();
 export type Presence = z.infer<typeof Presence>;
 
 // console_overview()

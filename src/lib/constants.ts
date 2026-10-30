@@ -19,7 +19,7 @@ export const PLANS = {
       "GPS check-in and check-out (200 m area)",
       "One weekly office/home schedule for everyone",
       "Late arrival and early exit tracking",
-      "Live “who’s in today” dashboard",
+      "Automatic check-out at closing time",
       "Nigerian public holidays built in",
       "Your logo in the app",
       "30 days of history, CSV export",
@@ -38,6 +38,7 @@ export const PLANS = {
       "Unlimited offices and branches, check-in area per office",
       "Schedules per person or team",
       "Managers and teams",
+      "Automatic check-in on arrival, overtime and company holidays",
       "Your full brand: colours, sign-in page, app icon and emails",
       "Visitor management at one office (up to 100 visits a month)",
       "Weak-GPS flags, device and IP records",
@@ -80,6 +81,10 @@ export const FLAG_LABELS: Record<string, string> = {
   home_not_set: "Home location not approved",
   corrected: "Time corrected after manager approval",
   left_unapproved: "Moved without approval (session ended)",
+  auto: "Automatic",
+  holiday: "Holiday work",
+  overtime: "Overtime",
+  overtime_cap: "Stopped at the latest overtime time",
 };
 
 const PUBLIC_DOMAINS = new Set([

@@ -19,6 +19,7 @@ export function AdminNav({ isAdmin, pendingPeople, pendingCorrections, pendingPl
       { label: "Operations", items: [
         { href: "/admin/locations", label: "Locations" },
         { href: "/admin/schedule", label: "Schedule" },
+        { href: "/admin/holidays", label: "Holidays" },
       ] },
       { label: "Organization", items: [
         { href: "/admin/settings", label: "Settings" },

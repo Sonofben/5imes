@@ -42,6 +42,10 @@ export type Org = {
   brand_color: string | null;
   accent_color?: string | null;
   suspended_at: string | null;
+  auto_check_in?: boolean;
+  auto_check_out?: boolean;
+  overtime_allowed?: boolean;
+  overtime_until?: string;
 };
 
 export type Subscription = {

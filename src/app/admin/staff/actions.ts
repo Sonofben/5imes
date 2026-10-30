@@ -124,3 +124,11 @@ export async function setLineManager(id: string, formData: FormData) {
   if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: manager ? "Line manager saved." : "Line manager cleared. Their requests go to admins." });
 }
+
+export async function setAutoCheckIn(memberId: string, on: boolean) {
+  const { supabase } = await requireMember({ admin: true });
+  if (!uuid.safeParse(memberId).success) back({ error: "Unknown person." });
+  const { error } = await supabase.rpc("admin_set_auto_check_in", { p_member: memberId, p_on: on });
+  if (error) back({ error: friendly(error, "admin/staff/auto") });
+  back({ msg: on ? "Automatic check-in is back on for this person." : "Automatic check-in is off for this person. They check in themselves." });
+}

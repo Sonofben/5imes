@@ -62,6 +62,7 @@ bash ~/vps-check.sh
    17. `supabase/migrations/0017_brand_kit.sql`
    18. `supabase/migrations/0018_plan_tiers.sql`
    19. `supabase/migrations/0019_brand_level.sql`
+   20. `supabase/migrations/0020_schedule_automation.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -565,3 +566,20 @@ Each app stays in its own house: one can be rebuilt or stopped without touching 
 | Check-ins always "Outside approved locations" | Re-pin the office from inside the building, or raise its radius (Pro). |
 | `nginx -t` fails after adding 5ime | Run `sudo rm /etc/nginx/sites-enabled/5ime && sudo nginx -t`. This puts Nginx back exactly as it was for CACTS. |
 | Users see "We can’t reach 5ime right now" | Their internet works but the site didn’t answer. Run `journalctl -t 5ime-watchdog -n 20`, `docker compose ps`, `sudo systemctl status nginx`, and check the uptime monitor’s history. |
+
+## 15. Schedule automation and holidays
+
+Migration 0020 adds automatic check-in, closing-time check-out, overtime and holidays
+(admins: **Settings → Automatic check-in and check-out**, **Holidays**; Global Admin: **Holidays**).
+
+- The rules run every 5 minutes inside the database with **pg_cron**. In Supabase, open
+  **Database → Extensions**, search **pg_cron** and switch it on, then run `scripts/deploy.sh` again
+  (the migration schedules the job if pg_cron is there). Check it with:
+  `select jobname, schedule from cron.job;` → `5ime-schedule-automation | */5 * * * *`.
+- Without pg_cron, the app runs the same rules whenever staff or admins open 5ime (at most every
+  3 minutes), so nothing breaks — check-outs just happen when someone next opens the app.
+- Islamic public holidays are entered as *Expected*. When the Federal Government announces the date,
+  confirm or move it in Global Admin → Holidays. Add any extra day the government declares there too.
+- Privacy: only the time and the kind of place (office / home / approved place) are kept for
+  automation, never coordinates, and they are deleted after 90 days.
+

@@ -165,6 +165,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      company_holidays: {
+        Row: {
+          id: string;
+          org_id: string;
+          day: string;
+          name: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          day: string;
+          name: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          day?: string;
+          name?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       kiosk_devices: {
         Row: {
           id: string;
@@ -331,6 +358,7 @@ export type Database = {
           mfa_last_enrolled_at: string | null;
           line_manager_id: string | null;
           can_reception: boolean;
+          auto_check_in_off: boolean;
         };
         Insert: {
           id?: string;
@@ -347,6 +375,7 @@ export type Database = {
           mfa_last_enrolled_at?: string | null;
           line_manager_id?: string | null;
           can_reception?: boolean;
+          auto_check_in_off?: boolean;
         };
         Update: {
           id?: string;
@@ -363,6 +392,7 @@ export type Database = {
           mfa_last_enrolled_at?: string | null;
           line_manager_id?: string | null;
           can_reception?: boolean;
+          auto_check_in_off?: boolean;
         };
         Relationships: [];
       };
@@ -383,6 +413,10 @@ export type Database = {
           suspended_at: string | null;
           archived_at: string | null;
           accent_color: string | null;
+          auto_check_in: boolean;
+          auto_check_out: boolean;
+          overtime_allowed: boolean;
+          overtime_until: string;
         };
         Insert: {
           id?: string;
@@ -400,6 +434,10 @@ export type Database = {
           suspended_at?: string | null;
           archived_at?: string | null;
           accent_color?: string | null;
+          auto_check_in?: boolean;
+          auto_check_out?: boolean;
+          overtime_allowed?: boolean;
+          overtime_until?: string;
         };
         Update: {
           id?: string;
@@ -417,6 +455,10 @@ export type Database = {
           suspended_at?: string | null;
           archived_at?: string | null;
           accent_color?: string | null;
+          auto_check_in?: boolean;
+          auto_check_out?: boolean;
+          overtime_allowed?: boolean;
+          overtime_until?: string;
         };
         Relationships: [];
       };
@@ -648,6 +690,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      presence_days: {
+        Row: {
+          member_id: string;
+          org_id: string;
+          local_date: string;
+          place: "office" | "home" | "elsewhere";
+          first_inside_at: string;
+          last_inside_at: string;
+          last_outside_at: string | null;
+        };
+        Insert: {
+          member_id: string;
+          org_id: string;
+          local_date: string;
+          place: "office" | "home" | "elsewhere";
+          first_inside_at: string;
+          last_inside_at: string;
+          last_outside_at?: string | null;
+        };
+        Update: {
+          member_id?: string;
+          org_id?: string;
+          local_date?: string;
+          place?: "office" | "home" | "elsewhere";
+          first_inside_at?: string;
+          last_inside_at?: string;
+          last_outside_at?: string | null;
+        };
+        Relationships: [];
+      };
       presence_departures: {
         Row: {
           id: string;
@@ -731,6 +803,27 @@ export type Database = {
         Update: {
           org_id?: string;
           paystack_email_token?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      public_holidays: {
+        Row: {
+          day: string;
+          name: string;
+          confirmed: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          day: string;
+          name: string;
+          confirmed?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          day?: string;
+          name?: string;
+          confirmed?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -1196,6 +1289,9 @@ export type Database = {
       };
     };
     Functions: {
+      admin_add_holiday: { Args: { p_day: string | null; p_name: string | null }; Returns: string };
+      admin_remove_holiday: { Args: { p_id: string | null }; Returns: undefined };
+      admin_set_auto_check_in: { Args: { p_member: string | null; p_on: boolean | null }; Returns: undefined };
       apply_paystack_payment: { Args: { p_reference: string | null; p_status: string | null; p_amount_kobo: number | null; p_currency: string | null; p_customer_code?: string | null; p_subscription_code?: string | null; p_plan_code?: string | null; p_email_token?: string | null }; Returns: Json };
       attendance_device_info: { Args: { p_from: string | null; p_to: string | null }; Returns: { attendance_id: string; ip: string; user_agent: string }[] };
       cancel_work_elsewhere: { Args: { p_request: string | null }; Returns: undefined };
@@ -1222,6 +1318,7 @@ export type Database = {
       console_payments: { Args: { p_from?: string | null; p_to?: string | null; p_status?: string | null; p_search?: string | null }; Returns: { reference: string; org_id: string; company: string; domain: string; provider: string; kind: string; status: string; plan: string; seats: number; months: number; amount_kobo: number; created_at: string; applied_at: string; note: string }[] };
       console_plans: { Args: Record<PropertyKey, never>; Returns: Json };
       console_rate_limits: { Args: Record<PropertyKey, never>; Returns: { bucket: string; who: string; company: string; hits: number; max_hits: number; window_start: string; window_seconds: number }[] };
+      console_remove_public_holiday: { Args: { p_day: string | null; p_reason: string | null }; Returns: undefined };
       console_require: { Args: { p_roles: string[] | null; p_reason?: string | null; p_need_reason?: boolean | null }; Returns: string };
       console_reset_mfa: { Args: { p_user: string | null; p_reason: string | null }; Returns: undefined };
       console_revenue: { Args: Record<PropertyKey, never>; Returns: Json };
@@ -1232,6 +1329,7 @@ export type Database = {
       console_set_plan: { Args: { p_org: string | null; p_plan: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
       console_set_plan_terms: { Args: { p_plan: string | null; p_name: string | null; p_price: number | null; p_blurb: string | null; p_features: string[] | null; p_max_locations: number | null; p_reason: string | null }; Returns: undefined };
       console_set_platform: { Args: { p_trial_days: number | null; p_maintenance: boolean | null; p_message: string | null; p_reason: string | null }; Returns: undefined };
+      console_set_public_holiday: { Args: { p_day: string | null; p_name: string | null; p_confirmed: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_suspended: { Args: { p_org: string | null; p_suspend: boolean | null; p_reason: string | null }; Returns: undefined };
       console_staff_list: { Args: { p_org: string | null }; Returns: { full_name: string; email: string; role: string; status: string; team: string; home_status: string; last_check_in: string }[] };
       console_team: { Args: Record<PropertyKey, never>; Returns: { user_id: string; email: string; role: string; created_at: string; last_sign_in_at: string; totp_enrolled: boolean }[] };
@@ -1246,6 +1344,7 @@ export type Database = {
       distance_m: { Args: { lat1: number | null; lng1: number | null; lat2: number | null; lng2: number | null }; Returns: number };
       end_session_at_departure: { Args: { p_departure: string | null }; Returns: undefined };
       grant_support_access: { Args: { p_hours: number | null }; Returns: string };
+      holiday_name: { Args: { p_org: string | null; p_date: string | null }; Returns: string };
       invite_member: { Args: { p_email: string | null; p_name: string | null; p_role?: string | null; p_team?: string | null }; Returns: string };
       invite_members_bulk: { Args: { p_members: Json | null }; Returns: number };
       is_console_staff: { Args: Record<PropertyKey, never>; Returns: boolean };
@@ -1306,6 +1405,7 @@ export type Database = {
       review_attendance_correction: { Args: { p_request_id: string | null; p_approve: boolean | null; p_note?: string | null }; Returns: undefined };
       review_home_location: { Args: { p_member: string | null; p_approve: boolean | null }; Returns: undefined };
       revoke_support_access: { Args: Record<PropertyKey, never>; Returns: undefined };
+      run_schedule_automation: { Args: Record<PropertyKey, never>; Returns: Json };
       set_line_manager: { Args: { p_member: string | null; p_manager: string | null }; Returns: undefined };
       set_paystack_subscription_cancelled: { Args: { p_subscription_code: string | null; p_cancelled: boolean | null; p_expected_updated_at?: string | null }; Returns: boolean };
       support_access_until: { Args: { p_org: string | null }; Returns: string };

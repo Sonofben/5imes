@@ -10,6 +10,22 @@ import { friendly } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
+async function saveAutomation(formData: FormData) {
+  "use server";
+  const { supabase, org } = await requireMember({ admin: true });
+  const until = String(formData.get("overtime_until") ?? "21:00");
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(until)) redirect(`/admin/settings?${flashQuery({ error: "Choose a valid latest overtime time." })}`);
+  // Pro features keep their saved values on Basic (the boxes are locked there), so upgrading later just works.
+  const { data: pro } = await supabase.rpc("org_has_visitors", { p_org: org.id });
+  const { error } = await supabase.from("organizations").update({
+    auto_check_out: formData.get("auto_check_out") === "on",
+    ...(pro ? { auto_check_in: formData.get("auto_check_in") === "on", overtime_allowed: formData.get("overtime_allowed") === "on", overtime_until: until } : {}),
+  }).eq("id", org.id);
+  if (error) redirect(`/admin/settings?${flashQuery({ error: friendly(error, "admin/settings/automation") })}`);
+  revalidatePath("/admin/settings");
+  redirect(`/admin/settings?${flashQuery({ msg: "Automation settings saved." })}`);
+}
+
 async function saveSettings(formData: FormData) {
   "use server";
   // The company always comes from the signed-in admin, never from the form.
@@ -43,10 +59,11 @@ const ZONES = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johanne
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { org, supabase } = await requireMember({ admin: true });
-  const [{ data: grants }, { data: supportLog }, { data: colorsAllowed }] = await Promise.all([
+  const [{ data: grants }, { data: supportLog }, { data: colorsAllowed }, { data: proFeatures }] = await Promise.all([
     supabase.from("support_access_grants").select("expires_at").is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("expires_at", { ascending: false }).limit(1),
     supabase.rpc("my_support_log"),
     supabase.rpc("org_has_brand_colors", { p_org: org.id }),
+    supabase.rpc("org_has_visitors", { p_org: org.id }),
   ]);
   const zones = ZONES.includes(org.timezone) ? ZONES : [...ZONES, org.timezone].sort();
 
@@ -66,8 +83,31 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <div><label className="label" htmlFor="timezone">Company time zone</label><select id="timezone" name="timezone" defaultValue={org.timezone} className="input">{zones.map((zone) => <option key={zone} value={zone}>{zone}</option>)}</select><p className="mt-1 text-xs text-muted">Dates, overnight shifts, and renewal periods are handled using this organization’s time zone.</p></div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4"><p className="max-w-sm text-xs leading-5 text-muted">Changes apply to future check-ins. Existing attendance records are not rewritten.</p><button className="btn-primary">Save settings</button></div>
       </form>
+      <form action={saveAutomation} className="card space-y-4">
+        <div><p className="eyebrow">Working hours</p><h2 className="mt-1 text-lg font-bold">Automatic check-in and check-out</h2>
+          <p className="mt-1 text-sm text-muted">Uses the work hours above. Staff can always check in and out themselves. Holidays never count as late or absent.</p></div>
+        <Toggle name="auto_check_out" on={org.auto_check_out ?? true} title="Check everyone out at closing time"
+          note={`Anyone still checked in at ${org.work_end.slice(0, 5)} is checked out at ${org.work_end.slice(0, 5)}. With overtime on, people still at work can carry on.`} />
+        <Toggle name="auto_check_in" on={org.auto_check_in ?? true} locked={!proFeatures} title="Check people in automatically when they arrive"
+          note="After someone has checked in properly on their last 5 working days, 5ime checks them in at the time it first saw them at work, if they haven’t by start time. A problem day (wrong place, weak GPS) pauses it until they have 5 good days again. You can switch it off for one person on the Staff page." />
+        <Toggle name="overtime_allowed" on={org.overtime_allowed ?? false} locked={!proFeatures} title="Allow overtime"
+          note="At closing time, people still at their workplace can keep working and check out themselves. If they leave without checking out, they’re checked out at the time they were last seen there." />
+        <div className="max-w-xs"><label className="label" htmlFor="overtime-until">Latest overtime time</label><input id="overtime-until" name="overtime_until" type="time" defaultValue={(org.overtime_until ?? "21:00").slice(0, 5)} disabled={!proFeatures} className="input" /><p className="mt-1 text-xs text-muted">Anyone still checked in then is checked out and the day is flagged.</p></div>
+        <p className="rounded-xl bg-paper px-3 py-2 text-xs leading-5 text-muted">5ime only knows where someone is while the app is open on their phone, so automatic check-in works when they open 5ime at work. For privacy, 5ime keeps only the times, never the location, and deletes them after 90 days.</p>
+        {!proFeatures && <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">Automatic check-in and overtime are part of Pro and Premium. <a href="/admin/billing?plan=pro" className="font-semibold underline">See plans</a></p>}
+        <div className="flex justify-end border-t border-line pt-4"><button className="btn-primary">Save automation</button></div>
+      </form>
       <BrandingCard slug={org.slug} logoUrl={org.logo_url} brandColor={org.brand_color} accentColor={org.accent_color ?? null} siteUrl={siteUrl()} colorsAllowed={!!colorsAllowed} />
       <SupportAccessCard until={grants?.[0]?.expires_at ?? null} log={(supportLog ?? [])} timezone={org.timezone} />
     </div>
+  );
+}
+
+function Toggle({ name, on, title, note, locked = false }: { name: string; on: boolean; title: string; note: string; locked?: boolean }) {
+  return (
+    <label className={`flex items-start gap-3 rounded-xl border border-line p-3 ${locked ? "opacity-60" : ""}`}>
+      <input type="checkbox" name={name} defaultChecked={on && !locked} disabled={locked} className="mt-1 h-5 w-5" />
+      <span><b className="text-sm">{title}</b><span className="mt-0.5 block text-xs leading-5 text-muted">{note}</span></span>
+    </label>
   );
 }

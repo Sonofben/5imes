@@ -107,3 +107,19 @@ export async function teamRemove(userId: string, f: FormData) {
   const { error } = await supabase.rpc("console_team_remove", { p_user: userId, p_reason: reasonOf(f) });
   done("/console/team", error, "Removed from the Global Admin team.");
 }
+
+// ── Public holidays
+export async function setPublicHoliday(f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const day = String(f.get("day") ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) back("/console/holidays", { error: "Choose a date." });
+  const { error } = await supabase.rpc("console_set_public_holiday", {
+    p_day: day, p_name: String(f.get("name") ?? ""), p_confirmed: f.get("confirmed") === "on", p_reason: reasonOf(f),
+  });
+  done("/console/holidays", error, "Holiday saved. Every company sees it straight away.");
+}
+export async function removePublicHoliday(day: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const { error } = await supabase.rpc("console_remove_public_holiday", { p_day: day, p_reason: reasonOf(f) });
+  done("/console/holidays", error, "Holiday removed.");
+}

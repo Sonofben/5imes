@@ -1,6 +1,6 @@
 import { requireMember, type Member, type Subscription } from "@/lib/session";
 import { mapsLink } from "@/lib/geo";
-import { inviteOne, inviteBulk, setStatus, setRole, removeMember, reviewHome, setLineManager } from "./actions";
+import { inviteOne, inviteBulk, setStatus, setRole, removeMember, reviewHome, setLineManager, setAutoCheckIn } from "./actions";
 import { MapView } from "@/components/maps/MapView";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
@@ -25,7 +25,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const { supabase, org, isAdmin, me } = await requireMember({ viewer: true });
   const [{ data }, { data: privateRows }, { data: sub }, { data: usageRaw }] = await Promise.all([
-    supabase.from("members").select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,line_manager_id").eq("org_id", org.id).order("created_at"),
+    supabase.from("members").select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,line_manager_id,auto_check_in_off").eq("org_id", org.id).order("created_at"),
     isAdmin
       ? supabase.from("member_private_locations").select("member_id,home_lat,home_lng,home_req_lat,home_req_lng,home_req_acc,home_address,home_req_address").eq("org_id", org.id)
       : Promise.resolve({ data: [] as PrivateLocationRow[] }),
@@ -48,7 +48,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
       home_req_at: null,
       home_address: location?.home_address ?? null,
       home_req_address: location?.home_req_address ?? null,
-    } as Member & { line_manager_id: string | null };
+    } as Member & { line_manager_id: string | null; auto_check_in_off: boolean };
   });
   const pending = members.filter((m) => m.status === "pending");
   const managers = members.filter((m) => m.status === "active" && ["owner", "admin", "manager"].includes(m.role));
@@ -161,7 +161,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
               {isAdmin && <td><div className="flex justify-end gap-1">{m.role !== "owner" && m.id !== me.id && <>
                 {m.status === "disabled" ? <form action={setStatus.bind(null,m.id,"active")}><button className="btn-ghost btn-sm">Enable</button></form> : m.status === "active" ? <ConfirmAction action={setStatus.bind(null,m.id,"disabled")} prompt={`Disable ${m.full_name || m.email}? They will lose workspace access until an admin enables the membership again.`} label="Disable" className="btn-ghost btn-sm text-warn" /> : null}
                 <ConfirmAction action={removeMember.bind(null,m.id)} prompt={`Remove ${m.full_name || m.email} from this organization? This permanently removes their membership and access.`} label="Remove" className="btn-ghost btn-sm text-bad" />
-              </>}</div></td>}
+              </>}{isPro && m.status === "active" && <AutoToggle id={m.id} off={m.auto_check_in_off} />}</div></td>}
             </tr>)}</tbody>
           </table></div>
         </div>
@@ -187,6 +187,15 @@ function LineManagerForm({ memberId, current, options }: { memberId: string; cur
         {options.map((o) => <option key={o.id} value={o.id}>{o.full_name || o.email}</option>)}
       </select>
       <button className="btn-ghost btn-sm">Save</button>
+    </form>
+  );
+}
+
+/** Automatic check-in for one person (Pro and Premium). */
+function AutoToggle({ id, off }: { id: string; off: boolean }) {
+  return (
+    <form action={setAutoCheckIn.bind(null, id, off)}>
+      <button className="btn-ghost btn-sm" title={off ? "This person always checks in themselves" : "5ime may check this person in when they arrive"}>{off ? "Auto check-in: off" : "Auto check-in: on"}</button>
     </form>
   );
 }
