@@ -82,7 +82,7 @@ export default async function Home() {
       <section className="relative mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 pt-8 sm:px-8 sm:pb-24 sm:pt-14 lg:grid-cols-[1.02fr_.98fr] lg:gap-14">
         <div className="relative z-10 max-w-2xl">
           <p className="eyebrow mb-5 flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand" /> Attendance and visitor management</p>
-          <h1 className="max-w-[12ch] text-[2.8rem] font-bold leading-[1.04] tracking-[-0.045em] sm:text-6xl lg:text-[4.15rem]">Know who’s in — your team and your visitors.</h1>
+          <h1 className="max-w-[12ch] text-[2.8rem] font-bold leading-[1.04] tracking-[-0.045em] sm:text-6xl lg:text-[4.15rem]">Know who’s in. Your team and your visitors.</h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted sm:text-lg sm:leading-8">{BRAND.name} lets your team check in by GPS only at an approved office or their approved home on scheduled days, and lets visitors check in from their own phone while reception decides who comes in. One clear view of everyone in the building.</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/login" className="btn-brand px-5">Start a {TRIAL_DAYS}-day Pro trial <span aria-hidden>→</span></Link>
@@ -139,6 +139,18 @@ export default async function Home() {
               <p className="mt-3 text-sm leading-6 text-muted">Upload your logo and 5ime picks your brand colours from it, keeping every screen easy to read.</p></div>
             <ul className="grid gap-2 text-sm sm:grid-cols-2">{["Your sign-in page at 5imes.click/your-company", "The staff app and admin area in your colours", "Your logo as the app icon on staff phones", "Your logo and colours on visitor pages and emails"].map((t) => <li key={t} className="flex gap-2"><span aria-hidden className="font-bold text-ok">✓</span><span>{t}</span></li>)}</ul>
           </div>
+        </div>
+      </section>
+
+      <section id="more">
+        <div className="mx-auto max-w-7xl px-5 pb-16 sm:px-8 sm:pb-20">
+          <div className="max-w-2xl"><p className="eyebrow">More than attendance</p><h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">The everyday HR tools your team already asks for.</h2></div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[
+            { t: "Leave", d: "Staff request leave in the app, managers approve, balances update. Leave days are never marked absent." },
+            { t: "Tasks", d: "Assign work with due dates, checklists and files. Follow up, review and see who finishes on time." },
+            { t: "Celebrations", d: "Birthdays and work anniversaries celebrated in the app and announced to the whole company." },
+            { t: "Field staff", d: "Sales reps and engineers check in at client sites with notes and photos. No tracking between visits." },
+          ].map((c) => <article key={c.t} className="rounded-2xl border border-line bg-white p-5"><h3 className="font-bold">{c.t}</h3><p className="mt-1.5 text-sm leading-6 text-muted">{c.d}</p></article>)}</div>
         </div>
       </section>
 
