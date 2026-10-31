@@ -65,6 +65,8 @@ bash ~/vps-check.sh
    20. `supabase/migrations/0020_schedule_automation.sql`
    21. `supabase/migrations/0021_leave.sql`
    22. `supabase/migrations/0022_celebrations.sql`
+   23. `supabase/migrations/0023_tasks.sql`
+   24. `supabase/migrations/0024_field_staff.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -602,4 +604,13 @@ systemctl list-timers 5ime-tick.timer   # next run within 5 minutes
 
 Leave documents (doctor's notes) are kept in a private storage bucket, `leave-docs`, created on the
 first upload; profile pictures in a public bucket, `avatars`.
+
+## 17. Tasks and field staff
+
+Tasks (0023) and field staff (0024) need nothing extra. Task reminder emails (due tomorrow, overdue)
+go out with the 5-minute timer from section 16. Task files go to a private bucket, `task-files`;
+visit photos to a private bucket, `visit-photos` (both created on first upload).
+
+Field staff is included in Premium. For a Pro company that buys the add-on, set the number of field
+people in Global Admin → Companies → the company → Field staff add-on.
 

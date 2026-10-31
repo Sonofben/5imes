@@ -127,6 +127,11 @@ export default async function StaffApp() {
         {openSession && openSession.local_date !== today && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-warn">Your open session began on {openSession.local_date}; check out here when your shift ends.</p>}
       </section>
 
+      {me.is_field && <section className="card mb-4 flex flex-wrap items-center justify-between gap-3 border-2 border-ink">
+        <div><h2 className="font-bold">Field visits</h2><p className="mt-1 text-sm text-muted">Check in at a client site, add notes and a photo, and see your plan for today.</p></div>
+        <Link href="/app/field" className="btn-primary">Open field visits</Link>
+      </section>}
+
       <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="font-bold">My tasks</h2><p className="mt-1 text-sm text-muted">{(() => {
           const open = (myTaskRows ?? []).map((r) => r.tasks as unknown as { due_date: string | null });

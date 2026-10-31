@@ -22,6 +22,7 @@ export type Member = {
   created_at: string;
   onboarded_at?: string | null;
   can_reception?: boolean;
+  is_field?: boolean;
 };
 
 type MemberRow = Omit<Member, "home_lat" | "home_lng" | "home_req_lat" | "home_req_lng" | "home_req_acc" | "home_req_at" | "home_address" | "home_req_address">;
@@ -100,7 +101,7 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
 
   const { data: memberRow, error: memberError } = await supabase
     .from("members")
-    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,onboarded_at,can_reception")
+    .select("id,org_id,user_id,email,full_name,role,status,team,home_status,created_at,onboarded_at,can_reception,is_field")
     .eq("user_id", user.id)
     .maybeSingle<MemberRow>();
   // A failed lookup must not bounce to /start: /start would send an owner straight

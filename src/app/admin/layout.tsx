@@ -50,7 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <header className="-mx-4 flex min-h-[72px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8" style={{ background: brand.primary, color: brand.onPrimary, borderBottom: `4px solid ${brand.accent}` }}>
           <div className="flex min-w-0 items-center gap-3">
             <CompanyMark name={org.name} logoUrl={org.logo_url} href="/admin" onBrand />
-            <span className="hidden truncate border-l border-current/30 pl-3 text-sm font-semibold md:inline">{org.name}</span>
+            {org.logo_url && <span className="hidden truncate border-l border-current/30 pl-3 text-sm font-semibold md:inline">{org.name}</span>}
             <span className="rounded-xl bg-white p-0.5 text-ink"><ModuleSwitch current="attendance" attendanceHref="/admin" /></span>
           </div>
           <div className="flex shrink-0 items-center gap-2">

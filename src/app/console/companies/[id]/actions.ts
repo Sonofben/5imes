@@ -75,3 +75,9 @@ export async function deleteCompany(id: string, f: FormData) {
   revalidatePath("/console/companies");
   redirect(`/console/companies?archived=1`);
 }
+
+export async function setFieldAddon(id: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const { error } = await supabase.rpc("console_set_field_addon", { p_org: id, p_seats: Number(f.get("seats") ?? 0), p_reason: reasonOf(f) });
+  back(id, error ? { error: friendly(error, "console/companies/field") } : { msg: "Field staff add-on updated." });
+}

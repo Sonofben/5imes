@@ -12,4 +12,6 @@ export async function runScheduleAutomation(admin: SupabaseClient<Database> | nu
   lastRun = Date.now();
   const { error } = await admin.rpc("run_schedule_automation");
   if (error) log.error("schedule.automation", { message: error.message });
+  const { error: visitError } = await admin.rpc("close_forgotten_visits");
+  if (visitError) log.error("field.close_forgotten", { message: visitError.message });
 }

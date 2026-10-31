@@ -216,6 +216,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      client_sites: {
+        Row: {
+          id: string;
+          org_id: string;
+          name: string;
+          address: string | null;
+          lat: number;
+          lng: number;
+          radius_m: number;
+          contact_name: string | null;
+          contact_phone: string | null;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          name: string;
+          address?: string | null;
+          lat: number;
+          lng: number;
+          radius_m?: number;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          name?: string;
+          address?: string | null;
+          lat?: number;
+          lng?: number;
+          radius_m?: number;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       company_holidays: {
         Row: {
           id: string;
@@ -613,6 +655,7 @@ export type Database = {
           auto_check_in_off: boolean;
           start_date: string | null;
           avatar_url: string | null;
+          is_field: boolean;
         };
         Insert: {
           id?: string;
@@ -632,6 +675,7 @@ export type Database = {
           auto_check_in_off?: boolean;
           start_date?: string | null;
           avatar_url?: string | null;
+          is_field?: boolean;
         };
         Update: {
           id?: string;
@@ -651,6 +695,7 @@ export type Database = {
           auto_check_in_off?: boolean;
           start_date?: string | null;
           avatar_url?: string | null;
+          is_field?: boolean;
         };
         Relationships: [];
       };
@@ -683,6 +728,7 @@ export type Database = {
           celebrations_hr_email: string | null;
           celebrations_heads_up_days: number;
           celebrations_weekend: "friday" | "monday" | "same";
+          field_addon_seats: number;
         };
         Insert: {
           id?: string;
@@ -712,6 +758,7 @@ export type Database = {
           celebrations_hr_email?: string | null;
           celebrations_heads_up_days?: number;
           celebrations_weekend?: "friday" | "monday" | "same";
+          field_addon_seats?: number;
         };
         Update: {
           id?: string;
@@ -741,6 +788,7 @@ export type Database = {
           celebrations_hr_email?: string | null;
           celebrations_heads_up_days?: number;
           celebrations_weekend?: "friday" | "monday" | "same";
+          field_addon_seats?: number;
         };
         Relationships: [];
       };
@@ -1161,6 +1209,72 @@ export type Database = {
           member_id?: string | null;
           weekday?: number;
           mode?: "office" | "home" | "off";
+        };
+        Relationships: [];
+      };
+      site_visits: {
+        Row: {
+          id: string;
+          org_id: string;
+          member_id: string;
+          site_id: string;
+          planned_date: string | null;
+          planned_by: string | null;
+          plan_note: string | null;
+          status: "planned" | "in_progress" | "done" | "cancelled";
+          started_at: string | null;
+          start_distance_m: number | null;
+          start_accuracy_m: number | null;
+          ended_at: string | null;
+          end_distance_m: number | null;
+          end_accuracy_m: number | null;
+          note: string | null;
+          outcome: string | null;
+          photo_path: string | null;
+          flags: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          member_id: string;
+          site_id: string;
+          planned_date?: string | null;
+          planned_by?: string | null;
+          plan_note?: string | null;
+          status?: "planned" | "in_progress" | "done" | "cancelled";
+          started_at?: string | null;
+          start_distance_m?: number | null;
+          start_accuracy_m?: number | null;
+          ended_at?: string | null;
+          end_distance_m?: number | null;
+          end_accuracy_m?: number | null;
+          note?: string | null;
+          outcome?: string | null;
+          photo_path?: string | null;
+          flags?: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          member_id?: string;
+          site_id?: string;
+          planned_date?: string | null;
+          planned_by?: string | null;
+          plan_note?: string | null;
+          status?: "planned" | "in_progress" | "done" | "cancelled";
+          started_at?: string | null;
+          start_distance_m?: number | null;
+          start_accuracy_m?: number | null;
+          ended_at?: string | null;
+          end_distance_m?: number | null;
+          end_accuracy_m?: number | null;
+          note?: string | null;
+          outcome?: string | null;
+          photo_path?: string | null;
+          flags?: string[];
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -1821,8 +1935,10 @@ export type Database = {
       admin_remove_leave_rule: { Args: { p_id: string | null }; Returns: undefined };
       admin_save_leave_rule: { Args: { p_type: string | null; p_team: string | null; p_role: string | null; p_min_years: number | null; p_days: number | null }; Returns: string };
       admin_save_leave_type: { Args: { p_id: string | null; p_name: string | null; p_paid: boolean | null; p_default_days: number | null; p_counts_weekends: boolean | null; p_needs_approval: boolean | null; p_document_after_days: number | null; p_carry_mode: string | null; p_carry_max: number | null; p_carry_expiry_months: number | null; p_active: boolean | null }; Returns: string };
+      admin_save_sites: { Args: { p_rows: Json | null }; Returns: number };
       admin_set_allowances: { Args: { p_rows: Json | null; p_note?: string | null }; Returns: number };
       admin_set_auto_check_in: { Args: { p_member: string | null; p_on: boolean | null }; Returns: undefined };
+      admin_set_field: { Args: { p_member: string | null; p_on: boolean | null }; Returns: undefined };
       admin_set_staff_details: { Args: { p_rows: Json | null }; Returns: number };
       apply_paystack_payment: { Args: { p_reference: string | null; p_status: string | null; p_amount_kobo: number | null; p_currency: string | null; p_customer_code?: string | null; p_subscription_code?: string | null; p_plan_code?: string | null; p_email_token?: string | null }; Returns: Json };
       attach_task_file: { Args: { p_id: string | null; p_path: string | null; p_name: string | null; p_size: number | null }; Returns: string };
@@ -1832,11 +1948,13 @@ export type Database = {
       can_manage_task: { Args: { p_task: string | null }; Returns: boolean };
       can_see_task: { Args: { p_task: string | null }; Returns: boolean };
       cancel_leave: { Args: { p_id: string | null }; Returns: undefined };
+      cancel_visit: { Args: { p_id: string | null }; Returns: undefined };
       cancel_work_elsewhere: { Args: { p_request: string | null }; Returns: undefined };
       check_in: { Args: { p_kind: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_user_agent?: string | null }; Returns: Database["public"]["Tables"]["attendance"]["Row"] };
       claim_celebration_emails: { Args: Record<PropertyKey, never>; Returns: Json };
       claim_task_reminders: { Args: Record<PropertyKey, never>; Returns: Json };
       clean_labels: { Args: { p_labels: string[] | null }; Returns: string[] };
+      close_forgotten_visits: { Args: Record<PropertyKey, never>; Returns: number };
       console_announce: { Args: { p_message: string | null; p_level: string | null; p_org: string | null; p_audience: string | null; p_hours: number | null; p_reason: string | null }; Returns: string };
       console_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; company: string; audience: string; starts_at: string; ends_at: string; ended_at: string; live: boolean }[] };
       console_audit: { Args: { p_limit?: number | null }; Returns: { at: string; actor_email: string; org_name: string; action: string; reason: string; details: Json }[] };
@@ -1866,6 +1984,7 @@ export type Database = {
       console_role: { Args: Record<PropertyKey, never>; Returns: string };
       console_security: { Args: Record<PropertyKey, never>; Returns: Json };
       console_set_archived: { Args: { p_org: string | null; p_archived: boolean | null; p_reason: string | null }; Returns: undefined };
+      console_set_field_addon: { Args: { p_org: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
       console_set_locked: { Args: { p_user: string | null; p_locked: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_plan: { Args: { p_org: string | null; p_plan: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
       console_set_plan_terms: { Args: { p_plan: string | null; p_name: string | null; p_price: number | null; p_blurb: string | null; p_features: string[] | null; p_max_locations: number | null; p_reason: string | null }; Returns: undefined };
@@ -1887,6 +2006,8 @@ export type Database = {
       delete_task: { Args: { p_id: string | null }; Returns: undefined };
       distance_m: { Args: { lat1: number | null; lng1: number | null; lat2: number | null; lng2: number | null }; Returns: number };
       end_session_at_departure: { Args: { p_departure: string | null }; Returns: undefined };
+      end_visit: { Args: { p_id: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_note: string | null; p_outcome: string | null; p_photo: string | null }; Returns: undefined };
+      field_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };
       grant_support_access: { Args: { p_hours: number | null }; Returns: string };
       holiday_name: { Args: { p_org: string | null; p_date: string | null }; Returns: string };
       invite_member: { Args: { p_email: string | null; p_name: string | null; p_role?: string | null; p_team?: string | null }; Returns: string };
@@ -1929,6 +2050,7 @@ export type Database = {
       org_brand_level: { Args: { p_slug: string | null }; Returns: string };
       org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; accent_color: string; domain: string }[] };
       org_has_brand_colors: { Args: { p_org: string | null }; Returns: boolean };
+      org_has_field: { Args: { p_org: string | null }; Returns: boolean };
       org_has_premium: { Args: { p_org: string | null }; Returns: boolean };
       org_has_pro: { Args: { p_org: string | null }; Returns: boolean };
       org_has_visitors: { Args: { p_org: string | null }; Returns: boolean };
@@ -1936,6 +2058,7 @@ export type Database = {
       org_visitor_location: { Args: { p_org: string | null }; Returns: string };
       org_visitor_tier: { Args: { p_org: string | null }; Returns: string };
       plan_price: { Args: { p_plan: string | null }; Returns: number };
+      plan_visit: { Args: { p_member: string | null; p_site: string | null; p_date: string | null; p_note: string | null }; Returns: string };
       platform_trial_days: { Args: Record<PropertyKey, never>; Returns: number };
       post_auth_destination: { Args: Record<PropertyKey, never>; Returns: { destination: string; reason: string }[] };
       prepare_paystack_seat_increase: { Args: { p_reference: string | null; p_seats: number | null }; Returns: Json };
@@ -1967,6 +2090,7 @@ export type Database = {
       set_my_birthday: { Args: { p_month: number | null; p_day: number | null; p_opt_out: boolean | null }; Returns: undefined };
       set_paystack_subscription_cancelled: { Args: { p_subscription_code: string | null; p_cancelled: boolean | null; p_expected_updated_at?: string | null }; Returns: boolean };
       set_task_status: { Args: { p_id: string | null; p_status: string | null }; Returns: string };
+      start_visit: { Args: { p_site: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: string };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
       task_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };
       throttle: { Args: { p_bucket: string | null }; Returns: undefined };

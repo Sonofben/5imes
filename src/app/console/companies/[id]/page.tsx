@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireConsole, can, naira, fmtDate, fmtDateTime } from "@/lib/console";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
-import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany } from "./actions";
+import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany, setFieldAddon } from "./actions";
 import { friendly } from "@/lib/errors";
 import { parseOrNull, ConsoleCompany as CompanyShape } from "@/lib/jsonShapes";
 
@@ -78,6 +78,9 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
         {can.setPlan(role) && <form action={setPlan.bind(null, id)} className="card space-y-2"><h2 className="font-bold">Change plan and seats</h2><p className="text-xs text-muted">Changes the plan and paid seats now, without a payment. Term dates stay the same.</p>
           <div className="grid grid-cols-2 gap-2"><select name="plan" className="input" defaultValue={s?.plan ?? "pro"}><option value="basic">Basic</option><option value="pro">Pro</option><option value="premium">Premium</option></select><input name="seats" type="number" min={1} defaultValue={Math.max(1, s?.seats_paid ?? used)} className="input" aria-label="Paid seats" /></div>
           <Reason /><button className="btn-primary">Save plan</button></form>}
+        {can.setPlan(role) && <form action={setFieldAddon.bind(null, id)} className="card space-y-2"><h2 className="font-bold">Field staff add-on (Pro)</h2><p className="text-xs text-muted">How many field staff a Pro company has paid for. Premium includes field staff already. Set 0 to switch it off.</p>
+          <input name="seats" type="number" min={0} max={100000} required defaultValue={0} className="input" aria-label="Field staff places" />
+          <Reason /><button className="btn-ghost">Save add-on</button></form>}
         {can.archive(role) && <form action={setArchived.bind(null, id, !isArchived)} className="card space-y-2"><h2 className="font-bold">{isArchived ? "Restore from archive" : "Archive company"}</h2>
           <p className="text-xs text-muted">{isArchived ? "Brings the company back into the lists. It stays suspended until you reactivate it." : "Hides the company from lists and suspends it. Nothing is deleted."}</p>
           <Reason /><button className={isArchived ? "btn-primary" : "btn-ghost text-bad"}>{isArchived ? "Restore" : "Archive"}</button></form>}

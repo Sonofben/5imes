@@ -12,6 +12,7 @@ export function AdminNav({ isAdmin, pendingPeople, pendingCorrections, pendingPl
       { href: "/admin", label: "Today" },
       { href: "/admin/staff", label: "People", badge: pendingPeople, badgeLabel: `${pendingPeople} people waiting for approval` },
       { href: "/admin/leave", label: "Leave", badge: pendingLeave, badgeLabel: `${pendingLeave} leave requests waiting` },
+      { href: "/admin/field", label: "Field visits" },
       { href: "/admin/requests", label: "Location requests", badge: pendingPlaces, badgeLabel: `${pendingPlaces} work-location requests waiting` },
       { href: "/admin/attendance-corrections", label: "Corrections", badge: pendingCorrections, badgeLabel: `${pendingCorrections} attendance requests awaiting review` },
       { href: "/admin/reports", label: "Reports" },

@@ -50,6 +50,7 @@ export const PLANS = {
       "Full leave management: your own leave types, rules, bulk allowances, carry-over",
       "Birthday and work anniversary celebrations by email",
       "Full task management: projects, checklists, files, recurring tasks, reviews, reminders and reports",
+      "Field staff available as an add-on",
     ],
   },
   premium: {
@@ -67,6 +68,7 @@ export const PLANS = {
       "Visitor blocklist",
       "Visitor reports and full audit trail",
       "Priority support and set-up help",
+      "Field staff: client sites, visit check-in with notes and photos, planned visits",
     ],
   },
 } as const;
