@@ -1242,6 +1242,246 @@ export type Database = {
         };
         Relationships: [];
       };
+      task_activity: {
+        Row: {
+          id: number;
+          task_id: string;
+          org_id: string;
+          member_id: string | null;
+          action: string;
+          detail: string | null;
+          at: string;
+        };
+        Insert: {
+          id?: number;
+          task_id: string;
+          org_id: string;
+          member_id?: string | null;
+          action: string;
+          detail?: string | null;
+          at?: string;
+        };
+        Update: {
+          id?: number;
+          task_id?: string;
+          org_id?: string;
+          member_id?: string | null;
+          action?: string;
+          detail?: string | null;
+          at?: string;
+        };
+        Relationships: [];
+      };
+      task_assignees: {
+        Row: {
+          task_id: string;
+          member_id: string;
+          org_id: string;
+        };
+        Insert: {
+          task_id: string;
+          member_id: string;
+          org_id: string;
+        };
+        Update: {
+          task_id?: string;
+          member_id?: string;
+          org_id?: string;
+        };
+        Relationships: [];
+      };
+      task_checklist: {
+        Row: {
+          id: string;
+          task_id: string;
+          org_id: string;
+          text: string;
+          done: boolean;
+          position: number;
+          done_by: string | null;
+          done_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          org_id: string;
+          text: string;
+          done?: boolean;
+          position?: number;
+          done_by?: string | null;
+          done_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          org_id?: string;
+          text?: string;
+          done?: boolean;
+          position?: number;
+          done_by?: string | null;
+          done_at?: string | null;
+        };
+        Relationships: [];
+      };
+      task_comments: {
+        Row: {
+          id: string;
+          task_id: string;
+          org_id: string;
+          member_id: string | null;
+          kind: "comment" | "update_request" | "review";
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          org_id: string;
+          member_id?: string | null;
+          kind?: "comment" | "update_request" | "review";
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          org_id?: string;
+          member_id?: string | null;
+          kind?: "comment" | "update_request" | "review";
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      task_files: {
+        Row: {
+          id: string;
+          task_id: string;
+          org_id: string;
+          path: string;
+          name: string;
+          size: number;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          org_id: string;
+          path: string;
+          name: string;
+          size: number;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          org_id?: string;
+          path?: string;
+          name?: string;
+          size?: number;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      task_projects: {
+        Row: {
+          id: string;
+          org_id: string;
+          name: string;
+          description: string | null;
+          color: string | null;
+          archived: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          name: string;
+          description?: string | null;
+          color?: string | null;
+          archived?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          name?: string;
+          description?: string | null;
+          color?: string | null;
+          archived?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      tasks: {
+        Row: {
+          id: string;
+          org_id: string;
+          project_id: string | null;
+          title: string;
+          description: string | null;
+          status: "todo" | "in_progress" | "in_review" | "done" | "cancelled";
+          priority: "low" | "normal" | "high" | "urgent";
+          due_date: string | null;
+          labels: string[];
+          needs_review: boolean;
+          recurrence: string | null;
+          repeat_of: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+          reviewed_by: string | null;
+          reminded_on: string | null;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          project_id?: string | null;
+          title: string;
+          description?: string | null;
+          status?: "todo" | "in_progress" | "in_review" | "done" | "cancelled";
+          priority?: "low" | "normal" | "high" | "urgent";
+          due_date?: string | null;
+          labels?: string[];
+          needs_review?: boolean;
+          recurrence?: string | null;
+          repeat_of?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+          reviewed_by?: string | null;
+          reminded_on?: string | null;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          project_id?: string | null;
+          title?: string;
+          description?: string | null;
+          status?: "todo" | "in_progress" | "in_review" | "done" | "cancelled";
+          priority?: "low" | "normal" | "high" | "urgent";
+          due_date?: string | null;
+          labels?: string[];
+          needs_review?: boolean;
+          recurrence?: string | null;
+          repeat_of?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+          reviewed_by?: string | null;
+          reminded_on?: string | null;
+        };
+        Relationships: [];
+      };
       visitor_audit: {
         Row: {
           id: string;
@@ -1571,6 +1811,8 @@ export type Database = {
       };
     };
     Functions: {
+      add_check_item: { Args: { p_id: string | null; p_text: string | null }; Returns: string };
+      add_task_comment: { Args: { p_id: string | null; p_body: string | null }; Returns: string };
       admin_add_holiday: { Args: { p_day: string | null; p_name: string | null }; Returns: string };
       admin_celebration_settings: { Args: { p_on: boolean | null; p_email: string | null; p_hr_email: string | null; p_heads_up: number | null; p_weekend: string | null }; Returns: undefined };
       admin_leave_overview: { Args: { p_type: string | null }; Returns: Json };
@@ -1583,12 +1825,18 @@ export type Database = {
       admin_set_auto_check_in: { Args: { p_member: string | null; p_on: boolean | null }; Returns: undefined };
       admin_set_staff_details: { Args: { p_rows: Json | null }; Returns: number };
       apply_paystack_payment: { Args: { p_reference: string | null; p_status: string | null; p_amount_kobo: number | null; p_currency: string | null; p_customer_code?: string | null; p_subscription_code?: string | null; p_plan_code?: string | null; p_email_token?: string | null }; Returns: Json };
+      attach_task_file: { Args: { p_id: string | null; p_path: string | null; p_name: string | null; p_size: number | null }; Returns: string };
       attendance_device_info: { Args: { p_from: string | null; p_to: string | null }; Returns: { attendance_id: string; ip: string; user_agent: string }[] };
       birthday_on: { Args: { p_month: number | null; p_day: number | null; p_date: string | null }; Returns: boolean };
+      can_assign_to: { Args: { p_member: string | null }; Returns: boolean };
+      can_manage_task: { Args: { p_task: string | null }; Returns: boolean };
+      can_see_task: { Args: { p_task: string | null }; Returns: boolean };
       cancel_leave: { Args: { p_id: string | null }; Returns: undefined };
       cancel_work_elsewhere: { Args: { p_request: string | null }; Returns: undefined };
       check_in: { Args: { p_kind: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_user_agent?: string | null }; Returns: Database["public"]["Tables"]["attendance"]["Row"] };
       claim_celebration_emails: { Args: Record<PropertyKey, never>; Returns: Json };
+      claim_task_reminders: { Args: Record<PropertyKey, never>; Returns: Json };
+      clean_labels: { Args: { p_labels: string[] | null }; Returns: string[] };
       console_announce: { Args: { p_message: string | null; p_level: string | null; p_org: string | null; p_audience: string | null; p_hours: number | null; p_reason: string | null }; Returns: string };
       console_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; company: string; audience: string; starts_at: string; ends_at: string; ended_at: string; live: boolean }[] };
       console_audit: { Args: { p_limit?: number | null }; Returns: { at: string; actor_email: string; org_name: string; action: string; reason: string; details: Json }[] };
@@ -1632,9 +1880,11 @@ export type Database = {
       console_transfer_ownership: { Args: { p_org: string | null; p_new_owner_email: string | null; p_reason: string | null }; Returns: undefined };
       console_update_domain: { Args: { p_org: string | null; p_domain: string | null; p_reason: string | null }; Returns: undefined };
       create_organization: { Args: { p_name: string | null }; Returns: string };
+      create_task: { Args: { p: Json | null }; Returns: string };
       current_email: { Args: Record<PropertyKey, never>; Returns: string };
       decide_leave: { Args: { p_id: string | null; p_approve: boolean | null; p_note: string | null }; Returns: undefined };
       decide_work_elsewhere: { Args: { p_request: string | null; p_approve: boolean | null; p_note?: string | null }; Returns: undefined };
+      delete_task: { Args: { p_id: string | null }; Returns: undefined };
       distance_m: { Args: { lat1: number | null; lng1: number | null; lat2: number | null; lng2: number | null }; Returns: number };
       end_session_at_departure: { Args: { p_departure: string | null }; Returns: undefined };
       grant_support_access: { Args: { p_hours: number | null }; Returns: string };
@@ -1693,27 +1943,36 @@ export type Database = {
       public_plans: { Args: Record<PropertyKey, never>; Returns: Json };
       record_paystack_subscription: { Args: { p_plan_code: string | null; p_subscription_code: string | null; p_customer_code: string | null; p_email_token: string | null }; Returns: boolean };
       release_missing_paystack_checkout: { Args: { p_reference: string | null }; Returns: boolean };
+      remove_check_item: { Args: { p_item: string | null }; Returns: undefined };
+      remove_task_file: { Args: { p_file: string | null }; Returns: string };
       replace_recovery_codes: { Args: { p_codes: string[] | null }; Returns: number };
       replace_schedule: { Args: { p_org: string | null; p_member: string | null; p_rows: Json | null }; Returns: undefined };
       report_presence: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: Json };
       request_attendance_correction: { Args: { p_work_date: string | null; p_check_in: string | null; p_check_out: string | null; p_reason: string | null }; Returns: string };
       request_home_location: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null } | { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_address: string | null }; Returns: undefined };
       request_leave: { Args: { p_type: string | null; p_start: string | null; p_end: string | null; p_reason: string | null; p_document?: string | null }; Returns: string };
+      request_task_update: { Args: { p_id: string | null; p_note: string | null }; Returns: undefined };
       request_work_elsewhere: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_reason: string | null; p_place_name?: string | null; p_address?: string | null }; Returns: string };
       require_visitors: { Args: { p_org: string | null }; Returns: undefined };
       reserved_slugs: { Args: Record<PropertyKey, never>; Returns: string[] };
       review_attendance_correction: { Args: { p_request_id: string | null; p_approve: boolean | null; p_note?: string | null }; Returns: undefined };
       review_home_location: { Args: { p_member: string | null; p_approve: boolean | null }; Returns: undefined };
+      review_task: { Args: { p_id: string | null; p_approve: boolean | null; p_note: string | null }; Returns: undefined };
       revoke_support_access: { Args: Record<PropertyKey, never>; Returns: undefined };
       run_schedule_automation: { Args: Record<PropertyKey, never>; Returns: Json };
+      save_task_project: { Args: { p_id: string | null; p_name: string | null; p_description: string | null; p_color: string | null; p_archived: boolean | null }; Returns: string };
       send_wish: { Args: { p_celebrant: string | null; p_message: string | null }; Returns: undefined };
       set_line_manager: { Args: { p_member: string | null; p_manager: string | null }; Returns: undefined };
       set_member_avatar: { Args: { p_member: string | null; p_url: string | null }; Returns: undefined };
       set_my_birthday: { Args: { p_month: number | null; p_day: number | null; p_opt_out: boolean | null }; Returns: undefined };
       set_paystack_subscription_cancelled: { Args: { p_subscription_code: string | null; p_cancelled: boolean | null; p_expected_updated_at?: string | null }; Returns: boolean };
+      set_task_status: { Args: { p_id: string | null; p_status: string | null }; Returns: string };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
+      task_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };
       throttle: { Args: { p_bucket: string | null }; Returns: undefined };
+      toggle_check_item: { Args: { p_item: string | null; p_done: boolean | null }; Returns: undefined };
       unique_org_slug: { Args: { p_name: string | null }; Returns: string };
+      update_task: { Args: { p_id: string | null; p: Json | null }; Returns: undefined };
       valid_birthday: { Args: { p_month: number | null; p_day: number | null }; Returns: boolean };
       verify_and_consume_recovery_code: { Args: { p_code: string | null }; Returns: boolean };
       visit_checkin: { Args: { p_token: string | null; p_code: string | null; p_phone: string | null; p_company: string | null; p_rules_accepted: boolean | null }; Returns: Json };

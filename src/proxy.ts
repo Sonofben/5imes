@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { buildCsp, newNonce } from "@/lib/csp";
 
-const PROTECTED = ["/app", "/admin", "/visitors", "/console", "/start", "/onboarding", "/pending"];
+const PROTECTED = ["/app", "/admin", "/visitors", "/tasks", "/console", "/start", "/onboarding", "/pending"];
 
 export async function proxy(request: NextRequest) {
   // A fresh nonce per request. Next.js reads the policy from the request headers and adds

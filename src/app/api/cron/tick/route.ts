@@ -3,10 +3,11 @@ import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { runScheduleAutomation } from "@/lib/schedule";
 import { runCelebrationEmails } from "@/lib/celebrations";
+import { runTaskReminders } from "@/lib/tasks";
 
 /**
  * Called every 5 minutes by the server's timer (deploy/systemd/5ime-tick.timer) so time-based work
- * happens even when nobody opens 5ime: celebration emails at 8:00, and the schedule automation as a
+ * happens even when nobody opens 5ime: celebration and task reminder emails at 8:00, and the schedule automation as a
  * backup to pg_cron. Needs CRON_SECRET in .env; without it this route is switched off.
  */
 export async function POST(request: Request) {
@@ -17,5 +18,6 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   await runScheduleAutomation(admin);
   await runCelebrationEmails(admin);
+  await runTaskReminders(admin);
   return NextResponse.json({ ok: true });
 }

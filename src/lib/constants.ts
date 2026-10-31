@@ -25,6 +25,8 @@ export const PLANS = {
       "30 days of history, CSV export",
       "Email support",
       "Leave requests and approvals (standard leave types)",
+      "Birthday and work anniversary celebrations in the app",
+      "Tasks: assign, due dates, priorities, comments",
     ],
   },
   pro: {
@@ -46,6 +48,8 @@ export const PLANS = {
       "Unlimited history and full reports",
       "WhatsApp and email support",
       "Full leave management: your own leave types, rules, bulk allowances, carry-over",
+      "Birthday and work anniversary celebrations by email",
+      "Full task management: projects, checklists, files, recurring tasks, reviews, reminders and reports",
     ],
   },
   premium: {

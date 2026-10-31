@@ -12,6 +12,7 @@ import { PresenceWatcher } from "./PresenceWatcher";
 import { createAdminClient } from "@/lib/supabase/server";
 import { runScheduleAutomation } from "@/lib/schedule";
 import { runCelebrationEmails } from "@/lib/celebrations";
+import { runTaskReminders } from "@/lib/tasks";
 import { CelebrationPopup } from "./CelebrationPopup";
 import { Celebrants } from "@/lib/jsonShapes";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
@@ -28,8 +29,9 @@ export default async function StaffApp() {
   const admin = createAdminClient();
   await runScheduleAutomation(admin);
   void runCelebrationEmails(admin);
+  void runTaskReminders(admin);
 
-  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }, { data: brandRaw }, { data: holiday }, { data: leaveToday }, { data: celebRaw }, { data: wishRows }] = await Promise.all([
+  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }, { data: brandRaw }, { data: holiday }, { data: leaveToday }, { data: celebRaw }, { data: wishRows }, { data: myTaskRows }] = await Promise.all([
     supabase.from("schedules").select("member_id,weekday,mode").eq("org_id", org.id),
     supabase.from("attendance").select("id,kind,at,location_type,flags,distance_m").eq("member_id", me.id).eq("local_date", today).order("at", { ascending: true }),
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date").eq("member_id", me.id).maybeSingle<LatestAttendance>(),
@@ -46,6 +48,7 @@ export default async function StaffApp() {
     supabase.rpc("on_leave", { p_member: me.id, p_date: today }),
     supabase.rpc("my_celebrations_today"),
     supabase.from("celebration_wishes").select("message,from_id").eq("celebrant_id", me.id).eq("day", today).order("created_at"),
+    supabase.from("task_assignees").select("tasks!inner(status,due_date)").eq("member_id", me.id).in("tasks.status", ["todo", "in_progress", "in_review"]).limit(500),
   ]);
   const brand = brandTheme(parseOrNull(BrandShape, brandRaw, "app/brand"));
   const celebrants = parseOrNull(Celebrants, celebRaw, "app/celebrations") ?? [];
@@ -125,7 +128,16 @@ export default async function StaffApp() {
       </section>
 
       <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="font-bold">Leave</h2><p className="mt-1 text-sm text-muted">See how many days you have left and ask for time off.</p></div>
+        <div><h2 className="font-bold">My tasks</h2><p className="mt-1 text-sm text-muted">{(() => {
+          const open = (myTaskRows ?? []).map((r) => r.tasks as unknown as { due_date: string | null });
+          const late = open.filter((t) => t.due_date && t.due_date < today).length;
+          return open.length === 0 ? "Nothing open. Nice!" : `${open.length} open${late ? `, ${late} overdue` : ""}.`;
+        })()}</p></div>
+        <Link href="/tasks" className="btn-ghost">Open tasks</Link>
+      </section>
+
+      <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="font-bold">Leave and profile</h2><p className="mt-1 text-sm text-muted">Ask for time off, see your days left, and add your photo and birthday.</p></div>
         <div className="flex gap-2"><Link href="/app/profile" className="btn-ghost">My profile</Link><Link href="/app/leave" className="btn-ghost">My leave</Link></div>
       </section>
 

@@ -32,7 +32,7 @@ select test.ok((select (b ->> 'pending')::numeric > 0 from jsonb_array_elements(
   'Pending days show in the balance');
 select test.blocked(format($$select public.request_leave(%L, current_date + 12, current_date + 13, null)$$, current_setting('test.annual')), 'already have leave', 'Overlapping leave is refused');
 select test.blocked(format($$select public.request_leave(%L, current_date + 20, current_date + 40, null)$$, current_setting('test.annual')), 'left', 'More days than the balance is refused');
-select test.blocked(format($$select public.decide_leave(%L, true, null)$$, current_setting('test.r1')), 'approve your own leave', 'Nobody approves their own leave');
+select test.blocked(format($$select public.decide_leave(%L, true, null)$$, current_setting('test.r1')), 'line manager or an admin', 'Staff cannot approve their own leave');
 select test.ok((select count(*) from public.leave_rules) = 0, 'Staff cannot see the leave rules');
 
 \echo '--- approving'
