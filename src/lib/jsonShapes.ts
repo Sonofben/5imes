@@ -29,6 +29,14 @@ export const LeaveBalance = z.object({
 export const LeaveBalances = z.array(LeaveBalance);
 export const LeaveOverview = z.array(LeaveBalance.extend({ member_id: str, member: str, team: opt(str), override: z.boolean() }));
 
+// celebrations_for() / my_celebrations_today()
+export const Celebrant = z.object({ member_id: str, name: str, first_name: str, avatar_url: opt(str), birthday: z.boolean(), years: opt(num) });
+export const Celebrants = z.array(Celebrant);
+export type Celebrant = z.infer<typeof Celebrant>;
+export const CelebrationEmails = z.array(z.object({
+  org_id: str, name: str, logo_url: opt(str), accent: opt(str), kind: z.enum(["announce", "heads_up"]), to: str, day: str, people: Celebrants,
+}));
+
 // my_plan_usage()
 export const PlanUsage = z.object({
   plan: str.nullable().optional(), staff: num, max_staff: opt(num),

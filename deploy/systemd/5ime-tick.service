@@ -1,0 +1,9 @@
+[Unit]
+Description=5ime: time-based jobs (celebration emails, schedule automation backup)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/apps/5ime
+# Reads CRON_SECRET and APP_PORT from the app's .env.
+ExecStart=/bin/bash -c 'set -a; . ./.env; curl -fsS --max-time 60 -X POST -H "Authorization: Bearer $CRON_SECRET" "http://127.0.0.1:${APP_PORT:-3005}/api/cron/tick" >/dev/null'

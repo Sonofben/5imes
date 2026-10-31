@@ -47,7 +47,7 @@ export function PresenceWatcher({ timezone, checkedIn }: { timezone: string; che
   if (state?.closing) {
     return (
       <div role="status" className="mb-4 rounded-xl border border-[#c8dfd1] bg-[#f1f8f3] p-3 text-sm text-[#245c3e]">
-        <b>It’s closing time.</b> If you’re staying on, your overtime is counted. Check out when you finish — if you leave without checking out, 5ime checks you out at the time you left.
+        <b>It’s closing time.</b> If you’re staying on, your overtime is counted. Check out when you finish. If you leave without checking out, 5ime checks you out at the time you left.
       </div>
     );
   }

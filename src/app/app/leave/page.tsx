@@ -4,7 +4,7 @@ import { readFlash } from "@/lib/flash";
 import { requireMember, todayIn } from "@/lib/session";
 import { LeaveBalances, parseOrNull } from "@/lib/jsonShapes";
 import { fmtDate, fmtDays } from "@/lib/leave";
-import { cancelLeave, requestLeave, saveBirthday } from "./actions";
+import { cancelLeave, requestLeave } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,18 +14,16 @@ const STATUS: Record<string, { label: string; tone: string }> = {
   declined: { label: "Declined", tone: "bg-red-50 text-bad" },
   cancelled: { label: "Cancelled", tone: "bg-paper text-muted" },
 };
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-/** A person's leave: balances, a request form, their requests, and their birthday for celebrations. */
+/** A person's leave: balances, a request form and their requests. */
 export default async function MyLeavePage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, me, org } = await requireMember();
   const today = todayIn(org.timezone);
-  const [{ data: balRaw }, { data: types }, { data: rows }, { data: details }] = await Promise.all([
+  const [{ data: balRaw }, { data: types }, { data: rows }] = await Promise.all([
     supabase.rpc("my_leave_balances"),
     supabase.from("leave_types").select("id,name,document_after_days,counts_weekends,paid").eq("org_id", org.id).eq("active", true).order("sort").order("name"),
     supabase.from("leave_requests").select("id,start_date,end_date,days,status,reason,decision_note,document_path,leave_type_id").eq("member_id", me.id).order("start_date", { ascending: false }).limit(30),
-    supabase.from("member_private_details").select("birth_month,birth_day,celebrate_opt_out").eq("member_id", me.id).maybeSingle(),
   ]);
   const balances = parseOrNull(LeaveBalances, balRaw, "app/leave/balances") ?? [];
   const offered = (types ?? []).filter((t) => balances.some((b) => b.type_id === t.id));
@@ -81,15 +79,6 @@ export default async function MyLeavePage({ searchParams }: { searchParams: Prom
           })}</ul>}
       </section>
 
-      <form action={saveBirthday} className="card space-y-3">
-        <div><h2 className="font-bold">Your birthday</h2><p className="text-sm text-muted">Day and month only, so {org.name} can celebrate you. Only you and your admins see it.</p></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><label className="label" htmlFor="b-month">Month</label><select id="b-month" name="month" defaultValue={details?.birth_month ?? ""} className="input"><option value="">Not set</option>{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></div>
-          <div><label className="label" htmlFor="b-day">Day</label><select id="b-day" name="day" defaultValue={details?.birth_day ?? ""} className="input"><option value="">Not set</option>{Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}</select></div>
-        </div>
-        <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="opt_out" defaultChecked={details?.celebrate_opt_out ?? false} className="mt-0.5 h-4 w-4" /> Don’t announce my birthday</label>
-        <button className="btn-ghost w-full">Save</button>
-      </form>
     </main>
   );
 }

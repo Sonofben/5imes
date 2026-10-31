@@ -11,7 +11,7 @@ import Link from "next/link";
 type Reason = "staff" | "branding" | "visitors";
 
 const HEADLINES: Record<Reason, { title: string; text: string }> = {
-  staff: { title: "Upgrade to Pro to add more staff", text: "Basic includes up to 15 staff. Pro has no limit — and a lot more for a growing company." },
+  staff: { title: "Upgrade to Pro to add more staff", text: "Basic includes up to 15 staff. Pro has no limit, and a lot more for a growing company." },
   branding: { title: "Make 5ime look like your company", text: "Your logo is already in the app. Pro adds your colours everywhere your staff look." },
   visitors: { title: "Welcome visitors with 5ime", text: "Pro adds visitor management for your reception." },
 };
@@ -27,7 +27,7 @@ export function UpgradeTour({ reason = "staff", openAtStart = false, label = "Se
     { title: "Your brand, everywhere", text: "5ime reads the colours in your logo and uses them on the sign-in page, the staff app, the phone icon, the browser tab and every email. 5ime only shows as “Powered by 5ime”.", art: <BrandArt /> },
     { title: "Every office and team", text: "Unlimited offices and branches, a check-in area per office, schedules per person or team, and managers who see their own team.", art: <OfficesArt /> },
     { title: "Visitors at reception", text: "Invite visitors with an “I’ve arrived” link, let walk-ins sign in from a QR poster, and admit them from one desk screen. Up to 100 visits a month at one office.", art: <VisitorsArt /> },
-    { title: "Reports without limits", text: "Unlimited history, full attendance reports, weak-GPS flags and device records — and support on WhatsApp.", art: <ReportsArt /> },
+    { title: "Reports without limits", text: "Unlimited history, full attendance reports, weak GPS flags and device records, plus support on WhatsApp.", art: <ReportsArt /> },
   ];
   const last = step === slides.length - 1;
 

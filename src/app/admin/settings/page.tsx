@@ -10,6 +10,18 @@ import { friendly } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
+async function saveCelebrations(formData: FormData) {
+  "use server";
+  const { supabase } = await requireMember({ admin: true });
+  const { error } = await supabase.rpc("admin_celebration_settings", {
+    p_on: formData.get("on") === "on", p_email: String(formData.get("email") ?? ""), p_hr_email: String(formData.get("hr_email") ?? ""),
+    p_heads_up: Number(formData.get("heads_up") ?? 3), p_weekend: String(formData.get("weekend") ?? "friday"),
+  });
+  if (error) redirect(`/admin/settings?${flashQuery({ error: friendly(error, "admin/settings/celebrations") })}`);
+  revalidatePath("/admin/settings");
+  redirect(`/admin/settings?${flashQuery({ msg: "Celebration settings saved." })}`);
+}
+
 async function saveAutomation(formData: FormData) {
   "use server";
   const { supabase, org } = await requireMember({ admin: true });
@@ -59,11 +71,12 @@ const ZONES = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johanne
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { org, supabase } = await requireMember({ admin: true });
-  const [{ data: grants }, { data: supportLog }, { data: colorsAllowed }, { data: proFeatures }] = await Promise.all([
+  const [{ data: grants }, { data: supportLog }, { data: colorsAllowed }, { data: proFeatures }, { data: celebrate }] = await Promise.all([
     supabase.from("support_access_grants").select("expires_at").is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("expires_at", { ascending: false }).limit(1),
     supabase.rpc("my_support_log"),
     supabase.rpc("org_has_brand_colors", { p_org: org.id }),
     supabase.rpc("org_has_visitors", { p_org: org.id }),
+    supabase.from("organizations").select("celebrations_on,celebrations_email,celebrations_hr_email,celebrations_heads_up_days,celebrations_weekend").eq("id", org.id).single(),
   ]);
   const zones = ZONES.includes(org.timezone) ? ZONES : [...ZONES, org.timezone].sort();
 
@@ -96,6 +109,20 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <p className="rounded-xl bg-paper px-3 py-2 text-xs leading-5 text-muted">5ime only knows where someone is while the app is open on their phone, so automatic check-in works when they open 5ime at work. For privacy, 5ime keeps only the times, never the location, and deletes them after 90 days.</p>
         {!proFeatures && <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">Automatic check-in and overtime are part of Pro and Premium. <a href="/admin/billing?plan=pro" className="font-semibold underline">See plans</a></p>}
         <div className="flex justify-end border-t border-line pt-4"><button className="btn-primary">Save automation</button></div>
+      </form>
+      <form action={saveCelebrations} className="card space-y-4">
+        <div><p className="eyebrow">People</p><h2 className="mt-1 text-lg font-bold">Birthdays and work anniversaries</h2>
+          <p className="mt-1 text-sm text-muted">On the day, everyone sees a celebration in the app and can send wishes. Add start dates and birthdays under <a className="font-semibold underline" href="/admin/leave/settings">Leave types and allowances</a>; staff can add their own birthday and picture in their profile.</p></div>
+        <label className="flex items-start gap-3 rounded-xl border border-line p-3"><input type="checkbox" name="on" defaultChecked={celebrate?.celebrations_on ?? true} className="mt-1 h-5 w-5" />
+          <span><b className="text-sm">Celebrate birthdays and work anniversaries</b><span className="mt-0.5 block text-xs text-muted">People can still choose not to have their birthday announced.</span></span></label>
+        <fieldset disabled={!proFeatures} className="grid gap-3 sm:grid-cols-2">
+          <div><label className="label" htmlFor="c-email">Company group email for announcements</label><input id="c-email" name="email" type="email" defaultValue={celebrate?.celebrations_email ?? ""} placeholder={`all@${org.domain}`} className="input" /><p className="mt-1 text-xs text-muted">One email at 8:00 am on the day, in your brand.</p></div>
+          <div><label className="label" htmlFor="c-hr">Heads-up email for HR (optional)</label><input id="c-hr" name="hr_email" type="email" defaultValue={celebrate?.celebrations_hr_email ?? ""} placeholder="Admins, if empty" className="input" /></div>
+          <div><label className="label" htmlFor="c-days">Heads-up how many days before</label><input id="c-days" name="heads_up" type="number" min={0} max={14} defaultValue={celebrate?.celebrations_heads_up_days ?? 3} className="input" /></div>
+          <div><label className="label" htmlFor="c-weekend">Celebrations on a weekend</label><select id="c-weekend" name="weekend" defaultValue={celebrate?.celebrations_weekend ?? "friday"} className="input"><option value="friday">Celebrate on the Friday before</option><option value="monday">Celebrate on the Monday after</option><option value="same">Celebrate on the day</option></select></div>
+        </fieldset>
+        {!proFeatures && <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">Celebration emails are part of Pro and Premium. The in-app celebration works on every plan. <a href="/admin/billing?plan=pro" className="font-semibold underline">See plans</a></p>}
+        <div className="flex justify-end border-t border-line pt-4"><button className="btn-primary">Save celebrations</button></div>
       </form>
       <BrandingCard slug={org.slug} logoUrl={org.logo_url} brandColor={org.brand_color} accentColor={org.accent_color ?? null} siteUrl={siteUrl()} colorsAllowed={!!colorsAllowed} />
       <SupportAccessCard until={grants?.[0]?.expires_at ?? null} log={(supportLog ?? [])} timezone={org.timezone} />

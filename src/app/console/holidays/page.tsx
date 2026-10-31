@@ -27,7 +27,7 @@ export default async function HolidaysConsolePage({ searchParams }: { searchPara
         <div><label className="label" htmlFor="h-name">Name</label><input id="h-name" name="name" required minLength={2} maxLength={80} className="input" placeholder="e.g. Eid al-Fitr" /></div>
         <label className="flex items-center gap-2 pb-3 text-sm"><input type="checkbox" name="confirmed" defaultChecked /> Confirmed</label>
         <div className="sm:col-span-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"><Reason placeholder="Reason, e.g. FG announcement of 18 March" /><button className="btn-primary">Save holiday</button></div>
-        <p className="sm:col-span-3 text-xs text-muted">Saving a date that already exists updates it — use this to confirm an expected date or rename it.</p>
+        <p className="sm:col-span-3 text-xs text-muted">Saving a date that already exists updates it. Use this to confirm an expected date or rename it.</p>
       </form>}
       <div className="card overflow-x-auto p-0"><table className="table min-w-[560px]">
         <thead><tr><th>Date</th><th>Holiday</th><th>Status</th>{edit && <th className="text-right">Remove</th>}</tr></thead>

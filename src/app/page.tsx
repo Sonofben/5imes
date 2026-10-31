@@ -128,7 +128,7 @@ export default async function Home() {
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
           <div className="flex flex-wrap items-end justify-between gap-5"><div className="max-w-2xl"><p className="eyebrow">Visitor management · Pro and Premium</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Welcome visitors the same way you manage your team.</h2></div><p className="max-w-md text-sm leading-6 text-muted">Invite a guest or let walk-ins scan the poster at reception. They check in on their phone, reception admits them, and the host is told — all in the same workspace as attendance.</p></div>
           <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{visitorFeatures.map((feature) => <article key={feature.mark} className="rounded-2xl border border-line bg-white p-5"><p className="text-[11px] font-bold tracking-[0.12em] text-brand-dark">{feature.mark}</p><h3 className="mt-3 font-bold">{feature.title}</h3><p className="mt-1.5 text-sm leading-6 text-muted">{feature.text}</p></article>)}</div>
-          <p className="mt-6 text-sm text-muted">Pro covers one office and up to 100 visits a month; Premium covers every office with no limit, plus the reception tablet, roll call, blocklist and reports. Included in every free trial. Visitors are free — only your team uses seats.</p>
+          <p className="mt-6 text-sm text-muted">Pro covers one office and up to 100 visits a month; Premium covers every office with no limit, plus the reception tablet, roll call, blocklist and reports. Included in every free trial. Visitors are free; only your team uses seats.</p>
         </div>
       </section>
 

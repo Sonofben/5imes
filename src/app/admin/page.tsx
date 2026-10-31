@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import { runScheduleAutomation } from "@/lib/schedule";
+import { runCelebrationEmails } from "@/lib/celebrations";
 import { requireMember, todayIn, timeIn, isoWeekdayIn, expectedMode } from "@/lib/session";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { FLAG_LABELS } from "@/lib/constants";
@@ -18,7 +19,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const { supabase, org, isAdmin } = await requireMember({ viewer: true });
   const today = todayIn(org.timezone);
   const weekday = isoWeekdayIn(org.timezone);
-  await runScheduleAutomation(createAdminClient());
+  const admin = createAdminClient();
+  await runScheduleAutomation(admin);
+  void runCelebrationEmails(admin);
   const [{ data: members }, { data: events }, { data: schedules }, { data: locations }, { data: latestEvents }, { data: alertEvents }, { data: holiday }, { data: onLeave }] = await Promise.all([
     supabase.from("members").select("id,full_name,email,team,status").eq("org_id", org.id).eq("status", "active").order("full_name"),
     supabase.from("attendance").select("member_id,kind,at,local_date,location_type,location_id,flags").eq("org_id", org.id).eq("local_date", today).order("at"),

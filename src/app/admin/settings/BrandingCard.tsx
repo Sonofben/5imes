@@ -125,7 +125,7 @@ export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, 
           <div className="mt-2 rounded-xl bg-paper px-3 py-2 text-xs leading-5 text-muted">
             <b className="text-ink">Best: a PNG with a transparent background</b>, at least 500 px wide.<br />
             Also accepted: SVG, JPG or WebP on a white background. SVG logos are turned into a PNG automatically.<br />
-            Avoid logos on a coloured or photo background — we read your brand colours from the logo.
+            Avoid logos on a coloured or photo background, because we read your brand colours from the logo.
           </div>
           {fileError && <p role="alert" className="mt-2 text-sm text-bad">{fileError}</p>}
           {logoUrl && <label className="mt-2 flex items-center gap-2 text-xs text-muted"><input type="checkbox" name="remove_logo" /> Remove current logo</label>}
@@ -133,7 +133,7 @@ export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, 
       </div>
 
       {!colorsAllowed && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">
-        <p>Your logo shows in the app on every plan. Your colours on the sign-in page, app icon, browser tab and emails are part of Pro and Premium — <Link href="/admin/billing" className="font-semibold underline">see plans</Link>.</p>
+        <p>Your logo shows in the app on every plan. Your colours on the sign-in page, app icon, browser tab and emails are part of Pro and Premium. <Link href="/admin/billing" className="font-semibold underline">see plans</Link>.</p>
         <UpgradeTour reason="branding" label="See what Pro adds" />
       </div>}
       {autoPicked && colorsAllowed && <p className="rounded-xl bg-[#eef6f1] px-4 py-3 text-sm text-ok">We picked these colours from your logo. Check the preview and change them if you like, then save.</p>}

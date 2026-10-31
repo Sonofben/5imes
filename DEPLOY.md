@@ -63,6 +63,8 @@ bash ~/vps-check.sh
    18. `supabase/migrations/0018_plan_tiers.sql`
    19. `supabase/migrations/0019_brand_level.sql`
    20. `supabase/migrations/0020_schedule_automation.sql`
+   21. `supabase/migrations/0021_leave.sql`
+   22. `supabase/migrations/0022_celebrations.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -582,4 +584,22 @@ Migration 0020 adds automatic check-in, closing-time check-out, overtime and hol
   confirm or move it in Global Admin → Holidays. Add any extra day the government declares there too.
 - Privacy: only the time and the kind of place (office / home / approved place) are kept for
   automation, never coordinates, and they are deleted after 90 days.
+
+## 16. Leave, celebrations and the 5-minute timer
+
+Leave (0021) and celebrations (0022) need nothing extra to work in the app. Celebration **emails**
+(the 8:00 announcement to the company's group email and the HR heads-up) are sent by a timer on the
+server, so they go out even when nobody opens 5ime:
+
+```bash
+cd /opt/apps/5ime
+grep -q '^CRON_SECRET=.\+' .env || echo "CRON_SECRET=$(openssl rand -hex 32)" >> .env
+scripts/deploy.sh            # restarts the app so it reads CRON_SECRET
+sudo cp deploy/systemd/5ime-tick.service deploy/systemd/5ime-tick.timer /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now 5ime-tick.timer
+systemctl list-timers 5ime-tick.timer   # next run within 5 minutes
+```
+
+Leave documents (doctor's notes) are kept in a private storage bucket, `leave-docs`, created on the
+first upload; profile pictures in a public bucket, `avatars`.
 

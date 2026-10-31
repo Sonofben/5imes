@@ -44,12 +44,3 @@ export async function cancelLeave(id: string) {
   if (error) back({ error: friendly(error, "app/leave/cancel") });
   back({ msg: "Leave cancelled." });
 }
-
-export async function saveBirthday(f: FormData) {
-  const { supabase } = await requireMember();
-  const month = Number(f.get("month") || 0), day = Number(f.get("day") || 0);
-  const has = month > 0 && day > 0;
-  const { error } = await supabase.rpc("set_my_birthday", { p_month: has ? month : null, p_day: has ? day : null, p_opt_out: f.get("opt_out") === "on" });
-  if (error) back({ error: friendly(error, "app/birthday") });
-  back({ msg: "Saved." });
-}

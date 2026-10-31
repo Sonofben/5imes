@@ -121,7 +121,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
 
       {isAdmin && atLimit && <section className="card flex flex-wrap items-center justify-between gap-4 border-2 border-ink">
         <div><p className="eyebrow">Basic plan</p><h2 className="mt-1 text-lg font-bold">You’ve reached {staffLimit} staff</h2>
-          <p className="mt-1 text-sm text-muted">Basic includes up to {staffLimit} staff. Upgrade to Pro to add more people — Pro has no staff limit.</p></div>
+          <p className="mt-1 text-sm text-muted">Basic includes up to {staffLimit} staff. Upgrade to Pro to add more people. Pro has no staff limit.</p></div>
         <UpgradeTour reason="staff" openAtStart={sp.upgrade === "staff"} />
       </section>}
       {isAdmin && !atLimit && sp.upgrade === "staff" && <div className="flex justify-end"><UpgradeTour reason="staff" openAtStart /></div>}

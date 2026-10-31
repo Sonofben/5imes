@@ -165,6 +165,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      celebration_sends: {
+        Row: {
+          org_id: string;
+          day: string;
+          kind: "announce" | "heads_up";
+          sent_at: string;
+        };
+        Insert: {
+          org_id: string;
+          day: string;
+          kind: "announce" | "heads_up";
+          sent_at?: string;
+        };
+        Update: {
+          org_id?: string;
+          day?: string;
+          kind?: "announce" | "heads_up";
+          sent_at?: string;
+        };
+        Relationships: [];
+      };
+      celebration_wishes: {
+        Row: {
+          id: string;
+          org_id: string;
+          celebrant_id: string;
+          from_id: string;
+          day: string;
+          message: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          celebrant_id: string;
+          from_id: string;
+          day: string;
+          message: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          celebrant_id?: string;
+          from_id?: string;
+          day?: string;
+          message?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       company_holidays: {
         Row: {
           id: string;
@@ -627,6 +678,11 @@ export type Database = {
           leave_year_mode: "calendar" | "financial" | "anniversary";
           leave_year_start_month: number;
           leave_prorate: boolean;
+          celebrations_on: boolean;
+          celebrations_email: string | null;
+          celebrations_hr_email: string | null;
+          celebrations_heads_up_days: number;
+          celebrations_weekend: "friday" | "monday" | "same";
         };
         Insert: {
           id?: string;
@@ -651,6 +707,11 @@ export type Database = {
           leave_year_mode?: "calendar" | "financial" | "anniversary";
           leave_year_start_month?: number;
           leave_prorate?: boolean;
+          celebrations_on?: boolean;
+          celebrations_email?: string | null;
+          celebrations_hr_email?: string | null;
+          celebrations_heads_up_days?: number;
+          celebrations_weekend?: "friday" | "monday" | "same";
         };
         Update: {
           id?: string;
@@ -675,6 +736,11 @@ export type Database = {
           leave_year_mode?: "calendar" | "financial" | "anniversary";
           leave_year_start_month?: number;
           leave_prorate?: boolean;
+          celebrations_on?: boolean;
+          celebrations_email?: string | null;
+          celebrations_hr_email?: string | null;
+          celebrations_heads_up_days?: number;
+          celebrations_weekend?: "friday" | "monday" | "same";
         };
         Relationships: [];
       };
@@ -1506,6 +1572,7 @@ export type Database = {
     };
     Functions: {
       admin_add_holiday: { Args: { p_day: string | null; p_name: string | null }; Returns: string };
+      admin_celebration_settings: { Args: { p_on: boolean | null; p_email: string | null; p_hr_email: string | null; p_heads_up: number | null; p_weekend: string | null }; Returns: undefined };
       admin_leave_overview: { Args: { p_type: string | null }; Returns: Json };
       admin_leave_settings: { Args: { p_mode: string | null; p_start_month: number | null; p_prorate: boolean | null }; Returns: undefined };
       admin_remove_holiday: { Args: { p_id: string | null }; Returns: undefined };
@@ -1517,9 +1584,11 @@ export type Database = {
       admin_set_staff_details: { Args: { p_rows: Json | null }; Returns: number };
       apply_paystack_payment: { Args: { p_reference: string | null; p_status: string | null; p_amount_kobo: number | null; p_currency: string | null; p_customer_code?: string | null; p_subscription_code?: string | null; p_plan_code?: string | null; p_email_token?: string | null }; Returns: Json };
       attendance_device_info: { Args: { p_from: string | null; p_to: string | null }; Returns: { attendance_id: string; ip: string; user_agent: string }[] };
+      birthday_on: { Args: { p_month: number | null; p_day: number | null; p_date: string | null }; Returns: boolean };
       cancel_leave: { Args: { p_id: string | null }; Returns: undefined };
       cancel_work_elsewhere: { Args: { p_request: string | null }; Returns: undefined };
       check_in: { Args: { p_kind: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_user_agent?: string | null }; Returns: Database["public"]["Tables"]["attendance"]["Row"] };
+      claim_celebration_emails: { Args: Record<PropertyKey, never>; Returns: Json };
       console_announce: { Args: { p_message: string | null; p_level: string | null; p_org: string | null; p_audience: string | null; p_hours: number | null; p_reason: string | null }; Returns: string };
       console_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; company: string; audience: string; starts_at: string; ends_at: string; ended_at: string; live: boolean }[] };
       console_audit: { Args: { p_limit?: number | null }; Returns: { at: string; actor_email: string; org_name: string; action: string; reason: string; details: Json }[] };
@@ -1591,6 +1660,7 @@ export type Database = {
       mark_onboarded: { Args: Record<PropertyKey, never>; Returns: undefined };
       mark_paystack_invoice_failed: { Args: { p_subscription_code: string | null; p_expected_period_end: string | null }; Returns: boolean };
       my_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; maintenance: boolean }[] };
+      my_celebrations_today: { Args: Record<PropertyKey, never>; Returns: Json };
       my_leave_balances: { Args: Record<PropertyKey, never>; Returns: Json };
       my_line_manager: { Args: Record<PropertyKey, never>; Returns: { id: string; full_name: string; email: string }[] };
       my_member_id: { Args: Record<PropertyKey, never>; Returns: string };
@@ -1636,7 +1706,9 @@ export type Database = {
       review_home_location: { Args: { p_member: string | null; p_approve: boolean | null }; Returns: undefined };
       revoke_support_access: { Args: Record<PropertyKey, never>; Returns: undefined };
       run_schedule_automation: { Args: Record<PropertyKey, never>; Returns: Json };
+      send_wish: { Args: { p_celebrant: string | null; p_message: string | null }; Returns: undefined };
       set_line_manager: { Args: { p_member: string | null; p_manager: string | null }; Returns: undefined };
+      set_member_avatar: { Args: { p_member: string | null; p_url: string | null }; Returns: undefined };
       set_my_birthday: { Args: { p_month: number | null; p_day: number | null; p_opt_out: boolean | null }; Returns: undefined };
       set_paystack_subscription_cancelled: { Args: { p_subscription_code: string | null; p_cancelled: boolean | null; p_expected_updated_at?: string | null }; Returns: boolean };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
