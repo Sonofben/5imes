@@ -21,6 +21,14 @@ export function parseOrNull<T extends z.ZodTypeAny>(schema: T, data: unknown, wh
   return null;
 }
 
+// leave_balance() via my_leave_balances() and admin_leave_overview()
+export const LeaveBalance = z.object({
+  type_id: str, name: str, paid: z.boolean(), year_start: str,
+  entitlement: opt(num), carried: num, carried_expires: opt(str), used: num, pending: num, remaining: opt(num),
+});
+export const LeaveBalances = z.array(LeaveBalance);
+export const LeaveOverview = z.array(LeaveBalance.extend({ member_id: str, member: str, team: opt(str), override: z.boolean() }));
+
 // my_plan_usage()
 export const PlanUsage = z.object({
   plan: str.nullable().optional(), staff: num, max_staff: opt(num),

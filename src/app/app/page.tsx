@@ -24,7 +24,7 @@ export default async function StaffApp() {
   const weekday = isoWeekdayIn(org.timezone);
   await runScheduleAutomation(createAdminClient());
 
-  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }, { data: brandRaw }, { data: holiday }] = await Promise.all([
+  const [{ data: schedules }, { data: events }, { data: latestEvent }, { data: elsewhere }, { data: lineManager }, { data: arrived }, { data: premium }, { data: brandRaw }, { data: holiday }, { data: leaveToday }] = await Promise.all([
     supabase.from("schedules").select("member_id,weekday,mode").eq("org_id", org.id),
     supabase.from("attendance").select("id,kind,at,location_type,flags,distance_m").eq("member_id", me.id).eq("local_date", today).order("at", { ascending: true }),
     supabase.from("member_latest_attendance").select("member_id,kind,at,local_date").eq("member_id", me.id).maybeSingle<LatestAttendance>(),
@@ -38,6 +38,7 @@ export default async function StaffApp() {
     supabase.rpc("org_has_visitors", { p_org: org.id }),
     supabase.rpc("my_org_brand"),
     supabase.rpc("holiday_name", { p_org: org.id, p_date: today }),
+    supabase.rpc("on_leave", { p_member: me.id, p_date: today }),
   ]);
   const brand = brandTheme(parseOrNull(BrandShape, brandRaw, "app/brand"));
   const approverName = lineManager ? lineManager.full_name || lineManager.email : "your admin";
@@ -80,6 +81,7 @@ export default async function StaffApp() {
         <p className="mt-1 text-sm text-muted">{new Intl.DateTimeFormat("en-NG", { timeZone: org.timezone, weekday: "long", day: "numeric", month: "long" }).format(new Date())}</p>
       </section>
 
+      {leaveToday && <p role="status" className="mb-4 rounded-xl border border-[#c8dfd1] bg-[#f1f8f3] px-4 py-3 text-sm text-[#245c3e]"><b>You’re on {leaveToday.toLowerCase()} today.</b> Enjoy your time off. Nothing is recorded as absent.</p>}
       {holiday && <p role="status" className="mb-4 rounded-xl border border-[#c8dfd1] bg-[#f1f8f3] px-4 py-3 text-sm text-[#245c3e]"><b>Today is a holiday: {holiday}.</b> Nobody is marked late or absent. If you work today, check in as usual and it’s recorded as holiday work.</p>}
       {org.suspended_at && <p role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-bad">Check-ins are paused because {org.name}&apos;s 5ime account is suspended. Please contact your admin.</p>}
       {!me.onboarded_at && <WelcomeSteps companyName={org.name} logoUrl={org.logo_url} hasHomeDays={week.some((d) => d.mode === "home")} homeDone={me.home_lat !== null || me.home_req_lat !== null} />}
@@ -92,7 +94,7 @@ export default async function StaffApp() {
         <CheckInPanel checkedIn={!!openSession} expected={expected} sessionLabel={sessionLabel} theme={brand.branded ? { primary: brand.primary, onPrimary: brand.onPrimary } : undefined} />
       </section>
 
-      {(openSession || (expected !== "off" && !holiday)) && <PresenceWatcher timezone={org.timezone} checkedIn={!!openSession} />}
+      {(openSession || (expected !== "off" && !holiday && !leaveToday)) && <PresenceWatcher timezone={org.timezone} checkedIn={!!openSession} />}
       {expected !== "off" && <WorkElsewhere request={elsewhere ?? null} approverName={approverName} timezone={org.timezone} />}
 
       <section className="card mb-4">
@@ -105,6 +107,11 @@ export default async function StaffApp() {
           </div>
         </li>)}</ol> : <p className="text-sm text-muted">No attendance events today.</p>}
         {openSession && openSession.local_date !== today && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-warn">Your open session began on {openSession.local_date}; check out here when your shift ends.</p>}
+      </section>
+
+      <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="font-bold">Leave</h2><p className="mt-1 text-sm text-muted">See how many days you have left and ask for time off.</p></div>
+        <Link href="/app/leave" className="btn-ghost">My leave</Link>
       </section>
 
       <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">

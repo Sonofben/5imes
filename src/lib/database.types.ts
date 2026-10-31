@@ -237,6 +237,180 @@ export type Database = {
         };
         Relationships: [];
       };
+      leave_allowances: {
+        Row: {
+          member_id: string;
+          leave_type_id: string;
+          year_start: string;
+          org_id: string;
+          days: number;
+          note: string | null;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          member_id: string;
+          leave_type_id: string;
+          year_start: string;
+          org_id: string;
+          days: number;
+          note?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          member_id?: string;
+          leave_type_id?: string;
+          year_start?: string;
+          org_id?: string;
+          days?: number;
+          note?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      leave_requests: {
+        Row: {
+          id: string;
+          org_id: string;
+          member_id: string;
+          leave_type_id: string;
+          start_date: string;
+          end_date: string;
+          days: number;
+          reason: string | null;
+          document_path: string | null;
+          status: "pending" | "approved" | "declined" | "cancelled";
+          approver_id: string | null;
+          decided_by: string | null;
+          decided_at: string | null;
+          decision_note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          member_id: string;
+          leave_type_id: string;
+          start_date: string;
+          end_date: string;
+          days: number;
+          reason?: string | null;
+          document_path?: string | null;
+          status?: "pending" | "approved" | "declined" | "cancelled";
+          approver_id?: string | null;
+          decided_by?: string | null;
+          decided_at?: string | null;
+          decision_note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          member_id?: string;
+          leave_type_id?: string;
+          start_date?: string;
+          end_date?: string;
+          days?: number;
+          reason?: string | null;
+          document_path?: string | null;
+          status?: "pending" | "approved" | "declined" | "cancelled";
+          approver_id?: string | null;
+          decided_by?: string | null;
+          decided_at?: string | null;
+          decision_note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      leave_rules: {
+        Row: {
+          id: string;
+          org_id: string;
+          leave_type_id: string;
+          team: string | null;
+          role: string | null;
+          min_years: number | null;
+          days: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          leave_type_id: string;
+          team?: string | null;
+          role?: string | null;
+          min_years?: number | null;
+          days: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          leave_type_id?: string;
+          team?: string | null;
+          role?: string | null;
+          min_years?: number | null;
+          days?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      leave_types: {
+        Row: {
+          id: string;
+          org_id: string;
+          code: "annual" | "sick" | "casual" | "maternity" | "paternity" | "compassionate" | "unpaid" | null;
+          name: string;
+          paid: boolean;
+          default_days: number | null;
+          counts_weekends: boolean;
+          needs_approval: boolean;
+          document_after_days: number | null;
+          carry_mode: "none" | "limited" | "all";
+          carry_max: number | null;
+          carry_expiry_months: number | null;
+          active: boolean;
+          sort: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          code?: "annual" | "sick" | "casual" | "maternity" | "paternity" | "compassionate" | "unpaid" | null;
+          name: string;
+          paid?: boolean;
+          default_days?: number | null;
+          counts_weekends?: boolean;
+          needs_approval?: boolean;
+          document_after_days?: number | null;
+          carry_mode?: "none" | "limited" | "all";
+          carry_max?: number | null;
+          carry_expiry_months?: number | null;
+          active?: boolean;
+          sort?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          code?: "annual" | "sick" | "casual" | "maternity" | "paternity" | "compassionate" | "unpaid" | null;
+          name?: string;
+          paid?: boolean;
+          default_days?: number | null;
+          counts_weekends?: boolean;
+          needs_approval?: boolean;
+          document_after_days?: number | null;
+          carry_mode?: "none" | "limited" | "all";
+          carry_max?: number | null;
+          carry_expiry_months?: number | null;
+          active?: boolean;
+          sort?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       locations: {
         Row: {
           id: string;
@@ -267,6 +441,33 @@ export type Database = {
           radius_m?: number;
           created_at?: string;
           address?: string | null;
+        };
+        Relationships: [];
+      };
+      member_private_details: {
+        Row: {
+          member_id: string;
+          org_id: string;
+          birth_month: number | null;
+          birth_day: number | null;
+          celebrate_opt_out: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          member_id: string;
+          org_id: string;
+          birth_month?: number | null;
+          birth_day?: number | null;
+          celebrate_opt_out?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          member_id?: string;
+          org_id?: string;
+          birth_month?: number | null;
+          birth_day?: number | null;
+          celebrate_opt_out?: boolean;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -359,6 +560,8 @@ export type Database = {
           line_manager_id: string | null;
           can_reception: boolean;
           auto_check_in_off: boolean;
+          start_date: string | null;
+          avatar_url: string | null;
         };
         Insert: {
           id?: string;
@@ -376,6 +579,8 @@ export type Database = {
           line_manager_id?: string | null;
           can_reception?: boolean;
           auto_check_in_off?: boolean;
+          start_date?: string | null;
+          avatar_url?: string | null;
         };
         Update: {
           id?: string;
@@ -393,6 +598,8 @@ export type Database = {
           line_manager_id?: string | null;
           can_reception?: boolean;
           auto_check_in_off?: boolean;
+          start_date?: string | null;
+          avatar_url?: string | null;
         };
         Relationships: [];
       };
@@ -417,6 +624,9 @@ export type Database = {
           auto_check_out: boolean;
           overtime_allowed: boolean;
           overtime_until: string;
+          leave_year_mode: "calendar" | "financial" | "anniversary";
+          leave_year_start_month: number;
+          leave_prorate: boolean;
         };
         Insert: {
           id?: string;
@@ -438,6 +648,9 @@ export type Database = {
           auto_check_out?: boolean;
           overtime_allowed?: boolean;
           overtime_until?: string;
+          leave_year_mode?: "calendar" | "financial" | "anniversary";
+          leave_year_start_month?: number;
+          leave_prorate?: boolean;
         };
         Update: {
           id?: string;
@@ -459,6 +672,9 @@ export type Database = {
           auto_check_out?: boolean;
           overtime_allowed?: boolean;
           overtime_until?: string;
+          leave_year_mode?: "calendar" | "financial" | "anniversary";
+          leave_year_start_month?: number;
+          leave_prorate?: boolean;
         };
         Relationships: [];
       };
@@ -1290,10 +1506,18 @@ export type Database = {
     };
     Functions: {
       admin_add_holiday: { Args: { p_day: string | null; p_name: string | null }; Returns: string };
+      admin_leave_overview: { Args: { p_type: string | null }; Returns: Json };
+      admin_leave_settings: { Args: { p_mode: string | null; p_start_month: number | null; p_prorate: boolean | null }; Returns: undefined };
       admin_remove_holiday: { Args: { p_id: string | null }; Returns: undefined };
+      admin_remove_leave_rule: { Args: { p_id: string | null }; Returns: undefined };
+      admin_save_leave_rule: { Args: { p_type: string | null; p_team: string | null; p_role: string | null; p_min_years: number | null; p_days: number | null }; Returns: string };
+      admin_save_leave_type: { Args: { p_id: string | null; p_name: string | null; p_paid: boolean | null; p_default_days: number | null; p_counts_weekends: boolean | null; p_needs_approval: boolean | null; p_document_after_days: number | null; p_carry_mode: string | null; p_carry_max: number | null; p_carry_expiry_months: number | null; p_active: boolean | null }; Returns: string };
+      admin_set_allowances: { Args: { p_rows: Json | null; p_note?: string | null }; Returns: number };
       admin_set_auto_check_in: { Args: { p_member: string | null; p_on: boolean | null }; Returns: undefined };
+      admin_set_staff_details: { Args: { p_rows: Json | null }; Returns: number };
       apply_paystack_payment: { Args: { p_reference: string | null; p_status: string | null; p_amount_kobo: number | null; p_currency: string | null; p_customer_code?: string | null; p_subscription_code?: string | null; p_plan_code?: string | null; p_email_token?: string | null }; Returns: Json };
       attendance_device_info: { Args: { p_from: string | null; p_to: string | null }; Returns: { attendance_id: string; ip: string; user_agent: string }[] };
+      cancel_leave: { Args: { p_id: string | null }; Returns: undefined };
       cancel_work_elsewhere: { Args: { p_request: string | null }; Returns: undefined };
       check_in: { Args: { p_kind: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_user_agent?: string | null }; Returns: Database["public"]["Tables"]["attendance"]["Row"] };
       console_announce: { Args: { p_message: string | null; p_level: string | null; p_org: string | null; p_audience: string | null; p_hours: number | null; p_reason: string | null }; Returns: string };
@@ -1340,6 +1564,7 @@ export type Database = {
       console_update_domain: { Args: { p_org: string | null; p_domain: string | null; p_reason: string | null }; Returns: undefined };
       create_organization: { Args: { p_name: string | null }; Returns: string };
       current_email: { Args: Record<PropertyKey, never>; Returns: string };
+      decide_leave: { Args: { p_id: string | null; p_approve: boolean | null; p_note: string | null }; Returns: undefined };
       decide_work_elsewhere: { Args: { p_request: string | null; p_approve: boolean | null; p_note?: string | null }; Returns: undefined };
       distance_m: { Args: { lat1: number | null; lng1: number | null; lat2: number | null; lng2: number | null }; Returns: number };
       end_session_at_departure: { Args: { p_departure: string | null }; Returns: undefined };
@@ -1361,10 +1586,12 @@ export type Database = {
       kiosk_sign_in: { Args: { p_token: string | null; p_visit: string | null; p_name: string | null; p_phone: string | null; p_email: string | null; p_company: string | null; p_purpose: string | null; p_host: string | null; p_rules_accepted: boolean | null; p_photo_path: string | null }; Returns: Json };
       kiosk_sign_out: { Args: { p_token: string | null; p_code: string | null; p_visit: string | null }; Returns: Json };
       kiosk_visitors_on_site: { Args: { p_token: string | null }; Returns: { id: string; name: string; since: string }[] };
+      leave_days: { Args: { p_member: string | null; p_type: string | null; p_start: string | null; p_end: string | null }; Returns: number };
       log_security_event: { Args: { p_kind: string | null; p_detail?: Json | null }; Returns: undefined };
       mark_onboarded: { Args: Record<PropertyKey, never>; Returns: undefined };
       mark_paystack_invoice_failed: { Args: { p_subscription_code: string | null; p_expected_period_end: string | null }; Returns: boolean };
       my_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; maintenance: boolean }[] };
+      my_leave_balances: { Args: Record<PropertyKey, never>; Returns: Json };
       my_line_manager: { Args: Record<PropertyKey, never>; Returns: { id: string; full_name: string; email: string }[] };
       my_member_id: { Args: Record<PropertyKey, never>; Returns: string };
       my_org_brand: { Args: Record<PropertyKey, never>; Returns: Json };
@@ -1377,11 +1604,13 @@ export type Database = {
       norm_email: { Args: { p: string | null }; Returns: string };
       norm_name: { Args: { p: string | null }; Returns: string };
       norm_phone: { Args: { p: string | null }; Returns: string };
+      on_leave: { Args: { p_member: string | null; p_date: string | null }; Returns: string };
       org_brand: { Args: { p_org: string | null }; Returns: Json };
       org_brand_level: { Args: { p_slug: string | null }; Returns: string };
       org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; accent_color: string; domain: string }[] };
       org_has_brand_colors: { Args: { p_org: string | null }; Returns: boolean };
       org_has_premium: { Args: { p_org: string | null }; Returns: boolean };
+      org_has_pro: { Args: { p_org: string | null }; Returns: boolean };
       org_has_visitors: { Args: { p_org: string | null }; Returns: boolean };
       org_plan_now: { Args: { p_org: string | null }; Returns: string };
       org_visitor_location: { Args: { p_org: string | null }; Returns: string };
@@ -1399,6 +1628,7 @@ export type Database = {
       report_presence: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: Json };
       request_attendance_correction: { Args: { p_work_date: string | null; p_check_in: string | null; p_check_out: string | null; p_reason: string | null }; Returns: string };
       request_home_location: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null } | { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_address: string | null }; Returns: undefined };
+      request_leave: { Args: { p_type: string | null; p_start: string | null; p_end: string | null; p_reason: string | null; p_document?: string | null }; Returns: string };
       request_work_elsewhere: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_reason: string | null; p_place_name?: string | null; p_address?: string | null }; Returns: string };
       require_visitors: { Args: { p_org: string | null }; Returns: undefined };
       reserved_slugs: { Args: Record<PropertyKey, never>; Returns: string[] };
@@ -1407,10 +1637,12 @@ export type Database = {
       revoke_support_access: { Args: Record<PropertyKey, never>; Returns: undefined };
       run_schedule_automation: { Args: Record<PropertyKey, never>; Returns: Json };
       set_line_manager: { Args: { p_member: string | null; p_manager: string | null }; Returns: undefined };
+      set_my_birthday: { Args: { p_month: number | null; p_day: number | null; p_opt_out: boolean | null }; Returns: undefined };
       set_paystack_subscription_cancelled: { Args: { p_subscription_code: string | null; p_cancelled: boolean | null; p_expected_updated_at?: string | null }; Returns: boolean };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
       throttle: { Args: { p_bucket: string | null }; Returns: undefined };
       unique_org_slug: { Args: { p_name: string | null }; Returns: string };
+      valid_birthday: { Args: { p_month: number | null; p_day: number | null }; Returns: boolean };
       verify_and_consume_recovery_code: { Args: { p_code: string | null }; Returns: boolean };
       visit_checkin: { Args: { p_token: string | null; p_code: string | null; p_phone: string | null; p_company: string | null; p_rules_accepted: boolean | null }; Returns: Json };
       visit_pass: { Args: { p_token: string | null }; Returns: Json };

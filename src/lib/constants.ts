@@ -24,6 +24,7 @@ export const PLANS = {
       "Your logo in the app",
       "30 days of history, CSV export",
       "Email support",
+      "Leave requests and approvals (standard leave types)",
     ],
   },
   pro: {
@@ -44,6 +45,7 @@ export const PLANS = {
       "Weak-GPS flags, device and IP records",
       "Unlimited history and full reports",
       "WhatsApp and email support",
+      "Full leave management: your own leave types, rules, bulk allowances, carry-over",
     ],
   },
   premium: {

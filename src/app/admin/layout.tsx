@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { supabase, org, isAdmin, me } = await requireMember({ viewer: true });
-  const [{ count: pendingPeople }, { count: pendingHomes }, { data: sub }, { count: pendingCorrections }, { count: pendingPlaces }, { data: brandRaw }] = await Promise.all([
+  const [{ count: pendingPeople }, { count: pendingHomes }, { data: sub }, { count: pendingCorrections }, { count: pendingPlaces }, { data: brandRaw }, { count: pendingLeave }] = await Promise.all([
     supabase.from("members").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending"),
     isAdmin
       ? supabase.from("member_private_locations").select("member_id", { count: "exact", head: true }).eq("org_id", org.id).not("home_req_lat", "is", null)
@@ -21,6 +21,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // RLS limits this to people the viewer line-manages (or everyone, for admins).
     supabase.from("work_location_requests").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending").neq("member_id", me.id),
     supabase.rpc("my_org_brand"),
+    // RLS limits this to requests the viewer may decide (their team, or everyone for admins).
+    supabase.from("leave_requests").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending").neq("member_id", me.id),
   ]);
   // Pro and Premium: the header carries the company's colours (my_org_brand returns none on Basic).
   const brand = brandTheme(parseOrNull(BrandShape, brandRaw, "admin/brand"));
@@ -78,7 +80,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       )}
       <div className="mt-4 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-7">
         <div className="mb-4 lg:mb-0">
-          <AdminNav isAdmin={isAdmin} pendingPeople={pendingPeople ?? 0} pendingCorrections={pendingCorrections ?? 0} pendingPlaces={pendingPlaces ?? 0} />
+          <AdminNav isAdmin={isAdmin} pendingPeople={pendingPeople ?? 0} pendingCorrections={pendingCorrections ?? 0} pendingPlaces={pendingPlaces ?? 0} pendingLeave={pendingLeave ?? 0} />
           {isAdmin && !!pendingHomes && <Link href="/admin/staff#home-requests" className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-[#fffdf8] px-3 py-2.5 text-xs font-medium leading-5 text-warn lg:mt-3"><span>{pendingHomes} home location request{pendingHomes === 1 ? "" : "s"} awaiting review</span><span aria-hidden="true">→</span></Link>}
         </div>
         <main className="min-w-0 pt-1 lg:pt-2">{children}</main>
