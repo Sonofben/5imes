@@ -1038,6 +1038,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_currencies: {
+        Row: {
+          code: string;
+          name: string;
+          symbol: string;
+          ngn_per_unit: number;
+          markup_pct: number;
+          active: boolean;
+          sort: number;
+          updated_at: string;
+        };
+        Insert: {
+          code: string;
+          name: string;
+          symbol: string;
+          ngn_per_unit: number;
+          markup_pct?: number;
+          active?: boolean;
+          sort?: number;
+          updated_at?: string;
+        };
+        Update: {
+          code?: string;
+          name?: string;
+          symbol?: string;
+          ngn_per_unit?: number;
+          markup_pct?: number;
+          active?: boolean;
+          sort?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       platform_plans: {
         Row: {
           plan: "basic" | "pro" | "premium";
@@ -2107,6 +2140,7 @@ export type Database = {
       console_company_link_requests: { Args: Record<PropertyKey, never>; Returns: { org_id: string; org_name: string; domain: string; current_slug: string; slug: string; requested_by_email: string; requested_at: string }[] };
       console_company_snapshot: { Args: { p_org: string | null }; Returns: Json };
       console_create_company: { Args: { p_name: string | null; p_domain: string | null; p_owner_email: string | null; p_owner_name: string | null; p_trial_days: number | null; p_reason: string | null }; Returns: string };
+      console_currencies: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["platform_currencies"]["Row"][] };
       console_decide_company_link: { Args: { p_org: string | null; p_approve: boolean | null; p_reason: string | null }; Returns: undefined };
       console_delete_company: { Args: { p_org: string | null; p_confirm_domain: string | null; p_reason: string | null }; Returns: undefined };
       console_delete_post: { Args: { p_id: string | null; p_reason: string | null }; Returns: undefined };
@@ -2133,6 +2167,7 @@ export type Database = {
       console_save_post: { Args: { p_id: string | null; p_post: Json | null; p_publish: boolean | null; p_publish_at?: string | null }; Returns: string };
       console_security: { Args: Record<PropertyKey, never>; Returns: Json };
       console_set_archived: { Args: { p_org: string | null; p_archived: boolean | null; p_reason: string | null }; Returns: undefined };
+      console_set_currency: { Args: { p_code: string | null; p_ngn_per_unit: number | null; p_markup_pct: number | null; p_active: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_field_addon: { Args: { p_org: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
       console_set_locked: { Args: { p_user: string | null; p_locked: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_plan: { Args: { p_org: string | null; p_plan: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
@@ -2215,6 +2250,7 @@ export type Database = {
       prepare_paystack_field_addon: { Args: { p_reference: string | null; p_field_seats: number | null }; Returns: Json };
       prepare_paystack_seat_increase: { Args: { p_reference: string | null; p_seats: number | null }; Returns: Json };
       prepare_paystack_subscription: { Args: { p_reference: string | null; p_plan: string | null; p_seats: number | null; p_months: number | null; p_auto_renew?: boolean | null; p_field_seats?: number | null }; Returns: Json };
+      public_currencies: { Args: Record<PropertyKey, never>; Returns: Json };
       public_plans: { Args: Record<PropertyKey, never>; Returns: Json };
       purge_old_sales_enquiries: { Args: Record<PropertyKey, never>; Returns: number };
       record_paystack_subscription: { Args: { p_plan_code: string | null; p_subscription_code: string | null; p_customer_code: string | null; p_email_token: string | null }; Returns: boolean };

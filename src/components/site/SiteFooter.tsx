@@ -5,7 +5,7 @@ import { BRAND, CONTACT } from "@/lib/constants";
 const COLUMNS = [
   { title: "Product", links: [["/attendance", "Attendance"], ["/visitor-management", "Visitor management"], ["/field-staff", "Field staff"], ["/leave-tasks-celebrations", "Leave, tasks and celebrations"], ["/pricing", "Pricing"]] },
   { title: "Compare", links: [["/blog/jibble-alternative-5ime-vs-jibble", "5ime vs Jibble"], ["/blog/connecteam-alternative-5ime-vs-connecteam", "5ime vs Connecteam"], ["/blog/fingerprint-attendance-vs-phone-check-in", "Fingerprint machines vs phones"], ["/blog/paper-visitor-register-vs-digital-visitor-management", "Paper visitor book vs digital"], ["/blog?category=comparison", "All comparisons"]] },
-  { title: "Company", links: [["/about", "About"], ["/contact", "Talk to sales"], ["/blog", "Blog"], ["/login", "Sign in"]] },
+  { title: "Company", links: [["/about", "About"], ["/contact", "Contact us"], ["/blog", "Blog"], ["/login", "Sign in"]] },
   { title: "Trust", links: [["/security", "Security and trust"], ["/privacy", "Privacy notice"], ["/terms", "Terms of service"]] },
 ] as const;
 
@@ -16,7 +16,7 @@ export function SiteFooter() {
         <div className="space-y-3">
           <Logo />
           <p className="max-w-xs text-sm leading-6 text-muted">Attendance and visitor management for teams in the office, at home and in the field.</p>
-          <p className="text-sm"><a href={`mailto:${CONTACT.hello}`} className="font-semibold hover:text-brand-dark">{CONTACT.hello}</a></p>
+          <p className="text-sm"><a href={`mailto:${CONTACT.info}`} className="font-semibold hover:text-brand-dark">{CONTACT.info}</a></p>
         </div>
         {COLUMNS.map((c) => (
           <nav key={c.title} aria-label={c.title}>

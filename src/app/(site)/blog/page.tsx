@@ -5,7 +5,7 @@ import { CtaBand } from "@/components/site/CtaBand";
 
 export const metadata: Metadata = {
   title: "Blog: attendance guides and comparisons",
-  description: "Guides on staff attendance, hybrid work and visitor management in Nigeria, and honest comparisons of 5ime with Jibble, Connecteam, fingerprint machines and the paper visitor book.",
+  description: "Guides on staff attendance, hybrid work and visitor management, and honest comparisons of 5ime with Jibble, Connecteam, fingerprint machines and the paper visitor book.",
   alternates: { canonical: "/blog" },
 };
 
@@ -19,7 +19,7 @@ export default async function BlogIndex({ searchParams }: { searchParams: Promis
       <section className="mx-auto max-w-7xl px-5 pb-8 pt-12 sm:px-8 sm:pt-16">
         <p className="eyebrow">Blog</p>
         <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">Guides and comparisons</h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">Practical writing on attendance, hybrid work and visitors in Nigerian workplaces, and honest comparisons to help you choose.</p>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">Practical writing on attendance, hybrid work and visitors at work, and honest comparisons to help you choose.</p>
         <nav aria-label="Categories" className="mt-6 flex flex-wrap gap-2 text-sm">
           <Link href="/blog" aria-current={!category ? "page" : undefined} className={`rounded-full border px-3 py-1.5 font-semibold ${!category ? "border-ink bg-ink text-white" : "border-line bg-white"}`}>All</Link>
           {(Object.keys(CATEGORIES) as Category[]).map((c) => (

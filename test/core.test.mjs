@@ -74,3 +74,15 @@ test("blog markdown keeps only safe links and builds tables", () => {
   // Raw HTML stays as text, never markup.
   assert.deepEqual(blocks[4], { t: "p", c: [{ t: "text", v: "<script>x</script>" }] });
 });
+
+import { convertFromNaira, formatMoney, guessCurrency } from "../src/lib/currency.ts";
+test("website prices convert from naira with the markup", () => {
+  const usd = { code: "USD", name: "US dollar", symbol: "$", ngnPerUnit: 1500, markupPct: 20 };
+  assert.equal(convertFromNaira(1500, usd), 1.2);
+  assert.equal(formatMoney(convertFromNaira(300, usd), usd), "$0.24");
+  assert.equal(formatMoney(300, { code: "NGN", name: "Nigerian naira", symbol: "₦", ngnPerUnit: 1, markupPct: 0 }), "₦300");
+  assert.equal(guessCurrency("Africa/Lagos", ["NGN", "USD"]), "NGN");
+  assert.equal(guessCurrency("Europe/London", ["NGN", "USD", "GBP"]), "GBP");
+  assert.equal(guessCurrency("Europe/Paris", ["NGN", "EUR"]), "EUR");
+  assert.equal(guessCurrency("America/New_York", ["NGN", "USD"]), "USD");
+});

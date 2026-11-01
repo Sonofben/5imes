@@ -3,58 +3,54 @@
 begin;
 insert into public.blog_posts (slug, title, excerpt, body, category, tags, seo_title, seo_description, faq, status, published_at)
 values
-  ($p$jibble-alternative-5ime-vs-jibble$p$, $p$Jibble alternative for Nigerian companies: 5ime vs Jibble$p$, $p$Jibble is a popular free time clock. 5ime is built for Nigerian offices that also need approved home check in, visitor management and naira billing. Here is an honest side by side.$p$, $p$*Last checked: November 2026. Product details change, so check each provider’s website before you decide. If anything here is out of date, email hello@5imes.click and we will correct it.*
+  ($p$jibble-alternative-5ime-vs-jibble$p$, $p$Jibble alternative: 5ime vs Jibble, compared honestly$p$, $p$Jibble is a popular free time clock. 5ime is built for companies that also need approved home check in on agreed days, visitor management and field visit reports. Here is an honest side by side.$p$, $p$*Last checked on jibble.io: 1 November 2026. Product details change, so check each provider’s website before you decide. If anything here is out of date, email info@5imes.click and we will correct it.*
 
-If you are searching for a Jibble alternative, you probably like the idea of staff clocking in on their phones, but something does not fit. For many Nigerian companies the gap is one of three things: staff who work from home on agreed days, visitors at reception, or paying in dollars.
+If you are searching for a Jibble alternative, you probably like the idea of staff clocking in on their phones, but something does not fit. For many companies the gap is one of three things: staff who work from home on agreed days, visitors at reception, or field staff who need visit reports without being tracked all day.
 
 This post compares Jibble and 5ime fairly, including where Jibble is the better choice.
 
 ## The short answer
 
-**Choose 5ime** if you are a Nigerian company that wants attendance at offices and approved homes, visitor management in the same product, field visit check in, and billing in naira.
+**Choose 5ime** if you want attendance at offices and approved homes on agreed days, visitor management in the same product, and field visit check in with notes and photos.
 
-**Choose Jibble** if you want a free time clock for a team anywhere in the world, need face recognition at a kiosk, or need detailed project time tracking.
+**Choose Jibble** if you want a free time clock, need face recognition at a kiosk, or need timesheets and project time tracking for payroll and invoicing.
 
 ## Side by side
 
 | | 5ime | Jibble |
 |---|---|---|
 | GPS check in at work sites | Yes, at approved offices with their own check in area | Yes, with geofences |
-| Work from home on scheduled days | Yes, only from a home an admin approved, only on home days | Location based clock in, without a separate approved home and schedule check |
-| Visitor management | Yes, visitors sign in on their own phone and reception admits them (Pro and Premium) | Not found on its public site when we checked |
-| Field visits at client sites | Yes, with notes, photos and planned visits | Clock in at job sites with geofences |
+| Work from home on scheduled days | Yes, only from a home an admin approved, only on home days | Work schedules and location rules, without an approved home check tied to home days |
+| Visitor management | Yes, visitors sign in on their own phone and reception admits them (Pro and Premium) | Not listed on its website when we checked |
+| Field staff | Visit check in with notes, photos and planned visits, no tracking between visits | Geofencing and GPS tracking |
 | Face recognition | No | Yes |
 | Kiosk clock in | Reception tablet for visitors (Premium) | Yes, shared kiosk for staff |
-| Leave | Yes, requests, approvals and balances | Time off features vary by plan |
-| Nigerian public holidays | Built in | Holidays can be set up |
-| Pricing | From ₦300 per staff a month, paid in naira | Free plan, paid plans in US dollars |
-| Payment options | Card, bank transfer and USSD (Paystack), Moniepoint | US dollars |
-| Free trial | Yes, every Pro feature, no card | Free plan |
+| Offline clock in | No | Yes |
+| Timesheets and payroll exports | Attendance reports and exports | Yes, timesheets, projects and invoicing |
+| Leave | Yes, requests, approvals and balances | Yes, leave policies, accruals and requests |
+| Public holidays | Built in for Nigeria, add your own | Can be set up |
+| Price | From ₦300 per staff a month (also shown in dollars, euros and pounds) | Free for unlimited users |
 
 ## Where 5ime is different
 
 ### Home working that follows the rules you agreed
 
-Many Nigerian companies now let staff work from home on some days. The hard part is making sure “working from home” means *their* home, on *their* home days. In 5ime, a staff member asks for their home location to be approved. An admin approves it once. After that they can check in from home only on the days their schedule says home. On office days, only the office works.
+Many companies now let staff work from home on some days. The hard part is making sure “working from home” means *their* home, on *their* home days. In 5ime, a staff member asks for their home location to be approved. An admin approves it once. After that they can check in from home only on the days their schedule says home. On office days, only the office works.
 
 ### Visitors in the same place as staff
 
-Most offices in Lagos and Abuja still use a paper visitor book. 5ime replaces it: visitors scan a QR code at reception, sign in on their own phone, and reception admits them. The host gets an email. You see staff and visitors on site in one list, which matters on the day of a fire drill. Read more about [visitor management](/visitor-management).
+Many offices still use a paper visitor book. 5ime replaces it: visitors scan a QR code at reception, sign in on their own phone, and reception admits them. The host gets an email. You see staff and visitors on site in one list, which matters on the day of a fire drill. Read more about [visitor management](/visitor-management).
 
-### Naira billing
+### Field staff without tracking
 
-5ime is priced per staff member in naira and paid locally. There is no dollar card to find and no exchange rate surprise at renewal. See [pricing](/pricing).
-
-### Privacy that staff can accept
-
-5ime reads location only at check in and check out. It never tracks staff in the background, and for field visits it keeps only the distance from the client site, not a route.
+Jibble offers GPS tracking. 5ime takes a different view: field staff check in at the client’s site, add a note and a photo, then check out, and nothing is recorded in between. Managers get proof of the visit and staff keep their privacy. See [field staff](/field-staff).
 
 ## Where Jibble is stronger
 
-- **Free plan.** Jibble has a free plan. 5ime has a free trial and then paid plans.
-- **Face recognition and kiosks.** If you want staff to clock in with their face on a shared tablet, Jibble does this and 5ime does not.
-- **Project time tracking.** Jibble tracks time against projects and activities for billing clients. 5ime focuses on attendance, not timesheets.
-- **Global teams.** Jibble is used by companies in many countries and languages.
+- **Price.** Jibble says it is free for unlimited users. 5ime has a free trial and then paid plans.
+- **Face recognition, NFC and kiosks.** If you want staff to clock in with their face on a shared tablet, Jibble does this and 5ime does not.
+- **Timesheets and projects.** Jibble tracks time against projects and activities for payroll and invoicing. 5ime focuses on attendance, not timesheets.
+- **Offline mode.** Jibble can record time without a connection. 5ime needs a connection to check in.
 
 ## How to switch
 
@@ -64,62 +60,64 @@ Most offices in Lagos and Abuja still use a paper visitor book. 5ime replaces it
 
 > Most teams are set up in an afternoon. If you have many branches, [talk to us](/contact) and we will help you plan the roll out.
 $p$, $p$comparison$p$,
-   array[$p$jibble$p$, $p$jibble alternative$p$, $p$attendance app$p$, $p$comparison$p$]::text[], $p$Jibble alternative in Nigeria: 5ime vs Jibble (2026)$p$, $p$Looking for a Jibble alternative? Compare 5ime and Jibble on GPS attendance, work from home, visitor management, field visits and naira pricing.$p$,
-   $p$[{"q":"Is 5ime a good alternative to Jibble?","a":"5ime is a good alternative to Jibble if your company is in Nigeria, has staff in the office and at home on set days, welcomes visitors at reception, or wants to pay in naira. If you only need a free time clock with face recognition, Jibble’s free plan may suit you better."},{"q":"Does Jibble have visitor management?","a":"Jibble’s public website describes time tracking, attendance, geofencing and kiosks. We could not find a visitor management module there when we last checked in November 2026. 5ime includes visitor management on its Pro and Premium plans."},{"q":"Can I pay for 5ime in naira?","a":"Yes. 5ime is priced and paid in naira, by card, bank transfer or USSD through Paystack, or with Moniepoint. Jibble’s paid plans are priced in US dollars."},{"q":"Is Jibble free?","a":"Jibble offers a free plan, and its paid plans add more features. Check Jibble’s website for current limits and prices, as they change."}]$p$::jsonb, 'published', $p$2026-11-01T08:00:00+01:00$p$::timestamptz),
-  ($p$connecteam-alternative-5ime-vs-connecteam$p$, $p$Connecteam alternative: 5ime vs Connecteam for Nigerian teams$p$, $p$Connecteam is an all in one app for deskless teams. 5ime does fewer things, in naira, with visitor management built in. Here is how to decide.$p$, $p$*Last checked: November 2026. Prices and features change, so confirm on each provider’s website. Spot something out of date? Email hello@5imes.click.*
+   array[$p$jibble$p$, $p$jibble alternative$p$, $p$attendance app$p$, $p$comparison$p$]::text[], $p$Jibble alternative: 5ime vs Jibble (2026)$p$, $p$Looking for a Jibble alternative? Compare 5ime and Jibble on GPS attendance, work from home, visitor management, field visits and price.$p$,
+   $p$[{"q":"Is 5ime a good alternative to Jibble?","a":"5ime is a good alternative to Jibble if your company has staff in the office and at home on set days, welcomes visitors at reception, or sends staff to client sites. If you only need a free time clock with face recognition, Jibble may suit you better."},{"q":"Does Jibble have visitor management?","a":"Jibble’s website describes time tracking, timesheets, time off, geofencing, GPS tracking, face recognition and kiosks. It does not list visitor management when we checked in November 2026. 5ime includes visitor management on its Pro and Premium plans."},{"q":"Is Jibble free?","a":"Jibble’s website says it is free forever for unlimited users. 5ime is a paid product with a free trial. If you only need a free time clock, Jibble is a strong option."},{"q":"Why pay for 5ime when Jibble is free?","a":"Pay for 5ime if you need what Jibble does not cover: visitor management at reception, home check in limited to an approved home on scheduled home days, field visit reports with notes and photos, and no tracking between visits."}]$p$::jsonb, 'published', $p$2026-11-01T08:00:00+01:00$p$::timestamptz),
+  ($p$connecteam-alternative-5ime-vs-connecteam$p$, $p$Connecteam alternative: 5ime vs Connecteam, compared honestly$p$, $p$Connecteam is an all in one app for frontline teams. 5ime does fewer things, with visitor management and approved home working built in. Here is how to decide.$p$, $p$*Last checked on connecteam.com: 1 November 2026. Plans and features change, so confirm on each provider’s website. Spot something out of date? Email info@5imes.click.*
 
-Connecteam is a well known app for teams that do not sit at desks: retail, construction, cleaning and field service. It covers time clock, scheduling, tasks, chat, training and more, split into separate hubs.
+Connecteam is a well known app for teams that do not sit at desks: retail, construction, cleaning and field service. It covers a time clock, scheduling, forms, tasks, chat, time off, training courses, documents, a help desk and hiring.
 
-5ime is narrower on purpose. It answers one question very well for Nigerian companies: who is at work, who is at home on an agreed day, who is with a client, and who is visiting.
+5ime is narrower on purpose. It answers one question very well: who is at work, who is at home on an agreed day, who is with a client, and who is visiting.
 
 ## The short answer
 
-**Choose 5ime** if you want attendance for office, home and field staff plus visitor management, priced in naira, without paying for chat, training or HR modules you will not use.
+**Choose 5ime** if you want attendance for office, home and field staff plus visitor management, without paying for chat, training and HR modules you will not use.
 
-**Choose Connecteam** if you run shift based teams that need rosters, internal chat, training courses and surveys in one app, and you are comfortable paying in US dollars.
+**Choose Connecteam** if you run shift based frontline teams that need rosters, internal chat, training courses and forms in one app.
 
 ## Side by side
 
 | | 5ime | Connecteam |
 |---|---|---|
-| GPS check in | Yes, at approved offices and approved homes | Yes, GPS time clock; geofencing on higher plans |
-| Home working on set days | Yes, approved home and weekly schedule | Not a dedicated feature |
-| Visitor management | Yes (Pro and Premium) | Not found when we checked |
-| Field visits | Visit check in with notes and photos, no tracking between visits | Location tracking available on higher plans |
+| GPS check in | Yes, at approved offices and approved homes | Yes, GPS location stamps on clock in and out |
+| Check in areas (geofences) | Every office on Pro and Premium | Up to 10 sites on Advanced, unlimited on Expert and above |
+| Home working on set days | Yes, approved home tied to the weekly schedule | Not a dedicated feature |
+| Visitor management | Yes (Pro and Premium) | Not listed when we checked |
+| Field staff | Visit check in with notes and photos, no tracking between visits | GPS breadcrumb tracking on higher plans |
 | Shift scheduling | Weekly office and home schedules | Detailed shift scheduling |
 | Tasks | Included | Included |
-| Chat, training, surveys | No | Yes, in separate hubs |
-| Leave | Included | Included |
-| Pricing basis | Per staff member, in naira | Per hub in US dollars, fixed price for a first group of users plus a price per extra user |
-| Free option | Free trial, no card | Free plan for small teams |
+| Time off | Included | Included |
+| Birthdays and anniversaries | Included | Included |
+| Chat, courses, forms, hiring | No | Yes |
+| Two step sign in for admins | Required for every admin, on every plan | Listed on the Enterprise plan |
+| Pricing | A simple price per staff member | A free plan for small teams and several paid plans |
 
 ## Where 5ime is different
 
 ### Built for offices, homes and reception
 
-Connecteam grew from deskless teams. 5ime grew from Nigerian offices: head office in Lagos, a branch in Abuja, some staff at home on Fridays, and a steady flow of visitors. Office days, home days and the visitor book all live in [one place](/attendance).
+Connecteam grew from frontline teams. 5ime grew from offices: a head office, a branch or two, some staff at home on Fridays, and a steady flow of visitors at reception. Office days, home days and the visitor book all live in [one place](/attendance).
 
 ### No tracking between visits
 
 Field staff often worry that an attendance app means being followed all day. 5ime only checks location when a visit starts and ends. Managers get proof of the visit, notes and a photo, and staff keep their privacy. See [field staff](/field-staff).
 
-### Local billing
+### Security without the top plan
 
-Pay per staff member in naira, by card, bank transfer or USSD. Your finance team does not need a dollar card and the price does not move with the exchange rate.
+5ime requires two step sign in for every company admin, on every plan. On Connecteam’s pricing page, two factor sign in for admins is listed on the Enterprise plan.
 
 ## Where Connecteam is stronger
 
-- **Shift scheduling** for rota based teams.
-- **Internal communication**: chat, updates and directories.
-- **Training and surveys** for frontline staff.
+- **Shift scheduling** for rota based teams, including open shifts and auto scheduling.
+- **Internal communication**: chat, updates, events and a directory.
+- **Training and onboarding** with courses, quizzes and document packs.
 - **Native mobile apps** in the app stores. 5ime runs in the phone’s browser and can be added to the home screen.
 
 ## Making the decision
 
 Ask your team one question: is the problem *knowing who is at work and who is visiting*, or is it *running a whole frontline workforce*? If it is the first, [try 5ime free](/signup). If it is the second, Connecteam is worth a look.
 $p$, $p$comparison$p$,
-   array[$p$connecteam$p$, $p$connecteam alternative$p$, $p$attendance app$p$, $p$comparison$p$]::text[], $p$Connecteam alternative in Nigeria: 5ime vs Connecteam (2026)$p$, $p$Compare 5ime and Connecteam on GPS attendance, scheduling, visitor management, field staff privacy and naira pricing for Nigerian companies.$p$,
-   $p$[{"q":"Is 5ime cheaper than Connecteam?","a":"It depends on team size and plan. 5ime charges per staff member in naira, from ₦300 a month. Connecteam charges in US dollars per hub, with a fixed price for the first group of users and a price per extra user. Work out both for your headcount before deciding."},{"q":"Does Connecteam have visitor management?","a":"We could not find a visitor management feature in Connecteam’s public material when we checked in November 2026. 5ime includes visitor management on Pro and Premium."},{"q":"Does 5ime track field staff live?","a":"No. 5ime records the distance from the client site and the GPS accuracy at check in and check out of a visit. It does not store a route or follow staff between visits."},{"q":"Is Connecteam better for shift scheduling?","a":"Yes. Connecteam has detailed shift scheduling with drag and drop rosters. 5ime has weekly office and home schedules per company, team or person, but not rota building for shift workers."}]$p$::jsonb, 'published', $p$2026-10-31T08:00:00+01:00$p$::timestamptz),
+   array[$p$connecteam$p$, $p$connecteam alternative$p$, $p$attendance app$p$, $p$comparison$p$]::text[], $p$Connecteam alternative: 5ime vs Connecteam (2026)$p$, $p$Compare 5ime and Connecteam on GPS attendance, home working, visitor management, field staff privacy and how much you really need.$p$,
+   $p$[{"q":"Does Connecteam have visitor management?","a":"Connecteam’s pricing page lists time clock, scheduling, forms, tasks, chat, time off, courses, help desk, hiring and more. It does not list visitor management when we checked on 1 November 2026. 5ime includes visitor management on Pro and Premium."},{"q":"Does 5ime track field staff live?","a":"No. 5ime records the distance from the client site and the GPS accuracy at check in and check out of a visit. It does not store a route. Connecteam offers GPS breadcrumb tracking on its higher plans."},{"q":"Is Connecteam better for shift scheduling?","a":"Yes. Connecteam has detailed shift scheduling with open shifts, templates and auto scheduling. 5ime has weekly office and home schedules for a company, a team or a person, but not rota building for shift workers."},{"q":"Which is cheaper, 5ime or Connecteam?","a":"It depends on your headcount and the plan you need. 5ime charges a simple price per staff member. Connecteam has a free plan for small teams and several paid plans. Price both for your team before deciding."}]$p$::jsonb, 'published', $p$2026-10-31T08:00:00+01:00$p$::timestamptz),
   ($p$fingerprint-attendance-vs-phone-check-in$p$, $p$Fingerprint attendance machines vs phone check in: what Nigerian offices should know$p$, $p$Fingerprint machines are common in Nigerian offices, but they cannot see staff working from home or at a client site. Here is how they compare with GPS check in on a phone.$p$, $p$Walk into most Nigerian offices before 9 am and you will find a small queue at a fingerprint machine by the door. It works, mostly. But the way people work has changed, and the machine has not.
 
 ## What a fingerprint machine does well

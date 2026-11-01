@@ -2,7 +2,7 @@ import { requireConsole, can } from "@/lib/console";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
 import { Reason } from "../Reason";
-import { savePlan, setPlatform } from "../actions";
+import { savePlan, setPlatform, setCurrency } from "../actions";
 import { friendly } from "@/lib/errors";
 import { parseOrNull, ConsolePlans } from "@/lib/jsonShapes";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function PricingPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, role } = await requireConsole();
-  const { data, error } = await supabase.rpc("console_plans");
+  const [{ data, error }, { data: currencies }] = await Promise.all([supabase.rpc("console_plans"), supabase.rpc("console_currencies")]);
   if (error || !data) return <p className="card text-bad">{(error ? friendly(error, "console/pricing") : "No data.")}</p>;
   const d = parseOrNull(ConsolePlans, data, "console/pricing");
   if (!d) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
@@ -48,6 +48,23 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
           {edit && <><Reason /><button className="btn-primary">Save trial length</button></>}
         </fieldset>
       </form>
+      <section className="card space-y-3">
+        <div><h2 className="font-bold">Website currencies</h2><p className="text-sm text-muted">How the website shows prices to visitors outside Nigeria. The price shown is the naira price ÷ naira per unit, plus the markup. Billing stays in naira. {can.setPlan(role) ? "" : "Only Global and Billing admins can change these."}</p></div>
+        <div className="grid gap-3 lg:grid-cols-3">{(currencies ?? []).filter((c) => c.code !== "NGN").map((c) => (
+          <form key={c.code} action={setCurrency.bind(null, c.code)} className="rounded-xl border border-line p-3">
+            <fieldset disabled={!can.setPlan(role)} className="space-y-2">
+              <p className="font-semibold">{c.code} · {c.name}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div><label className="label" htmlFor={`r-${c.code}`}>₦ per 1 {c.code}</label><input id={`r-${c.code}`} name="rate" type="number" step="0.01" min="0.01" defaultValue={Number(c.ngn_per_unit)} className="input" required /></div>
+                <div><label className="label" htmlFor={`m-${c.code}`}>Markup %</label><input id={`m-${c.code}`} name="markup" type="number" step="0.5" min="0" max="500" defaultValue={Number(c.markup_pct)} className="input" /></div>
+              </div>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={c.active} /> Show on the website</label>
+              <p className="text-xs text-muted">₦600 shows as about {c.symbol}{((600 / Number(c.ngn_per_unit)) * (1 + Number(c.markup_pct) / 100)).toFixed(2)}</p>
+              <Reason /><button className="btn-ghost btn-sm">Save {c.code}</button>
+            </fieldset>
+          </form>
+        ))}</div>
+      </section>
     </div>
   );
 }

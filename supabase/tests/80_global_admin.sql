@@ -19,9 +19,9 @@ select test.blocked($$select public.console_set_plan_terms('basic','Basic',300,'
 select test.as_console('00000000-0000-0000-0000-0000000000c1', 'joseph@koraforge.com');
 select test.blocked($$select public.console_set_plan_terms('basic','Basic',300,'x',array['a'],1,'')$$, 'reason', 'Price change needs a reason');
 select public.console_set_plan_terms('basic', 'Basic', 300, 'One office', array['One office', ' '], 1, 'Price review 2027');
-select public.console_set_platform(21, false, null, 'Longer trial for Q4');
+select public.console_set_platform(30, false, null, 'Longer trial for Q4');
 select test.ok((public.public_plans() -> 'plans' -> 0 ->> 'pricePerSeat')::int = 300, 'New Basic price is public');
-select test.ok((public.public_plans() ->> 'trial_days')::int = 21, 'New trial length is public');
+select test.ok((public.public_plans() ->> 'trial_days')::int = 30, 'New trial length is public');
 reset role;
 select test.ok((select count(*) from public.platform_audit where action in ('pricing.update','platform.settings')) = 2, 'Both changes are logged');
 select test.ok(public.plan_price('basic') = 300 and public.plan_price('pro') = 600, 'plan_price reads the table');
@@ -33,18 +33,18 @@ insert into auth.users (id) values ('00000000-0000-0000-0000-00000000b802');
 set role authenticated;
 select test.as_user('00000000-0000-0000-0000-00000000b802', 'boss@trialco.ng');
 select public.create_organization('TrialCo');
-select test.ok((select trial_ends_at between now() + interval '20 days 23 hours' and now() + interval '21 days 1 hour' from public.subscriptions),
-  'Self sign-up now gets the 21-day trial');
+select test.ok((select trial_ends_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 hour' from public.subscriptions),
+  'Self sign-up now gets the longer trial');
 
 \echo '--- announcements and maintenance'
 select test.as_console('00000000-0000-0000-0000-0000000000c1', 'joseph@koraforge.com');
 select public.console_announce('New reports page is live', 'info', null, 'everyone', 24, 'Release note');
-select public.console_set_platform(21, true, 'Upgrading servers until 10pm', 'Planned maintenance');
+select public.console_set_platform(30, true, 'Upgrading servers until 10pm', 'Planned maintenance');
 select test.as_user('00000000-0000-0000-0000-00000000000b', 'tunde@acme.ng');
 select test.ok((select count(*) from public.my_announcements()) = 2, 'Staff see the announcement and the maintenance notice');
 select test.blocked($$select public.check_in('out', 6.6018, 3.3515, 10)$$, 'Upgrading servers', 'Maintenance pauses check-ins');
 select test.as_console('00000000-0000-0000-0000-0000000000c1', 'joseph@koraforge.com');
-select public.console_set_platform(21, false, null, 'Maintenance finished');
+select public.console_set_platform(14, false, null, 'Maintenance finished, standard 14 day trial');
 select public.console_end_announcement((select id from public.console_announcements() limit 1));
 select test.as_user('00000000-0000-0000-0000-00000000000b', 'tunde@acme.ng');
 select test.ok((select count(*) from public.my_announcements()) = 0, 'Ended announcement and maintenance disappear');

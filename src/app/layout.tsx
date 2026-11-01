@@ -5,7 +5,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BRAND } from "@/lib/constants";
 import { isStaging, publicOrigin } from "@/lib/site";
 
-const description = "Staff attendance and visitor management for Nigerian teams: GPS check in at the office, an approved home or a client site, and visitors who sign in on their own phone. From ₦300 per staff a month.";
+const description = "Staff attendance and visitor management for modern teams: GPS check in at the office, an approved home or a client site, and visitors who sign in on their own phone. No hardware needed.";
 
 export const metadata: Metadata = {
   title: { default: `${BRAND.name}: staff attendance and visitor management`, template: `%s · ${BRAND.name}` },

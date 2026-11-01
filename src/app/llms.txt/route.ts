@@ -11,10 +11,10 @@ export async function GET() {
   const [{ plans, trialDays }, posts] = await Promise.all([loadPublicPlans(), listPosts().catch(() => [])]);
   const body = `# 5ime
 
-> 5ime is staff attendance and visitor management for teams in Nigeria. Staff check in with their own phone by GPS, only at an approved office, an approved home on their home days, or a client site. Visitors sign in on their own phone and reception admits them. Priced in naira per staff member per month, with a ${trialDays} day free trial and no hardware.
+> 5ime is staff attendance and visitor management for offices, hybrid and field teams. It started in Nigeria and serves teams anywhere. Staff check in with their own phone by GPS, only at an approved office, an approved home on their home days, or a client site. Visitors sign in on their own phone and reception admits them. Priced per staff member per month (billed in naira today; the website also shows US dollars, euros and pounds), with a ${trialDays} day free trial and no hardware.
 
 ## Product
-- [Attendance](${o}/attendance): GPS check in at approved offices and approved homes, schedules, late and early, automatic check in and check out, overtime, Nigerian public holidays, reports.
+- [Attendance](${o}/attendance): GPS check in at approved offices and approved homes, schedules, late and early, automatic check in and check out, overtime, public and company holidays, reports.
 - [Visitor management](${o}/visitor-management): visitors sign in on their own phone, reception admits them, the host is emailed, roll call and blocklist on Premium.
 - [Field staff](${o}/field-staff): client site visits with notes and photos, planned visits, no tracking between visits.
 - [Leave, tasks and celebrations](${o}/leave-tasks-celebrations): included in every plan.
@@ -25,7 +25,7 @@ ${Object.values(plans).map((p) => `- ${p.name}: ₦${p.pricePerSeat}. ${p.blurb}
 - Details: ${o}/pricing
 
 ## Trust
-- [Security and trust](${o}/security): information security aligned with ISO/IEC 27001; designed for the Nigeria Data Protection Act 2023 and the GDPR.
+- [Security and trust](${o}/security): information security aligned with ISO/IEC 27001; designed for the GDPR and the Nigeria Data Protection Act 2023.
 - [Privacy notice](${o}/privacy)
 - [Terms](${o}/terms)
 

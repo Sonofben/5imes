@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BRAND, naira } from "@/lib/constants";
+import { BRAND } from "@/lib/constants";
+import { Money, CurrencySelect, CurrencyNote } from "@/components/site/Currency";
 import { loadPublicPlans } from "@/lib/plans";
 import { listPosts, CATEGORIES } from "@/lib/blog";
 import { Faq } from "@/components/site/Faq";
@@ -10,7 +11,7 @@ import { publicOrigin } from "@/lib/site";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  description: "5ime is staff attendance and visitor management for Nigerian teams. Staff check in by GPS at the office, an approved home or a client site. Visitors sign in on their own phone. Priced in naira, no hardware needed.",
+  description: "5ime is staff attendance and visitor management for modern teams. Staff check in by GPS at the office, an approved home or a client site. Visitors sign in on their own phone. No hardware needed.",
 };
 
 const products = [
@@ -20,10 +21,10 @@ const products = [
 ];
 
 const reasons = [
-  { title: "Priced in naira", text: "Pay per staff member in naira with card, bank transfer or USSD. No dollar card, no exchange rate surprises." },
+  { title: "Simple, fair pricing", text: "Pay per staff member, with prices shown in your own currency. No hardware, no set up fee and no long contract." },
   { title: "No machines to buy", text: "Staff use the phone they already have. No fingerprint devices to install, repair or queue at." },
   { title: "Fair to your staff", text: "Location is read only at check in and check out. Home addresses and exact positions stay hidden from ordinary managers." },
-  { title: "Built for how Nigeria works", text: "Nigerian public holidays, branches across cities, staff at home on agreed days and visitors at reception." },
+  { title: "Built for how teams work now", text: "Several branches, staff at home on agreed days, people out with clients and visitors at reception, all in one place." },
 ];
 
 const steps = [
@@ -35,9 +36,9 @@ const steps = [
 const faq = [
   { q: "What is 5ime?", a: "5ime is an attendance and visitor management service. Staff check in with their phone at an approved office, an approved home or a client site, and visitors sign in at reception on their own phone. Admins see who is in, who is late and who is visiting, live." },
   { q: "Do my staff need to install an app?", a: "No download from an app store is needed. 5ime runs in the phone’s browser and can be added to the home screen like an app, on Android and iPhone." },
-  { q: "How much does 5ime cost?", a: "Plans start at ₦300 per staff member a month on Basic, ₦600 on Pro and ₦1,000 on Premium. Every company starts with a free Pro trial and no card is needed." },
+  { q: "How much does 5ime cost?", a: "Plans start at ₦300 per staff member a month on Basic, ₦600 on Pro and ₦1,000 on Premium. The pricing page shows these in US dollars, euros and pounds too. Every company starts with a free Pro trial and no card is needed." },
   { q: "Can staff fake their location?", a: "5ime checks the GPS position and how accurate it is at the moment of check in. Rough readings are refused, and on Pro and Premium weak GPS, device and network details are flagged for review." },
-  { q: "Is 5ime compliant with the NDPA?", a: "5ime is designed around the Nigeria Data Protection Act 2023 and the GDPR: location is read only when staff check in or out, access follows roles, and companies decide how long records are kept. See our Security and trust page for details." },
+  { q: "Does 5ime follow data protection law?", a: "5ime is designed around the GDPR and the Nigeria Data Protection Act 2023: location is read only when staff check in or out, access follows roles, and companies decide how long records are kept. See our Security and trust page for details." },
 ];
 
 export default async function Home() {
@@ -48,7 +49,7 @@ export default async function Home() {
       <JsonLd data={[
         { "@context": "https://schema.org", "@type": "Organization", name: BRAND.name, url: origin, logo: `${origin}/icon-512.png`, parentOrganization: { "@type": "Organization", name: "Kora Forge" } },
         { "@context": "https://schema.org", "@type": "SoftwareApplication", name: BRAND.name, applicationCategory: "BusinessApplication", operatingSystem: "Web, Android, iOS",
-          description: "Staff attendance with GPS check in, visitor management and field visit check in, priced in naira.",
+          description: "Staff attendance with GPS check in, visitor management and field visit check in.",
           offers: Object.values(plans).map((p) => ({ "@type": "Offer", name: p.name, price: p.pricePerSeat, priceCurrency: "NGN", description: "Per staff member per month" })) },
       ]} />
 
@@ -62,7 +63,7 @@ export default async function Home() {
               <Link href="/signup" className="btn-brand px-5">Start free trial <span aria-hidden>→</span></Link>
               <Link href="/pricing" className="btn-ghost">See pricing</Link>
             </div>
-            <p className="mt-4 text-sm text-muted">{trialDays} day free trial with every Pro feature. No card needed. From <b className="text-ink">{naira(plans.basic.pricePerSeat)}</b> per staff a month.</p>
+            <p className="mt-4 text-sm text-muted">{trialDays} day free trial with every Pro feature. No card needed. From <b className="text-ink"><Money ngn={plans.basic.pricePerSeat} /></b> per staff a month.</p>
           </div>
           <div aria-label="Illustrative example of the 5ime dashboard" role="img" className="relative mx-auto w-full max-w-[560px]">
             <div aria-hidden className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-[#edcfc2]/60 blur-3xl" />
@@ -101,7 +102,7 @@ export default async function Home() {
       </section>
 
       <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-16">
-        <div className="max-w-2xl"><p className="eyebrow">Why teams choose 5ime</p><h2 className="mt-2 text-3xl font-bold tracking-tight">Made for Nigerian workplaces.</h2></div>
+        <div className="max-w-2xl"><p className="eyebrow">Why teams choose 5ime</p><h2 className="mt-2 text-3xl font-bold tracking-tight">Made for real workplaces.</h2></div>
         <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {reasons.map((r) => <article key={r.title} className="rounded-2xl border border-line bg-white p-5"><h3 className="font-bold">{r.title}</h3><p className="mt-1.5 text-sm leading-6 text-muted">{r.text}</p></article>)}
         </div>
@@ -117,16 +118,17 @@ export default async function Home() {
       <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl"><p className="eyebrow">Pricing</p><h2 className="mt-2 text-3xl font-bold tracking-tight">Simple prices per staff member.</h2></div>
-          <Link href="/pricing" className="btn-ghost">Compare plans</Link>
+          <div className="flex flex-wrap items-center gap-3"><CurrencySelect /><Link href="/pricing" className="btn-ghost">Compare plans</Link></div>
         </div>
         <div className="mt-8 grid gap-3 md:grid-cols-3">
           {Object.values(plans).map((p) => (
             <article key={p.id} className={`rounded-2xl border bg-white p-5 ${p.id === "pro" ? "border-ink" : "border-line"}`}>
               <h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-muted">{p.blurb}</p>
-              <p className="mt-3"><span className="text-3xl font-extrabold">{naira(p.pricePerSeat)}</span><span className="text-sm text-muted"> per staff a month</span></p>
+              <p className="mt-3"><span className="text-3xl font-extrabold"><Money ngn={p.pricePerSeat} /></span><span className="text-sm text-muted"> per staff a month</span></p>
             </article>
           ))}
         </div>
+        <div className="mt-3"><CurrencyNote /></div>
       </section>
 
       {posts.length > 0 && (

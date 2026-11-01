@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const pillars = [
-  { title: "Access control", text: "Least privilege by role. Company admins choose who sees what, ordinary managers never see exact positions or home addresses, and two factor sign in is available for every admin and required for our own staff." },
+  { title: "Access control", text: "Least privilege by role. Company admins choose who sees what, ordinary managers never see exact positions or home addresses, and two step sign in is required for every company admin and for our own staff." },
   { title: "Separation between companies", text: "Every company’s data is kept separate from every other company’s, and this separation is tested automatically before every release." },
   { title: "Encryption", text: "Data is encrypted in transit between your devices and our service, and encrypted at rest." },
   { title: "Logging and audit trail", text: "Sensitive actions, such as approvals, exports and support access, are recorded so they can be reviewed later." },
@@ -29,8 +29,8 @@ const faq = [
   { q: "Where is our data stored?", a: `Data is held with established cloud providers under data protection terms. If your company needs details of locations and safeguards for transfers, email ${CONTACT.privacy}.` },
   { q: "Do you track staff location all day?", a: "No. Location is read when staff check in or out. Field visits store only the distance from the site and the reading’s accuracy, not a route." },
   { q: "What happens to our data if we leave?", a: "You can export your reports at any time. When a company closes its account, its data is deleted within 90 days, except records the law requires us to keep." },
-  { q: "Can we send you a security questionnaire?", a: `Yes. Send it to ${CONTACT.security} and we will answer it. Some details are shared only under a confidentiality agreement.` },
-  { q: "How do I report a security issue?", a: `Email ${CONTACT.security}. Please give us reasonable time to fix the issue before telling anyone else. We do not take action against good faith research.` },
+  { q: "Can we send you a security questionnaire?", a: `Yes. Send it to ${CONTACT.support} and we will answer it. Some details are shared only under a confidentiality agreement.` },
+  { q: "How do I report a security issue?", a: `Email ${CONTACT.support}. Please give us reasonable time to fix the issue before telling anyone else. We do not take action against good faith research.` },
 ];
 
 export default function SecurityPage() {
@@ -65,7 +65,7 @@ export default function SecurityPage() {
         </article>
         <article className="rounded-2xl border border-line bg-white p-6">
           <h2 className="text-xl font-bold">Contact</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">Privacy and data requests: <a className="font-semibold text-ink underline" href={`mailto:${CONTACT.privacy}`}>{CONTACT.privacy}</a><br />Security reports: <a className="font-semibold text-ink underline" href={`mailto:${CONTACT.security}`}>{CONTACT.security}</a></p>
+          <p className="mt-2 text-sm leading-6 text-muted">Privacy and data requests: <a className="font-semibold text-ink underline" href={`mailto:${CONTACT.privacy}`}>{CONTACT.privacy}</a><br />Support and security reports: <a className="font-semibold text-ink underline" href={`mailto:${CONTACT.support}`}>{CONTACT.support}</a></p>
         </article>
       </section>
 

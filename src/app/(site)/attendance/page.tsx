@@ -5,7 +5,7 @@ import { CtaBand } from "@/components/site/CtaBand";
 
 export const metadata: Metadata = {
   title: "Staff attendance with GPS check in",
-  description: "GPS staff attendance for offices, branches and hybrid teams in Nigeria. Check in only at an approved office or approved home on scheduled days, with late, early and overtime worked out automatically.",
+  description: "GPS staff attendance for offices, branches and hybrid teams. Check in only at an approved office or approved home on scheduled days, with late, early and overtime worked out automatically.",
   alternates: { canonical: "/attendance" },
 };
 
@@ -15,7 +15,7 @@ const core = [
   { title: "Weekly schedules", text: "Set which days are office days and which are home days, for everyone, a team or one person." },
   { title: "Late, early and absent", text: "Grace periods, late arrivals and early exits are worked out against each person’s hours. Nobody has to do sums." },
   { title: "Automatic check in and check out", text: "Staff can be checked in when they arrive and checked out at closing time, with overtime counted when they stay." },
-  { title: "Public and company holidays", text: "Nigerian public holidays are built in, and you can add your own company days off. Nobody is marked absent on a holiday." },
+  { title: "Public and company holidays", text: "Public holidays are built in for Nigeria, and you can add your own public and company days off anywhere. Nobody is marked absent on a holiday." },
 ];
 
 const control = [

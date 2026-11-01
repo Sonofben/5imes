@@ -123,3 +123,12 @@ export async function removePublicHoliday(day: string, f: FormData) {
   const { error } = await supabase.rpc("console_remove_public_holiday", { p_day: day, p_reason: reasonOf(f) });
   done("/console/holidays", error, "Holiday removed.");
 }
+
+// ── Website currencies
+export async function setCurrency(code: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const { error } = await supabase.rpc("console_set_currency", {
+    p_code: code, p_ngn_per_unit: Number(f.get("rate")), p_markup_pct: Number(f.get("markup") ?? 0), p_active: f.get("active") === "on", p_reason: reasonOf(f),
+  });
+  back("/console/pricing", error ? { error: friendly(error, "console/pricing/currency") } : { msg: `${code} display rate saved.` });
+}

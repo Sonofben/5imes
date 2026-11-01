@@ -5,7 +5,7 @@ import { CtaBand } from "@/components/site/CtaBand";
 
 export const metadata: Metadata = {
   title: "Visitor management system",
-  description: "Digital visitor management for Nigerian offices. Visitors sign in on their own phone, reception admits them and the host is told by email. Replace the paper visitor book.",
+  description: "Digital visitor management for busy offices. Visitors sign in on their own phone, reception admits them and the host is told by email. Replace the paper visitor book.",
   alternates: { canonical: "/visitor-management" },
 };
 

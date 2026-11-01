@@ -7,8 +7,8 @@ import { Faq } from "@/components/site/Faq";
 import { sendEnquiry } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Talk to sales",
-  description: "Talk to the 5ime team about rolling out attendance and visitor management across your company, invoices, larger teams and data protection questions.",
+  title: "Contact us",
+  description: "Contact the 5ime team: sales for larger roll outs and invoices, support for help with your account, and general questions.",
   alternates: { canonical: "/contact" },
 };
 
@@ -23,12 +23,14 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
     <>
       <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-14 pt-12 sm:px-8 sm:pt-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div>
-          <p className="eyebrow">Talk to sales</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">Rolling out across a larger team?</h1>
-          <p className="mt-4 text-lg leading-8 text-muted">Tell us about your company and we will help with set up across branches, invoices, procurement and your data protection questions.</p>
-          <ul className="mt-6 space-y-2 text-sm">
-            <li>Sales: <a className="font-semibold underline" href={`mailto:${CONTACT.sales}`}>{CONTACT.sales}</a></li>
-            <li>Everything else: <a className="font-semibold underline" href={`mailto:${CONTACT.hello}`}>{CONTACT.hello}</a></li>
+          <p className="eyebrow">Contact us</p>
+          <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">Talk to the 5ime team</h1>
+          <p className="mt-4 text-lg leading-8 text-muted">Planning a roll out across branches, need an invoice, or have data protection questions? Send us a message and a person will reply.</p>
+          <ul className="mt-6 space-y-3 text-sm">
+            <li><b>Sales:</b> <a className="underline" href={`mailto:${CONTACT.sales}`}>{CONTACT.sales}</a></li>
+            <li><b>Support for customers:</b> <a className="underline" href={`mailto:${CONTACT.support}`}>{CONTACT.support}</a></li>
+            <li><b>Privacy and data requests:</b> <a className="underline" href={`mailto:${CONTACT.privacy}`}>{CONTACT.privacy}</a></li>
+            <li><b>Anything else:</b> <a className="underline" href={`mailto:${CONTACT.info}`}>{CONTACT.info}</a></li>
           </ul>
           <p className="mt-6 text-sm text-muted">Just want to try it? <Link href="/signup" className="font-semibold text-ink underline">Start a free trial</Link>, no call needed.</p>
         </div>

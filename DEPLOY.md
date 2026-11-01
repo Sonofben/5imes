@@ -70,6 +70,7 @@ bash ~/vps-check.sh
    25. `supabase/migrations/0025_company_links_field_addon.sql`
    26. `supabase/migrations/0026_blog_and_sales.sql`
    27. `supabase/migrations/0027_seed_blog_posts.sql`
+   28. `supabase/migrations/0028_display_currencies.sql` (then set real rates in Global Admin → Plans & pricing → Website currencies)
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -629,7 +630,7 @@ people in Global Admin → Companies → the company → Field staff add-on.
 
 ## 19. Website, blog and Talk to sales (0026, 0027)
 
-- Create these mailboxes on 5imes.click before launch: hello@, sales@, privacy@ and security@.
+- Create these mailboxes on 5imes.click before launch: info@, sales@, privacy@ and support@.
   "Talk to sales" messages are saved in Global Admin → Sales enquiries and emailed to sales@ (needs RESEND_API_KEY and EMAIL_FROM).
 - Blog posts are written in Global Admin → Blog. Add writers in Global Admin → Team with the "Blog writer" role:
   they need two step sign in like every Global Admin user, and they see only the blog.
