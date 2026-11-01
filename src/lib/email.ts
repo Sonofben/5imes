@@ -13,7 +13,23 @@ export function emailEnabled() {
   return !!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }
 
-export async function sendEmail(p: { to: string; subject: string; html: string; text: string; replyTo?: string }): Promise<boolean> {
+/** Records the result for Global Admin → Operations. Only the recipient's domain is kept. */
+async function logEmail(kind: string, to: string, ok: boolean, detail?: string) {
+  try {
+    const { createAdminClient } = await import("./supabase/server");
+    const admin = createAdminClient();
+    if (!admin) return;
+    await admin.from("email_log").insert({ kind: kind.slice(0, 60), to_domain: (to.split("@")[1] ?? "").toLowerCase().slice(0, 200) || null, ok, detail: detail?.slice(0, 300) ?? null });
+  } catch { /* logging must never break sending */ }
+}
+
+export async function sendEmail(p: { to: string; subject: string; html: string; text: string; replyTo?: string; kind?: string }): Promise<boolean> {
+  const ok = await deliver(p);
+  await logEmail(p.kind ?? "app", p.to, ok, ok ? undefined : emailEnabled() ? "Delivery failed" : "Email is not configured on the server");
+  return ok;
+}
+
+async function deliver(p: { to: string; subject: string; html: string; text: string; replyTo?: string }): Promise<boolean> {
   if (!emailEnabled()) return false;
   try {
     const res = await fetch("https://api.resend.com/emails", {

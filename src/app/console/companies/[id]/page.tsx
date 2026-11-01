@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireConsole, can, naira, fmtDate, fmtDateTime } from "@/lib/console";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
-import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany, setFieldAddon, setDeal, endDeal } from "./actions";
+import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany, setFieldAddon, setDeal, endDeal, setLimits } from "./actions";
 import { describeDeal } from "@/lib/deals";
 import { friendly } from "@/lib/errors";
 import { parseOrNull, ConsoleCompany as CompanyShape } from "@/lib/jsonShapes";
@@ -25,6 +25,8 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
     supabase.rpc("console_companies", { p_search: d.org.domain, p_archived: true }),
     supabase.rpc("console_deals", { p_org: id }),
   ]);
+  const { data: limitsRaw } = await supabase.rpc("console_limits", { p_org: id });
+  const limits = (limitsRaw ?? {}) as { staff?: number | null; offices?: number | null; visits?: number | null; ends_at?: string | null; note?: string | null; active?: boolean };
   const deal = (dealRows ?? []).find((x) => x.is_active) ?? null;
   const isArchived = (archivedRows ?? []).some((r) => r.id === id);
   const s = d.subscription;
@@ -86,6 +88,20 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
         {can.setPlan(role) && <form action={setFieldAddon.bind(null, id)} className="card space-y-2"><h2 className="font-bold">Field staff add-on (Pro)</h2><p className="text-xs text-muted">How many field staff a Pro company has paid for. Premium includes field staff already. Set 0 to switch it off.</p>
           <input name="seats" type="number" min={0} max={100000} required defaultValue={0} className="input" aria-label="Field staff places" />
           <Reason /><button className="btn-ghost">Save add-on</button></form>}
+        <section className="card space-y-3 lg:col-span-2">
+          <div><h2 className="font-bold">Plan limits for this company</h2><p className="text-xs text-muted">Change one company’s limits without changing its plan. Leave a box empty to use the plan’s own limit; type 0 for no limit. Ending date is optional.</p></div>
+          {limits.active && <p className="rounded-xl bg-paper px-3 py-2 text-sm"><b>Active:</b> staff {limits.staff ?? "plan"}, offices {limits.offices ?? "plan"}, visits a month {limits.visits ?? "plan"}{limits.ends_at ? `, until ${fmtDate(limits.ends_at)}` : ""}{limits.note ? ` · ${limits.note}` : ""}</p>}
+          {can.setPlan(role) || role === "support" ? <form action={setLimits.bind(null, id)} className="grid gap-2 md:grid-cols-4">
+            <div><label className="label" htmlFor="l-staff">Max staff</label><input id="l-staff" name="staff" type="number" min={0} defaultValue={limits.active ? limits.staff ?? "" : ""} className="input" /></div>
+            <div><label className="label" htmlFor="l-off">Max offices</label><input id="l-off" name="offices" type="number" min={0} defaultValue={limits.active ? limits.offices ?? "" : ""} className="input" /></div>
+            <div><label className="label" htmlFor="l-vis">Visits a month</label><input id="l-vis" name="visits" type="number" min={0} defaultValue={limits.active ? limits.visits ?? "" : ""} className="input" /></div>
+            <div><label className="label" htmlFor="l-months">For (months)</label><input id="l-months" name="months" type="number" min={1} max={120} className="input" placeholder="No end" /></div>
+            <div className="md:col-span-2"><input name="note" maxLength={300} placeholder="Note (optional)" className="input" aria-label="Note" /></div>
+            <div className="md:col-span-2"><Reason /></div>
+            <button className="btn-primary">Save limits</button>
+            <p className="self-center text-xs text-muted md:col-span-3">Leave all three empty and save to remove the override.</p>
+          </form> : null}
+        </section>
         <section className="card space-y-3 lg:col-span-2">
           <div><h2 className="font-bold">Pricing deal</h2><p className="text-xs text-muted">A special price for this company. It applies to their next payment, seat top ups and automatic renewals, and normal prices come back when it ends. A new deal replaces the current one.</p></div>
           <p className="rounded-xl bg-paper px-3 py-2 text-sm">{deal ? <><b>Active:</b> {describeDeal(deal, fmtDate)}{deal.note ? ` · ${deal.note}` : ""}</> : "No deal. This company pays normal prices."}</p>

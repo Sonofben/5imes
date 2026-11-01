@@ -27,6 +27,7 @@ export function AdminNav({ isAdmin, pendingPeople, pendingCorrections, pendingPl
         { href: "/admin/settings", label: "Settings" },
         { href: "/admin/security", label: "Security" },
         { href: "/admin/billing", label: "Billing" },
+        { href: "/admin/support", label: "Support" },
       ] },
     ] : []),
   ];

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   ["/console", "Overview"], ["/console/companies", "Companies"], ["/console/revenue", "Revenue"], ["/console/people", "People"],
   ["/console/security", "Security"], ["/console/announcements", "Announcements"], ["/console/pricing", "Plans & pricing"], ["/console/holidays", "Holidays"],
-  ["/console/enquiries", "Sales enquiries"], ["/console/blog", "Blog"], ["/console/team", "Team"], ["/console/audit", "Audit log"],
+  ["/console/support", "Support"], ["/console/messages", "Messages"], ["/console/enquiries", "Sales enquiries"], ["/console/data-requests", "Data requests"],
+  ["/console/operations", "Operations"], ["/console/blog", "Blog"], ["/console/team", "Team"], ["/console/audit", "Audit log"],
 ] as const;
 
 export function ConsoleNav({ role }: { role: string | null }) {

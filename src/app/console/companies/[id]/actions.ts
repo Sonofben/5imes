@@ -97,3 +97,13 @@ export async function endDeal(id: string, f: FormData) {
   const { error } = await supabase.rpc("console_end_deal", { p_org: id, p_reason: reasonOf(f) });
   back(id, error ? { error: friendly(error, "console/companies/deal") } : { msg: "Pricing deal ended. Normal prices apply from the next payment." });
 }
+
+export async function setLimits(id: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const num = (k: string) => { const v = String(f.get(k) ?? "").trim(); return v === "" ? null : Number(v); };
+  const { error } = await supabase.rpc("console_set_limits", {
+    p_org: id, p_staff: num("staff") as number, p_offices: num("offices") as number, p_visits: num("visits") as number,
+    p_months: num("months") as number, p_note: String(f.get("note") ?? ""), p_reason: reasonOf(f),
+  });
+  back(id, error ? { error: friendly(error, "console/companies/limits") } : { msg: "Limits saved." });
+}

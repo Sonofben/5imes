@@ -72,6 +72,7 @@ bash ~/vps-check.sh
    27. `supabase/migrations/0027_seed_blog_posts.sql`
    28. `supabase/migrations/0028_display_currencies.sql` (then set real rates in Global Admin → Plans & pricing → Website currencies)
    29. `supabase/migrations/0029_price_deals.sql`
+   30. `supabase/migrations/0030_support_and_operations.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.

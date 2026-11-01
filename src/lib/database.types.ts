@@ -6,6 +6,51 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      admin_broadcasts: {
+        Row: {
+          id: string;
+          subject: string;
+          body: string;
+          scope: "all" | "plan" | "company";
+          plan: string | null;
+          org_id: string | null;
+          recipients: number;
+          sent: number;
+          failed: number;
+          created_by: string | null;
+          created_at: string;
+          finished_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          subject: string;
+          body: string;
+          scope: "all" | "plan" | "company";
+          plan?: string | null;
+          org_id?: string | null;
+          recipients?: number;
+          sent?: number;
+          failed?: number;
+          created_by?: string | null;
+          created_at?: string;
+          finished_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          subject?: string;
+          body?: string;
+          scope?: "all" | "plan" | "company";
+          plan?: string | null;
+          org_id?: string | null;
+          recipients?: number;
+          sent?: number;
+          failed?: number;
+          created_by?: string | null;
+          created_at?: string;
+          finished_at?: string | null;
+        };
+        Relationships: [];
+      };
       attendance: {
         Row: {
           id: string;
@@ -366,6 +411,114 @@ export type Database = {
           slug?: string;
           requested_by?: string | null;
           requested_at?: string;
+        };
+        Relationships: [];
+      };
+      data_requests: {
+        Row: {
+          id: string;
+          number: number;
+          org_id: string | null;
+          requester_name: string;
+          requester_email: string | null;
+          relationship: "staff" | "visitor" | "admin" | "prospect" | "other";
+          kind: "access" | "correction" | "deletion" | "objection" | "restriction" | "portability" | "complaint" | "other";
+          received_at: string;
+          due_at: string;
+          status: "new" | "verifying" | "in_progress" | "with_company" | "completed" | "refused";
+          details: string | null;
+          outcome: string | null;
+          completed_at: string | null;
+          created_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          number?: number;
+          org_id?: string | null;
+          requester_name: string;
+          requester_email?: string | null;
+          relationship?: "staff" | "visitor" | "admin" | "prospect" | "other";
+          kind: "access" | "correction" | "deletion" | "objection" | "restriction" | "portability" | "complaint" | "other";
+          received_at?: string;
+          due_at: string;
+          status?: "new" | "verifying" | "in_progress" | "with_company" | "completed" | "refused";
+          details?: string | null;
+          outcome?: string | null;
+          completed_at?: string | null;
+          created_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          number?: number;
+          org_id?: string | null;
+          requester_name?: string;
+          requester_email?: string | null;
+          relationship?: "staff" | "visitor" | "admin" | "prospect" | "other";
+          kind?: "access" | "correction" | "deletion" | "objection" | "restriction" | "portability" | "complaint" | "other";
+          received_at?: string;
+          due_at?: string;
+          status?: "new" | "verifying" | "in_progress" | "with_company" | "completed" | "refused";
+          details?: string | null;
+          outcome?: string | null;
+          completed_at?: string | null;
+          created_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      email_log: {
+        Row: {
+          id: number;
+          kind: string;
+          to_domain: string | null;
+          ok: boolean;
+          detail: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          kind: string;
+          to_domain?: string | null;
+          ok: boolean;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          kind?: string;
+          to_domain?: string | null;
+          ok?: boolean;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      job_runs: {
+        Row: {
+          id: number;
+          job: string;
+          started_at: string;
+          finished_at: string | null;
+          ok: boolean | null;
+          detail: string | null;
+        };
+        Insert: {
+          id?: number;
+          job: string;
+          started_at?: string;
+          finished_at?: string | null;
+          ok?: boolean | null;
+          detail?: string | null;
+        };
+        Update: {
+          id?: number;
+          job?: string;
+          started_at?: string;
+          finished_at?: string | null;
+          ok?: boolean | null;
+          detail?: string | null;
         };
         Relationships: [];
       };
@@ -780,6 +933,39 @@ export type Database = {
           start_date?: string | null;
           avatar_url?: string | null;
           is_field?: boolean;
+        };
+        Relationships: [];
+      };
+      org_limit_overrides: {
+        Row: {
+          org_id: string;
+          max_staff: number | null;
+          max_offices: number | null;
+          max_visits_month: number | null;
+          ends_at: string | null;
+          note: string | null;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          org_id: string;
+          max_staff?: number | null;
+          max_offices?: number | null;
+          max_visits_month?: number | null;
+          ends_at?: string | null;
+          note?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          org_id?: string;
+          max_staff?: number | null;
+          max_offices?: number | null;
+          max_visits_month?: number | null;
+          ends_at?: string | null;
+          note?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -1593,6 +1779,84 @@ export type Database = {
         };
         Relationships: [];
       };
+      support_messages: {
+        Row: {
+          id: string;
+          ticket_id: string;
+          author_user: string | null;
+          author_name: string;
+          from_staff: boolean;
+          internal: boolean;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id: string;
+          author_user?: string | null;
+          author_name: string;
+          from_staff?: boolean;
+          internal?: boolean;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string;
+          author_user?: string | null;
+          author_name?: string;
+          from_staff?: boolean;
+          internal?: boolean;
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      support_tickets: {
+        Row: {
+          id: string;
+          number: number;
+          org_id: string;
+          opened_by: string | null;
+          subject: string;
+          category: "question" | "problem" | "billing" | "account" | "feature";
+          priority: "low" | "normal" | "high" | "urgent";
+          status: "open" | "waiting_on_customer" | "resolved" | "closed";
+          assigned_to: string | null;
+          created_at: string;
+          updated_at: string;
+          last_reply_by: "customer" | "staff";
+        };
+        Insert: {
+          id?: string;
+          number?: number;
+          org_id: string;
+          opened_by?: string | null;
+          subject: string;
+          category?: "question" | "problem" | "billing" | "account" | "feature";
+          priority?: "low" | "normal" | "high" | "urgent";
+          status?: "open" | "waiting_on_customer" | "resolved" | "closed";
+          assigned_to?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          last_reply_by?: "customer" | "staff";
+        };
+        Update: {
+          id?: string;
+          number?: number;
+          org_id?: string;
+          opened_by?: string | null;
+          subject?: string;
+          category?: "question" | "problem" | "billing" | "account" | "feature";
+          priority?: "low" | "normal" | "high" | "urgent";
+          status?: "open" | "waiting_on_customer" | "resolved" | "closed";
+          assigned_to?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          last_reply_by?: "customer" | "staff";
+        };
+        Relationships: [];
+      };
       task_activity: {
         Row: {
           id: number;
@@ -2197,6 +2461,8 @@ export type Database = {
       console_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; company: string; audience: string; starts_at: string; ends_at: string; ended_at: string; live: boolean }[] };
       console_audit: { Args: { p_limit?: number | null }; Returns: { at: string; actor_email: string; org_name: string; action: string; reason: string; details: Json }[] };
       console_blog_posts: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["blog_posts"]["Row"][] };
+      console_broadcast_recipients: { Args: { p_scope: string | null; p_plan: string | null; p_org: string | null }; Returns: { email: string; name: string; org_name: string }[] };
+      console_broadcasts: { Args: Record<PropertyKey, never>; Returns: { id: string; subject: string; scope: string; plan: string; org_name: string; recipients: number; sent: number; failed: number; created_at: string; sender: string }[] };
       console_companies: { Args: { p_search?: string | null; p_archived?: boolean | null }; Returns: { id: string; name: string; domain: string; slug: string; plan: string; status: string; trial_ends_at: string; current_period_end: string; seats_paid: number; seats_used: number; created_at: string; suspended_at: string; owner_email: string; last_check_in: string; support_until: string; archived_at: string }[] };
       console_company: { Args: { p_org: string | null }; Returns: Json };
       console_company_export: { Args: { p_org: string | null; p_reason: string | null }; Returns: Json };
@@ -2204,6 +2470,7 @@ export type Database = {
       console_company_snapshot: { Args: { p_org: string | null }; Returns: Json };
       console_create_company: { Args: { p_name: string | null; p_domain: string | null; p_owner_email: string | null; p_owner_name: string | null; p_trial_days: number | null; p_reason: string | null }; Returns: string };
       console_currencies: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["platform_currencies"]["Row"][] };
+      console_data_requests: { Args: { p_open_only?: boolean | null }; Returns: Database["public"]["Tables"]["data_requests"]["Row"][] };
       console_deals: { Args: { p_org?: string | null }; Returns: { id: string; org_id: string; org_name: string; kind: string; percent_off: number; amount_off_kobo: number; price_per_seat: number; plan: string; starts_at: string; ends_at: string; max_uses: number; uses: number; note: string; created_at: string; revoked_at: string; is_active: boolean }[] };
       console_decide_company_link: { Args: { p_org: string | null; p_approve: boolean | null; p_reason: string | null }; Returns: undefined };
       console_delete_company: { Args: { p_org: string | null; p_confirm_domain: string | null; p_reason: string | null }; Returns: undefined };
@@ -2212,29 +2479,35 @@ export type Database = {
       console_end_deal: { Args: { p_org: string | null; p_reason: string | null }; Returns: undefined };
       console_extend_trial: { Args: { p_org: string | null; p_days: number | null; p_reason: string | null }; Returns: string };
       console_find_person: { Args: { p_email: string | null }; Returns: { user_id: string; email: string; full_name: string; company: string; org_id: string; role: string; status: string; last_sign_in_at: string; totp_enrolled: boolean; locked: boolean; global_admin_role: string }[] };
+      console_finish_broadcast: { Args: { p_id: string | null; p_sent: number | null; p_failed: number | null }; Returns: undefined };
       console_force_signout: { Args: { p_user: string | null; p_reason: string | null }; Returns: undefined };
       console_grant_complimentary: { Args: { p_org: string | null; p_plan: string | null; p_seats: number | null; p_months: number | null; p_reason: string | null }; Returns: string };
       console_health: { Args: Record<PropertyKey, never>; Returns: Json };
       console_invite_member: { Args: { p_org: string | null; p_email: string | null; p_name: string | null; p_reason: string | null }; Returns: string };
+      console_limits: { Args: { p_org: string | null }; Returns: Json };
       console_log: { Args: { p_org: string | null; p_action: string | null; p_reason: string | null; p_details?: Json | null }; Returns: undefined };
       console_mark_enquiry: { Args: { p_id: string | null; p_handled: boolean | null }; Returns: undefined };
       console_note: { Args: { p_org: string | null; p_action: string | null; p_reason: string | null; p_details?: Json | null }; Returns: undefined };
+      console_operations: { Args: Record<PropertyKey, never>; Returns: Json };
       console_overview: { Args: Record<PropertyKey, never>; Returns: Json };
       console_payments: { Args: { p_from?: string | null; p_to?: string | null; p_status?: string | null; p_search?: string | null }; Returns: { reference: string; org_id: string; company: string; domain: string; provider: string; kind: string; status: string; plan: string; seats: number; months: number; amount_kobo: number; created_at: string; applied_at: string; note: string }[] };
       console_plans: { Args: Record<PropertyKey, never>; Returns: Json };
       console_rate_limits: { Args: Record<PropertyKey, never>; Returns: { bucket: string; who: string; company: string; hits: number; max_hits: number; window_start: string; window_seconds: number }[] };
       console_remove_public_holiday: { Args: { p_day: string | null; p_reason: string | null }; Returns: undefined };
+      console_reply_ticket: { Args: { p_ticket: string | null; p_body: string | null; p_internal: boolean | null; p_status: string | null; p_assign_me?: boolean | null }; Returns: string };
       console_require: { Args: { p_roles: string[] | null; p_reason?: string | null; p_need_reason?: boolean | null }; Returns: string };
       console_reset_mfa: { Args: { p_user: string | null; p_reason: string | null }; Returns: undefined };
       console_revenue: { Args: Record<PropertyKey, never>; Returns: Json };
       console_role: { Args: Record<PropertyKey, never>; Returns: string };
       console_sales_enquiries: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["sales_enquiries"]["Row"][] };
+      console_save_data_request: { Args: { p_id: string | null; p: Json | null; p_reason: string | null }; Returns: string };
       console_save_post: { Args: { p_id: string | null; p_post: Json | null; p_publish: boolean | null; p_publish_at?: string | null }; Returns: string };
       console_security: { Args: Record<PropertyKey, never>; Returns: Json };
       console_set_archived: { Args: { p_org: string | null; p_archived: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_currency: { Args: { p_code: string | null; p_ngn_per_unit: number | null; p_markup_pct: number | null; p_active: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_deal: { Args: { p_org: string | null; p_kind: string | null; p_value: number | null; p_plan: string | null; p_months: number | null; p_payments: number | null; p_note: string | null; p_reason: string | null }; Returns: string };
       console_set_field_addon: { Args: { p_org: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
+      console_set_limits: { Args: { p_org: string | null; p_staff: number | null; p_offices: number | null; p_visits: number | null; p_months: number | null; p_note: string | null; p_reason: string | null }; Returns: undefined };
       console_set_locked: { Args: { p_user: string | null; p_locked: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_plan: { Args: { p_org: string | null; p_plan: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
       console_set_plan_terms: { Args: { p_plan: string | null; p_name: string | null; p_price: number | null; p_blurb: string | null; p_features: string[] | null; p_max_locations: number | null; p_reason: string | null }; Returns: undefined };
@@ -2242,6 +2515,9 @@ export type Database = {
       console_set_public_holiday: { Args: { p_day: string | null; p_name: string | null; p_confirmed: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_suspended: { Args: { p_org: string | null; p_suspend: boolean | null; p_reason: string | null }; Returns: undefined };
       console_staff_list: { Args: { p_org: string | null }; Returns: { full_name: string; email: string; role: string; status: string; team: string; home_status: string; last_check_in: string }[] };
+      console_start_broadcast: { Args: { p_subject: string | null; p_body: string | null; p_scope: string | null; p_plan: string | null; p_org: string | null; p_recipients: number | null; p_reason: string | null }; Returns: string };
+      console_support_messages: { Args: { p_ticket: string | null }; Returns: Database["public"]["Tables"]["support_messages"]["Row"][] };
+      console_support_tickets: { Args: { p_status?: string | null; p_org?: string | null }; Returns: { id: string; number: number; org_id: string; org_name: string; subject: string; category: string; priority: string; status: string; assigned_email: string; created_at: string; updated_at: string; last_reply_by: string; opened_by_email: string }[] };
       console_team: { Args: Record<PropertyKey, never>; Returns: { user_id: string; email: string; role: string; created_at: string; last_sign_in_at: string; totp_enrolled: boolean }[] };
       console_team_add: { Args: { p_email: string | null; p_role: string | null; p_reason: string | null }; Returns: undefined };
       console_team_remove: { Args: { p_user: string | null; p_reason: string | null }; Returns: undefined };
@@ -2300,6 +2576,7 @@ export type Database = {
       norm_name: { Args: { p: string | null }; Returns: string };
       norm_phone: { Args: { p: string | null }; Returns: string };
       on_leave: { Args: { p_member: string | null; p_date: string | null }; Returns: string };
+      open_support_ticket: { Args: { p_subject: string | null; p_category: string | null; p_priority: string | null; p_body: string | null }; Returns: string };
       org_brand: { Args: { p_org: string | null }; Returns: Json };
       org_brand_level: { Args: { p_slug: string | null }; Returns: string };
       org_branding: { Args: { p_slug: string | null }; Returns: { name: string; slug: string; logo_url: string; brand_color: string; accent_color: string; domain: string }[] };
@@ -2321,6 +2598,7 @@ export type Database = {
       public_currencies: { Args: Record<PropertyKey, never>; Returns: Json };
       public_plans: { Args: Record<PropertyKey, never>; Returns: Json };
       purge_old_sales_enquiries: { Args: Record<PropertyKey, never>; Returns: number };
+      purge_operations_logs: { Args: Record<PropertyKey, never>; Returns: undefined };
       record_paystack_subscription: { Args: { p_plan_code: string | null; p_subscription_code: string | null; p_customer_code: string | null; p_email_token: string | null }; Returns: boolean };
       release_missing_paystack_checkout: { Args: { p_reference: string | null }; Returns: boolean };
       remove_check_item: { Args: { p_item: string | null }; Returns: undefined };
@@ -2329,6 +2607,7 @@ export type Database = {
       renewals_needing_price_sync: { Args: Record<PropertyKey, never>; Returns: { org_id: string; plan_code: string; amount_kobo: number }[] };
       replace_recovery_codes: { Args: { p_codes: string[] | null }; Returns: number };
       replace_schedule: { Args: { p_org: string | null; p_member: string | null; p_rows: Json | null }; Returns: undefined };
+      reply_support_ticket: { Args: { p_ticket: string | null; p_body: string | null; p_close?: boolean | null }; Returns: undefined };
       report_presence: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: Json };
       request_attendance_correction: { Args: { p_work_date: string | null; p_check_in: string | null; p_check_out: string | null; p_reason: string | null }; Returns: string };
       request_company_link: { Args: { p_slug: string | null }; Returns: Json };
