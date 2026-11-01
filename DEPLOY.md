@@ -73,6 +73,7 @@ bash ~/vps-check.sh
    28. `supabase/migrations/0028_display_currencies.sql` (then set real rates in Global Admin → Plans & pricing → Website currencies)
    29. `supabase/migrations/0029_price_deals.sql`
    30. `supabase/migrations/0030_support_and_operations.sql`
+   31. `supabase/migrations/0031_restore_decide_leave.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -639,4 +640,10 @@ people in Global Admin → Companies → the company → Field staff add-on.
 - Cover images go to a public "blog" storage bucket, created on the first upload.
 - The launch posts live in supabase/seed/blog. After editing those files, regenerate 0027 with
   `node scripts/build-blog-seed.mjs > supabase/migrations/0027_seed_blog_posts.sql` (only before 0027 has been applied anywhere).
+
+## 20. Never run migration files by hand after `deploy.sh` has applied them
+
+`scripts/deploy.sh` applies every pending migration for you and records it. Running an old
+migration file again in the Supabase SQL Editor can put back an older version of a function.
+Check what is applied with `scripts/migrate.sh --status` instead.
 
