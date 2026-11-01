@@ -29,7 +29,7 @@ select test.ok(position('rate_limit_hit(' in pg_get_functiondef(f::regprocedure)
     'public.request_home_location(double precision,double precision,double precision,text)',
     'public.request_attendance_correction(date,time without time zone,time without time zone,text)',
     'public.verify_and_consume_recovery_code(text)', 'public.replace_recovery_codes(text[])', 'public.grant_support_access(integer)',
-    'public.prepare_paystack_subscription(text,text,integer,integer,boolean)', 'public.prepare_paystack_seat_increase(text,integer)',
+    'public.prepare_paystack_subscription(text,text,integer,integer,boolean,integer)', 'public.prepare_paystack_seat_increase(text,integer)',
     'public.console_invite_member(uuid,text,text,text)', 'public.console_create_company(text,text,text,text,integer,text)',
     'public.console_team_add(text,text,text)', 'public.console_company_export(uuid,text)', 'public.console_company_snapshot(uuid)',
     'public.console_find_person(text)', 'public.console_force_signout(uuid,text)', 'public.console_set_locked(uuid,boolean,text)',

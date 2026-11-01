@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     if (!Object.hasOwn(BILLING_CYCLES, cycle)) return back({ error: "Choose a valid billing period." });
     const seats = Number(form.get("seats"));
     if (!Number.isSafeInteger(seats) || seats < 1 || seats > 10000) return back({ error: "Choose a valid seat count." });
+    if (plan === "pro" && Number(form.get("field_seats") || 0) > 0) return back({ error: "The field staff add-on is paid with Paystack. Choose Paystack, or set field staff places to 0." });
     reference = `5ime-${me.org_id.slice(0, 8)}-${randomUUID()}`;
     const { data: raw, error } = await supabase.rpc("prepare_paystack_subscription", {
       p_reference: reference, p_plan: plan, p_seats: seats, p_months: BILLING_CYCLES[cycle].months, p_auto_renew: false,

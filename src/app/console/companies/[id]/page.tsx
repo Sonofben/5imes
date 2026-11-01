@@ -44,7 +44,7 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
     <div className="space-y-5">
       <div><Link href="/console/companies" className="text-sm text-muted underline">← Companies</Link>
         <h1 className="page-heading mt-1">{d.org.name}</h1>
-        <p className="text-sm text-muted">@{d.org.domain} · link /{d.org.slug} · joined {fmtDate(d.org.created_at)} · owner {d.owner ? `${d.owner.name ?? ""} <${d.owner.email}>` : "—"}</p></div>
+        <p className="text-sm text-muted">@{d.org.domain} · link /c/{d.org.slug} · joined {fmtDate(d.org.created_at)} · owner {d.owner ? `${d.owner.name ?? ""} <${d.owner.email}>` : "—"}</p></div>
       <Flash {...readFlash(sp)} />
       {isArchived && <p className="card border-red-200 bg-red-50 text-sm text-bad">This company is archived: hidden from lists and suspended.</p>}
 

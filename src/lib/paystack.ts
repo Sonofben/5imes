@@ -55,8 +55,12 @@ export type PaidTx = {
   subscription?: string | { subscription_code?: string; email_token?: string } | null;
 };
 
+/** Mid-term top-ups: added seats, and added field staff places on Pro. */
+const TOPUP_KINDS = ["seat_increase", "field_addon"] as const;
+
 type SeatPayment = {
   reference: string;
+  org_id: string;
   kind: string;
   status: string;
   plan: string;
@@ -77,8 +81,11 @@ async function syncSeatRenewal(admin: NonNullable<ReturnType<typeof createAdminC
   if (!cycle || !Object.hasOwn(PLANS, payment.plan as PlanId) || !payment.paystack_plan_code) {
     return { ok: false, reason: "the paid seats are active, but renewal plan details are incomplete" };
   }
+  // Seats plus the Pro field staff add-on, as the database will expect at the next renewal.
+  const { data: renewal, error: renewalError } = await admin.rpc("renewal_amount_kobo", { p_org: payment.org_id });
   const { plans } = await loadPlans(admin);
-  const recurringAmount = billingAmountKobo(plans[payment.plan as PlanId].pricePerSeat, payment.seats, cycle);
+  const recurringAmount = !renewalError && Number.isSafeInteger(Number(renewal)) && Number(renewal) > 0
+    ? Number(renewal) : billingAmountKobo(plans[payment.plan as PlanId].pricePerSeat, payment.seats, cycle);
   try {
     await paystack(`/plan/${encodeURIComponent(payment.paystack_plan_code)}`, {
       method: "PUT",
@@ -87,11 +94,11 @@ async function syncSeatRenewal(admin: NonNullable<ReturnType<typeof createAdminC
   } catch (error) {
     const reason = friendly(error, "lib/paystack", "Paystack request failed");
     await admin.from("payments").update({ renewal_sync_status: "pending", renewal_sync_error: reason })
-      .eq("reference", payment.reference).eq("status", "applied").eq("kind", "seat_increase");
+      .eq("reference", payment.reference).eq("status", "applied").in("kind", TOPUP_KINDS);
     return { ok: false, reason: `the paid seats are active, but Paystack has not updated the next renewal yet (${reason})` };
   }
   const { error } = await admin.from("payments").update({ renewal_sync_status: "synced", renewal_sync_error: null })
-    .eq("reference", payment.reference).eq("status", "applied").eq("kind", "seat_increase");
+    .eq("reference", payment.reference).eq("status", "applied").in("kind", TOPUP_KINDS);
   if (error) return { ok: false, reason: `the paid seats are active, but the renewal update needs a retry (${friendly(error, "lib/paystack")})` };
   return { ok: true, reason: "paid seats are active and the next renewal amount is updated" };
 }
@@ -101,8 +108,8 @@ export async function retrySeatPlanSync(reference: string): Promise<PaymentResul
   const admin = createAdminClient();
   if (!admin) return { ok: false, reason: "service role key missing" };
   const { data: payment, error } = await admin.from("payments")
-    .select("reference,kind,status,plan,seats,billing_interval_months,amount_kobo,paystack_plan_code,renewal_sync_status")
-    .eq("reference", reference).eq("kind", "seat_increase").eq("status", "applied").maybeSingle();
+    .select("reference,org_id,kind,status,plan,seats,billing_interval_months,amount_kobo,paystack_plan_code,renewal_sync_status")
+    .eq("reference", reference).in("kind", TOPUP_KINDS).eq("status", "applied").maybeSingle();
   if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
   if (!payment) return { ok: false, reason: "no applied seat payment needs a renewal retry" };
   if (payment.renewal_sync_status === "synced") return { ok: true, reason: "the recurring price is already updated" };
@@ -141,11 +148,12 @@ export async function applyPayment(tx: PaidTx): Promise<PaymentResult> {
   const admin = createAdminClient();
   if (!admin) return { ok: false, reason: "service role key missing" };
   const { data: payment, error: paymentReadError } = await admin.from("payments")
-    .select("kind,status,plan,seats,billing_interval_months,amount_kobo,paystack_plan_code,renewal_sync_status")
+    .select("org_id,kind,status,plan,seats,billing_interval_months,amount_kobo,paystack_plan_code,renewal_sync_status")
     .eq("reference", tx.reference).maybeSingle();
+  const isTopup = !!payment && (TOPUP_KINDS as readonly string[]).includes(payment.kind);
   if (paymentReadError) return { ok: false, reason: friendly(paymentReadError, "lib/paystack") };
 
-  if (payment?.kind === "seat_increase" && tx.status === "success") {
+  if (payment && isTopup && tx.status === "success") {
     if (payment.status === "applied" && payment.renewal_sync_status === "synced") {
       return { ok: true, reason: "paid seats are active and the next renewal amount is updated" };
     }
@@ -168,9 +176,9 @@ export async function applyPayment(tx: PaidTx): Promise<PaymentResult> {
   });
   if (error) return { ok: false, reason: friendly(error, "lib/paystack") };
   const result = parseResult(PaymentResult, data, "lib/paystack/apply", { ok: false, reason: "No payment result returned." });
-  if (!result.ok || payment?.kind !== "seat_increase" || tx.status !== "success") return result;
+  if (!result.ok || !payment || !isTopup || tx.status !== "success") return result;
   // Pay-per-term organizations have no Paystack plan to update.
-  if (!payment.paystack_plan_code) return { ok: true, reason: "paid seats are active" };
+  if (!payment.paystack_plan_code) return { ok: true, reason: payment.kind === "field_addon" ? "field staff places are active" : "paid seats are active" };
   if (payment.status === "applied" && payment.renewal_sync_status === "synced") return result;
 
   // Paid seat capacity is committed before this idempotent provider update. If Paystack is

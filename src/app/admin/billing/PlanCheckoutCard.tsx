@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BILLING_CYCLES, billingAmountKobo, type BillingCycleId } from "@/lib/billing";
-import { naira, type PlanId } from "@/lib/constants";
+import { naira, FIELD_ADDON_PRICE, type PlanId } from "@/lib/constants";
 
 const CYCLE_OPTIONS: { id: BillingCycleId; label: string }[] = [
   { id: "monthly", label: "Monthly · 1 month" },
@@ -12,8 +12,11 @@ const CYCLE_OPTIONS: { id: BillingCycleId; label: string }[] = [
 ];
 
 export function PlanCheckoutCard({
-  plan, minSeats, defaultCycle, enabled, allowAutoRenew = true, payAheadUntil, providers = ["paystack"],
+  plan, minSeats, defaultCycle, enabled, allowAutoRenew = true, payAheadUntil, providers = ["paystack"], fieldPlaces = 0, fieldUsed = 0,
 }: {
+  /** Field staff add-on places the company has now, and field staff in use (Pro only). */
+  fieldPlaces?: number;
+  fieldUsed?: number;
   /** Payment providers switched on, in display order. */
   providers?: ("paystack" | "monnify")[];
   plan: { id: PlanId; name: string; pricePerSeat: number; blurb: string; features: readonly string[]; maxSeats?: number | null };
@@ -31,8 +34,12 @@ export function PlanCheckoutCard({
   const maxSeats = plan.maxSeats ?? 10000;
   const tooMany = minSeats > maxSeats;
   const safeSeats = Number.isSafeInteger(seats) && seats >= minSeats ? Math.min(seats, maxSeats) : minSeats;
-  const amountNaira = billingAmountKobo(plan.pricePerSeat, safeSeats, cycle) / 100;
   const months = BILLING_CYCLES[cycle].months;
+  const isPro = plan.id === "pro";
+  const [field, setField] = useState(Math.max(fieldPlaces, fieldUsed));
+  const safeField = isPro ? (Number.isSafeInteger(field) && field >= fieldUsed ? Math.min(field, safeSeats) : fieldUsed) : 0;
+  const amountNaira = billingAmountKobo(plan.pricePerSeat, safeSeats, cycle) / 100 + safeField * FIELD_ADDON_PRICE * months;
+  const fieldBlocksMonnify = safeField > 0;
 
   return (
       <form action="/api/paystack/initialize" method="post" onSubmit={() => setSubmitting(true)} className={`card flex h-full flex-col gap-5 ${plan.id === "pro" ? "border-ink ring-1 ring-ink/5" : ""}`}>
@@ -46,6 +53,10 @@ export function PlanCheckoutCard({
           <div><label className="label" htmlFor={`${plan.id}-cycle`}>Billing period</label><select id={`${plan.id}-cycle`} name="cycle" className="input" value={cycle} onChange={(event) => setCycle(event.target.value as BillingCycleId)}>{CYCLE_OPTIONS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div>
           <div><label className="label" htmlFor={`${plan.id}-seats`}>Seats to purchase</label><input id={`${plan.id}-seats`} name="seats" type="number" min={minSeats} max={maxSeats} required className="input tabular-nums" value={safeSeats} onChange={(event) => setSeats(Number(event.target.value))}/><p className="mt-1 text-[11px] text-muted">Minimum {minSeats} active + invited{plan.maxSeats ? ` · up to ${plan.maxSeats} on ${plan.name}` : ""}</p></div>
         </div>
+        {isPro && <div><label className="label" htmlFor="pro-field">Field staff places (optional add-on)</label>
+          <input id="pro-field" name="field_seats" type="number" min={fieldUsed} max={safeSeats} className="input tabular-nums" value={safeField} onChange={(event) => setField(Number(event.target.value))} />
+          <p className="mt-1 text-[11px] leading-4 text-muted">{naira(FIELD_ADDON_PRICE)} per field person a month, for the same term. Client sites and visit check-in for sales reps, engineers and officers. Paid with Paystack.{fieldUsed > 0 ? ` You have ${fieldUsed} field staff now.` : ""}</p></div>}
+        {plan.id === "premium" && <p className="text-[11px] leading-4 text-muted">Field staff is included in Premium at no extra cost.</p>}
         {allowAutoRenew && providers.includes("paystack") ? (
           <label className="flex items-start gap-3 rounded-xl border border-line p-3 text-sm">
             <input type="checkbox" name="auto_renew" className="mt-0.5 h-4 w-4" />
@@ -55,7 +66,7 @@ export function PlanCheckoutCard({
           <p className="rounded-xl bg-paper p-3 text-xs leading-5 text-muted">One-off payment — nothing is charged automatically.{payAheadUntil ? ` This new term starts when your current term ends (${payAheadUntil}).` : ""}</p>
         )}
         <div className="rounded-xl border border-line bg-[#fafbf9] p-4">
-          <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
+          <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}{safeField > 0 ? ` + ${safeField} field staff × ${naira(FIELD_ADDON_PRICE)} × ${months}` : ""}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
         </div>
         {tooMany ? (
           <p className="rounded-xl bg-amber-50 p-3 text-sm text-warn">You have {minSeats} staff. {plan.name} includes up to {maxSeats}, so choose Pro or Premium.</p>
@@ -63,7 +74,7 @@ export function PlanCheckoutCard({
           <button disabled className="btn-primary w-full">Online payment coming soon</button>
         ) : (
           <div className="grid gap-2">
-            {providers.includes("monnify") && <button formAction="/api/monnify/checkout" disabled={submitting} className={`${plan.id === "pro" ? "btn-brand" : "btn-primary"} w-full`}>{submitting ? "Starting secure checkout…" : `Pay with Moniepoint · ${naira(amountNaira)}`}</button>}
+            {providers.includes("monnify") && !fieldBlocksMonnify && <button formAction="/api/monnify/checkout" disabled={submitting} className={`${plan.id === "pro" ? "btn-brand" : "btn-primary"} w-full`}>{submitting ? "Starting secure checkout…" : `Pay with Moniepoint · ${naira(amountNaira)}`}</button>}
             {providers.includes("paystack") && <button formAction="/api/paystack/initialize" disabled={submitting} className={`${providers.includes("monnify") ? "btn-ghost" : plan.id === "pro" ? "btn-brand" : "btn-primary"} w-full`}>{submitting ? "Starting secure checkout…" : `Pay with Paystack · ${naira(amountNaira)}`}</button>}
             {providers.includes("monnify") && <p className="text-[11px] leading-4 text-muted">Moniepoint: card, bank transfer or USSD. One-off payment for this term.</p>}
           </div>

@@ -21,3 +21,11 @@ export async function createCompany(f: FormData) {
   revalidatePath("/console/companies");
   redirect(`/console/companies/${data}?${flashQuery({ msg: sent ? `Company created. Invitation emailed to ${email}.` : `Company created. Ask ${email} to sign in or use "Forgot password" to set a password.` })}`);
 }
+
+export async function decideCompanyLink(orgId: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const approve = f.get("decision") === "approve";
+  const { error } = await supabase.rpc("console_decide_company_link", { p_org: orgId, p_approve: approve, p_reason: String(f.get("reason") ?? "") });
+  revalidatePath("/console/companies");
+  redirect(`/console/companies?${flashQuery(error ? { error: friendly(error, "console/companies/link") } : { msg: approve ? "Company link approved." : "Company link request declined." })}`);
+}

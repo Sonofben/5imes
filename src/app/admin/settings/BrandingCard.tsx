@@ -55,8 +55,8 @@ function toPng(file: File): Promise<File> {
  * visitors' phone pages, the reception poster and tablet, and invitation emails. Readable text is
  * chosen automatically. Colours are part of Pro and Premium (the database enforces this too).
  */
-export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, colorsAllowed }: {
-  slug: string; logoUrl: string | null; brandColor: string | null; accentColor: string | null; siteUrl: string; colorsAllowed: boolean;
+export function BrandingCard({ slug, pendingSlug, logoUrl, brandColor, accentColor, siteUrl, colorsAllowed }: {
+  slug: string; pendingSlug: string | null; logoUrl: string | null; brandColor: string | null; accentColor: string | null; siteUrl: string; colorsAllowed: boolean;
 }) {
   const [preview, setPreview] = useState<string | null>(logoUrl);
   const [palette, setPalette] = useState<string[]>([]);
@@ -108,10 +108,11 @@ export function BrandingCard({ slug, logoUrl, brandColor, accentColor, siteUrl, 
       <div>
         <label className="label" htmlFor="slug">Company link</label>
         <div className="flex items-center overflow-hidden rounded-xl border border-line bg-white focus-within:ring-2 focus-within:ring-ink/10">
-          <span className="whitespace-nowrap border-r border-line bg-paper px-3 py-2.5 text-sm text-muted">{siteUrl.replace(/^https?:\/\//, "")}/</span>
+          <span className="whitespace-nowrap border-r border-line bg-paper px-3 py-2.5 text-sm text-muted">{siteUrl.replace(/^https?:\/\//, "")}/c/</span>
           <input id="slug" name="slug" defaultValue={slug} required minLength={3} maxLength={40} pattern="[a-z0-9][a-z0-9\-]{1,38}[a-z0-9]" className="w-full px-3 py-2.5 text-sm outline-none" />
         </div>
-        <p className="mt-1 text-xs text-muted">Lowercase letters, numbers and dashes. Current link: <a className="underline" href={`${siteUrl}/${slug}`} target="_blank" rel="noreferrer">{siteUrl}/{slug}</a></p>
+        <p className="mt-1 text-xs leading-5 text-muted">Lowercase letters, numbers and dashes. Current link: <a className="underline" href={`${siteUrl}/c/${slug}`} target="_blank" rel="noreferrer">{siteUrl}/c/{slug}</a>. A link that matches your company name or email domain changes at once; any other link is checked by the 5ime team first. Old links keep working and nobody else can take them.</p>
+        {pendingSlug && <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-warn">Waiting for approval: <b>/c/{pendingSlug}</b>. Your current link works until then. Save your current link again to cancel the request.</p>}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-end">

@@ -27,7 +27,7 @@ export default async function SitesPage({ searchParams }: { searchParams: Promis
       <Flash {...readFlash(sp)} />
 
       {isAdmin && <section className="card space-y-3">
-        <div><h2 className="font-bold">Field staff</h2><p className="text-sm text-muted">People who visit clients: sales reps, engineers, officers.{plan === "pro" ? ` Your add-on covers ${addon?.field_addon_seats ?? 0} people (${fieldCount} used).` : ""}</p></div>
+        <div><h2 className="font-bold">Field staff</h2><p className="text-sm text-muted">People who visit clients: sales reps, engineers, officers.{plan === "pro" ? ` Your add-on covers ${addon?.field_addon_seats ?? 0} people (${fieldCount} used).` : ""}</p>{plan === "pro" && <Link href="/admin/billing" className="mt-1 inline-block text-sm font-semibold underline">Add field staff places</Link>}</div>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{(people ?? []).map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2 text-sm">
             <span className="min-w-0 truncate"><b>{p.full_name || p.email}</b>{p.team ? <span className="text-muted"> · {p.team}</span> : null}</span>

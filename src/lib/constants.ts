@@ -109,3 +109,6 @@ export function isPublicEmail(email: string) {
 export function naira(n: number) {
   return "₦" + n.toLocaleString("en-NG");
 }
+
+/** Field staff add-on for Pro: naira per field person per month (Premium includes field staff). */
+export const FIELD_ADDON_PRICE = 150;

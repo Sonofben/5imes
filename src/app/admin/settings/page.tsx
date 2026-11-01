@@ -71,12 +71,13 @@ const ZONES = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johanne
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { org, supabase } = await requireMember({ admin: true });
-  const [{ data: grants }, { data: supportLog }, { data: colorsAllowed }, { data: proFeatures }, { data: celebrate }] = await Promise.all([
+  const [{ data: grants }, { data: supportLog }, { data: colorsAllowed }, { data: proFeatures }, { data: celebrate }, { data: linkRequest }] = await Promise.all([
     supabase.from("support_access_grants").select("expires_at").is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("expires_at", { ascending: false }).limit(1),
     supabase.rpc("my_support_log"),
     supabase.rpc("org_has_brand_colors", { p_org: org.id }),
     supabase.rpc("org_has_visitors", { p_org: org.id }),
     supabase.from("organizations").select("celebrations_on,celebrations_email,celebrations_hr_email,celebrations_heads_up_days,celebrations_weekend").eq("id", org.id).single(),
+    supabase.from("company_link_requests").select("slug").eq("org_id", org.id).maybeSingle(),
   ]);
   const zones = ZONES.includes(org.timezone) ? ZONES : [...ZONES, org.timezone].sort();
 
@@ -124,7 +125,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         {!proFeatures && <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-warn">Celebration emails are part of Pro and Premium. The in-app celebration works on every plan. <a href="/admin/billing?plan=pro" className="font-semibold underline">See plans</a></p>}
         <div className="flex justify-end border-t border-line pt-4"><button className="btn-primary">Save celebrations</button></div>
       </form>
-      <BrandingCard slug={org.slug} logoUrl={org.logo_url} brandColor={org.brand_color} accentColor={org.accent_color ?? null} siteUrl={siteUrl()} colorsAllowed={!!colorsAllowed} />
+      <BrandingCard slug={org.slug} pendingSlug={linkRequest?.slug ?? null} logoUrl={org.logo_url} brandColor={org.brand_color} accentColor={org.accent_color ?? null} siteUrl={siteUrl()} colorsAllowed={!!colorsAllowed} />
       <SupportAccessCard until={grants?.[0]?.expires_at ?? null} log={(supportLog ?? [])} timezone={org.timezone} />
     </div>
   );

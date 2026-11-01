@@ -33,7 +33,8 @@ update subscriptions set plan = 'pro', status = 'active', trial_ends_at = null, 
 set role authenticated;
 select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
 select test.ok((select slug from organizations) = 'acme-ltd', 'Every company gets a link name from its name (acme-ltd)');
-update organizations set slug = 'acme', brand_color = '#0055aa';
+select public.request_company_link('acme');
+update organizations set brand_color = '#0055aa';
 select test.ok((select slug = 'acme' and brand_color = '#0055aa' from organizations), 'Admin sets company link and colour');
 reset role;
 update subscriptions s set plan = a.plan, status = a.status, trial_ends_at = a.trial_ends_at, current_period_end = a.current_period_end
@@ -46,10 +47,11 @@ update organizations set logo_url = 'https://abc123.supabase.co/storage/v1/objec
 select test.blocked($$update organizations set logo_url = 'https://cdn.example.com/acme.png' where slug = 'acme'$$, 'logo_url', 'The logo must be a file in our own logo storage');
 set role authenticated;
 select test.as_user('00000000-0000-0000-0000-00000000000a', 'boss@acme.ng');
-select test.blocked($$update organizations set slug = 'console'$$, 'reserved', 'Reserved link names (console, admin, …) are refused');
+select test.blocked($$select public.request_company_link('support')$$, 'reserved', 'Reserved link names (support, 5ime, …) are refused');
+select test.blocked($$update organizations set slug = 'acme-two'$$, 'permission denied', 'Admins change the link only through a request');
 select test.blocked($$update organizations set brand_color = 'red'$$, 'brand_color', 'Brand colour must be a #hex value');
 select test.as_user('00000000-0000-0000-0000-00000000000e', 'ceo@other.ng');
-select test.blocked($$update organizations set slug = 'acme'$$, 'duplicate key', 'Two companies cannot share a link');
+select test.blocked($$select public.request_company_link('acme')$$, 'already taken', 'Two companies cannot share a link');
 reset role;
 set role anon;
 select test.ok((select name = 'Acme Ltd' and logo_url like 'https://%' from org_branding('acme')), 'Public sign-in page can read only name/logo/colour for a link');

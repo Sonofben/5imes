@@ -37,6 +37,8 @@ export async function POST(request: Request) {
   if (!Number.isSafeInteger(seats) || seats < existingSeats || seats > 10000) {
     return back({ error: `Choose at least ${existingSeats} seats (your active and invited people), and no more than 10,000.` });
   }
+  const fieldSeats = plan === "pro" ? Number(form.get("field_seats") || 0) : 0;
+  if (!Number.isSafeInteger(fieldSeats) || fieldSeats < 0 || fieldSeats > seats) return back({ error: "Field staff places must be between 0 and your number of seats." });
   if (!user.email) return back({ error: "Add an email address to your account before starting payment." });
   if (!admin) return back({ error: "Supabase server credentials are not configured, so the verified payment ledger is unavailable." });
 
@@ -50,6 +52,7 @@ export async function POST(request: Request) {
     p_seats: seats,
     p_months: interval.months,
     p_auto_renew: autoRenew,
+    p_field_seats: fieldSeats,
   });
   const reservation = parseResult(Reservation, reservationRaw, "api/paystack/initialize", { ok: false, reason: "The payment could not be reserved." });
   if (reservationError || !reservation.ok) {
@@ -65,7 +68,7 @@ export async function POST(request: Request) {
   try {
     let planCode: string | null = null;
     if (autoRenew) {
-      const name = `5ime ${PLANS[plan].name} · ${seats} seats · ${interval.label} · ${me.org_id.slice(0, 8)}`.slice(0, 90);
+      const name = `5ime ${PLANS[plan].name} · ${seats} seats${fieldSeats ? ` + ${fieldSeats} field` : ""} · ${interval.label} · ${me.org_id.slice(0, 8)}`.slice(0, 90);
       const paystackPlan = await paystack<{ plan_code: string }>("/plan", {
         method: "POST",
         body: JSON.stringify({ name, amount, interval: interval.paystackInterval, currency: "NGN" }),
@@ -96,6 +99,7 @@ export async function POST(request: Request) {
           custom_fields: [
             { display_name: "Plan", variable_name: "plan", value: PLANS[plan].name },
             { display_name: "Seats", variable_name: "seats", value: String(seats) },
+            ...(fieldSeats ? [{ display_name: "Field staff places", variable_name: "field_seats", value: String(fieldSeats) }] : []),
             { display_name: "Billing period", variable_name: "billing_period", value: interval.label },
             { display_name: "Renewal", variable_name: "renewal", value: autoRenew ? "Automatic" : "Manual (no auto-charge)" },
           ],

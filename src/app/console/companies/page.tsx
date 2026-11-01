@@ -3,7 +3,7 @@ import { requireConsole, can, fmtDate } from "@/lib/console";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
 import { Reason } from "../Reason";
-import { createCompany } from "./actions";
+import { createCompany, decideCompanyLink } from "./actions";
 import { friendly } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +18,14 @@ function state(c: Row) {
   return [c.status, "bg-paper text-muted"];
 }
 
-export default async function GlobalCompanies({ searchParams }: { searchParams: Promise<{ q?: string; archived?: string; new?: string; error?: string }> }) {
+export default async function GlobalCompanies({ searchParams }: { searchParams: Promise<{ q?: string; archived?: string; new?: string; error?: string; msg?: string }> }) {
   const sp = await searchParams;
   const archived = sp.archived === "1";
   const { supabase, role } = await requireConsole();
-  const [{ data, error }, { data: plans }] = await Promise.all([
+  const [{ data, error }, { data: plans }, { data: linkRequests }] = await Promise.all([
     supabase.rpc("console_companies", { p_search: sp.q ?? null, p_archived: archived }),
     supabase.rpc("public_plans"),
+    can.trial(role) ? supabase.rpc("console_company_link_requests") : Promise.resolve({ data: null }),
   ]);
   const rows = (data ?? []);
   const trialDays = (plans as { trial_days?: number } | null)?.trial_days ?? 14;
@@ -35,8 +36,21 @@ export default async function GlobalCompanies({ searchParams }: { searchParams: 
           <Link href={archived ? "/console/companies" : "/console/companies?archived=1"} className="text-sm text-muted underline">{archived ? "← Active companies" : "Show archived"}</Link></div>
         <form className="flex gap-2">{archived && <input type="hidden" name="archived" value="1" />}<input name="q" defaultValue={sp.q} placeholder="Search name, domain or link" className="input w-64" /><button className="btn-primary">Search</button></form>
       </div>
-      <Flash error={readFlash(sp).error} />
+      <Flash error={readFlash(sp).error} msg={readFlash(sp).msg} />
       {error && <p className="card text-bad">{friendly(error, "console/companies")}</p>}
+
+      {!archived && (linkRequests ?? []).length > 0 && (
+        <section className="card space-y-3">
+          <div><h2 className="font-bold">Company link requests</h2><p className="text-sm text-muted">These links don’t match the company name or email domain. Approve only when the link is clearly the client’s own name or brand.</p></div>
+          {(linkRequests ?? []).map((r) => (
+            <form key={r.org_id} action={decideCompanyLink.bind(null, r.org_id)} className="grid gap-2 rounded-xl border border-line p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+              <div><p className="font-semibold">{r.org_name}</p><p className="text-xs text-muted">@{r.domain} · now /c/{r.current_slug} · wants <b>/c/{r.slug}</b>{r.requested_by_email ? ` · asked by ${r.requested_by_email}` : ""} · {fmtDate(r.requested_at)}</p></div>
+              <Reason placeholder="e.g. Trading name confirmed with client" />
+              <div className="flex gap-2"><button name="decision" value="approve" className="btn-primary">Approve</button><button name="decision" value="decline" className="btn-ghost">Decline</button></div>
+            </form>
+          ))}
+        </section>
+      )}
 
       {can.createCompany(role) && !archived && (
         <details className="card" open={sp.new === "1"}>
@@ -59,7 +73,7 @@ export default async function GlobalCompanies({ searchParams }: { searchParams: 
         <tbody>{rows.length === 0 ? <tr><td colSpan={7} className="text-muted">No companies found.</td></tr> : rows.map((c) => {
           const [label, tone] = state(c);
           return <tr key={c.id}>
-            <td><Link href={`/console/companies/${c.id}`} className="font-semibold underline">{c.name}</Link><div className="text-xs text-muted">@{c.domain} · /{c.slug}{c.support_until ? " · support access on" : ""}</div></td>
+            <td><Link href={`/console/companies/${c.id}`} className="font-semibold underline">{c.name}</Link><div className="text-xs text-muted">@{c.domain} · /c/{c.slug}{c.support_until ? " · support access on" : ""}</div></td>
             <td><span className={`chip ${tone}`}>{label}</span></td>
             <td className="capitalize">{c.plan}</td>
             <td className="tabular-nums">{c.seats_used} / {c.status === "trialing" ? "trial" : c.seats_paid}</td>

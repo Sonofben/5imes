@@ -137,7 +137,7 @@ export default async function Home() {
           <div className="grid gap-6 rounded-2xl border border-line bg-white p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
             <div><p className="eyebrow">Your brand · Pro and Premium</p><h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Your staff see your company, not ours.</h2>
               <p className="mt-3 text-sm leading-6 text-muted">Upload your logo and 5ime picks your brand colours from it, keeping every screen easy to read.</p></div>
-            <ul className="grid gap-2 text-sm sm:grid-cols-2">{["Your sign-in page at 5imes.click/your-company", "The staff app and admin area in your colours", "Your logo as the app icon on staff phones", "Your logo and colours on visitor pages and emails"].map((t) => <li key={t} className="flex gap-2"><span aria-hidden className="font-bold text-ok">✓</span><span>{t}</span></li>)}</ul>
+            <ul className="grid gap-2 text-sm sm:grid-cols-2">{["Your sign-in page at 5imes.click/c/your-company", "The staff app and admin area in your colours", "Your logo as the app icon on staff phones", "Your logo and colours on visitor pages and emails"].map((t) => <li key={t} className="flex gap-2"><span aria-hidden className="font-bold text-ok">✓</span><span>{t}</span></li>)}</ul>
           </div>
         </div>
       </section>

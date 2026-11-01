@@ -33,7 +33,7 @@ select set_config('test.bisi', (select id::text from public.members where email 
 
 \echo '--- Premium plan'
 select test.ok((select count(*) from public.platform_plans where plan = 'premium' and price_naira = 1000) = 1, 'Premium plan exists at ₦1,000 per seat (editable in Global Admin)');
-select test.ok(position('''premium''' in pg_get_functiondef('public.prepare_paystack_subscription(text,text,integer,integer,boolean)'::regprocedure)) > 0,
+select test.ok(position('''premium''' in pg_get_functiondef('public.prepare_paystack_subscription(text,text,integer,integer,boolean,integer)'::regprocedure)) > 0,
   'Checkout accepts the Premium plan');
 select test.ok(position('''premium''' in pg_get_functiondef('public.replace_schedule(uuid,uuid,jsonb)'::regprocedure)) > 0,
   'Premium includes Pro features (per-person schedules)');

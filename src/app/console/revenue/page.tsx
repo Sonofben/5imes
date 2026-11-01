@@ -48,7 +48,7 @@ export default async function RevenuePage({ searchParams }: { searchParams: Prom
           <tbody>{payments.length === 0 ? <tr><td colSpan={7} className="text-muted">No payments match.</td></tr> : payments.map((p) => <tr key={p.reference}>
             <td className="text-xs">{fmtDateTime(p.created_at)}</td>
             <td><Link className="underline" href={`/console/companies/${p.org_id}`}>{p.company}</Link></td>
-            <td className="text-xs">{p.kind === "seat_increase" ? `Seats → ${p.seats}` : `${p.plan} · ${p.seats} seats · ${p.months} mo`}{p.note ? ` · ${p.note}` : ""}</td>
+            <td className="text-xs">{p.kind === "seat_increase" ? `Seats → ${p.seats}` : p.kind === "field_addon" ? "Field staff add-on" : `${p.plan} · ${p.seats} seats · ${p.months} mo`}{p.note ? ` · ${p.note}` : ""}</td>
             <td className="capitalize">{p.provider}</td><td className="tabular-nums">{naira(p.amount_kobo)}</td>
             <td><span className={`chip ${p.status === "applied" ? "bg-green-50 text-ok" : p.status === "pending" ? "bg-amber-50 text-warn" : "bg-red-50 text-bad"}`}>{p.status === "applied" ? "confirmed" : p.status}</span></td>
             <td className="font-mono text-xs">{p.reference}</td>

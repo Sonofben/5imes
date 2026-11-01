@@ -50,3 +50,11 @@ export function addCalendarMonths(isoDate: string | Date, months: number) {
   firstOfTarget.setUTCHours(source.getUTCHours(), source.getUTCMinutes(), source.getUTCSeconds(), source.getUTCMilliseconds());
   return firstOfTarget.toISOString();
 }
+
+/** Naira per field person per month; keep in step with FIELD_ADDON_PRICE and public.field_addon_price(). */
+export const FIELD_ADDON_PRICE_NAIRA = 150;
+
+/** Field staff add-on (Pro) for added places, prorated like the database does. */
+export function proratedFieldAmountKobo(addedPlaces: number, cycle: BillingCycleId, periodStart: string | Date, periodEnd: string | Date, at: string | Date = new Date()) {
+  return Math.max(100, proratedSeatAmountKobo(FIELD_ADDON_PRICE_NAIRA, addedPlaces, cycle, periodStart, periodEnd, at));
+}

@@ -285,6 +285,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      company_link_requests: {
+        Row: {
+          org_id: string;
+          slug: string;
+          requested_by: string | null;
+          requested_at: string;
+        };
+        Insert: {
+          org_id: string;
+          slug: string;
+          requested_by?: string | null;
+          requested_at?: string;
+        };
+        Update: {
+          org_id?: string;
+          slug?: string;
+          requested_by?: string | null;
+          requested_at?: string;
+        };
+        Relationships: [];
+      };
       kiosk_devices: {
         Row: {
           id: string;
@@ -699,6 +720,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      org_slug_history: {
+        Row: {
+          slug: string;
+          org_id: string | null;
+          first_used_at: string;
+        };
+        Insert: {
+          slug: string;
+          org_id?: string | null;
+          first_used_at?: string;
+        };
+        Update: {
+          slug?: string;
+          org_id?: string | null;
+          first_used_at?: string;
+        };
+        Relationships: [];
+      };
       organizations: {
         Row: {
           id: string;
@@ -802,7 +841,7 @@ export type Database = {
           amount_kobo: number;
           currency: string;
           status: "pending" | "applied" | "failed";
-          kind: "subscription" | "seat_increase";
+          kind: "subscription" | "seat_increase" | "field_addon";
           paystack_customer: string | null;
           paystack_plan_code: string | null;
           paystack_subscription_code: string | null;
@@ -814,6 +853,7 @@ export type Database = {
           last_status_check_at: string | null;
           provider: "paystack" | "complimentary" | "korapay" | "monnify" | "payaza";
           note: string | null;
+          field_seats: number;
         };
         Insert: {
           reference: string;
@@ -824,7 +864,7 @@ export type Database = {
           amount_kobo: number;
           currency?: string;
           status?: "pending" | "applied" | "failed";
-          kind?: "subscription" | "seat_increase";
+          kind?: "subscription" | "seat_increase" | "field_addon";
           paystack_customer?: string | null;
           paystack_plan_code?: string | null;
           paystack_subscription_code?: string | null;
@@ -836,6 +876,7 @@ export type Database = {
           last_status_check_at?: string | null;
           provider?: "paystack" | "complimentary" | "korapay" | "monnify" | "payaza";
           note?: string | null;
+          field_seats?: number;
         };
         Update: {
           reference?: string;
@@ -846,7 +887,7 @@ export type Database = {
           amount_kobo?: number;
           currency?: string;
           status?: "pending" | "applied" | "failed";
-          kind?: "subscription" | "seat_increase";
+          kind?: "subscription" | "seat_increase" | "field_addon";
           paystack_customer?: string | null;
           paystack_plan_code?: string | null;
           paystack_subscription_code?: string | null;
@@ -858,6 +899,7 @@ export type Database = {
           last_status_check_at?: string | null;
           provider?: "paystack" | "complimentary" | "korapay" | "monnify" | "payaza";
           note?: string | null;
+          field_seats?: number;
         };
         Relationships: [];
       };
@@ -1947,6 +1989,7 @@ export type Database = {
       can_assign_to: { Args: { p_member: string | null }; Returns: boolean };
       can_manage_task: { Args: { p_task: string | null }; Returns: boolean };
       can_see_task: { Args: { p_task: string | null }; Returns: boolean };
+      cancel_company_link_request: { Args: Record<PropertyKey, never>; Returns: undefined };
       cancel_leave: { Args: { p_id: string | null }; Returns: undefined };
       cancel_visit: { Args: { p_id: string | null }; Returns: undefined };
       cancel_work_elsewhere: { Args: { p_request: string | null }; Returns: undefined };
@@ -1961,8 +2004,10 @@ export type Database = {
       console_companies: { Args: { p_search?: string | null; p_archived?: boolean | null }; Returns: { id: string; name: string; domain: string; slug: string; plan: string; status: string; trial_ends_at: string; current_period_end: string; seats_paid: number; seats_used: number; created_at: string; suspended_at: string; owner_email: string; last_check_in: string; support_until: string; archived_at: string }[] };
       console_company: { Args: { p_org: string | null }; Returns: Json };
       console_company_export: { Args: { p_org: string | null; p_reason: string | null }; Returns: Json };
+      console_company_link_requests: { Args: Record<PropertyKey, never>; Returns: { org_id: string; org_name: string; domain: string; current_slug: string; slug: string; requested_by_email: string; requested_at: string }[] };
       console_company_snapshot: { Args: { p_org: string | null }; Returns: Json };
       console_create_company: { Args: { p_name: string | null; p_domain: string | null; p_owner_email: string | null; p_owner_name: string | null; p_trial_days: number | null; p_reason: string | null }; Returns: string };
+      console_decide_company_link: { Args: { p_org: string | null; p_approve: boolean | null; p_reason: string | null }; Returns: undefined };
       console_delete_company: { Args: { p_org: string | null; p_confirm_domain: string | null; p_reason: string | null }; Returns: undefined };
       console_end_announcement: { Args: { p_id: string | null }; Returns: undefined };
       console_extend_trial: { Args: { p_org: string | null; p_days: number | null; p_reason: string | null }; Returns: string };
@@ -2007,6 +2052,8 @@ export type Database = {
       distance_m: { Args: { lat1: number | null; lng1: number | null; lat2: number | null; lng2: number | null }; Returns: number };
       end_session_at_departure: { Args: { p_departure: string | null }; Returns: undefined };
       end_visit: { Args: { p_id: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_note: string | null; p_outcome: string | null; p_photo: string | null }; Returns: undefined };
+      field_addon_kobo: { Args: { p_plan: string | null; p_field: number | null; p_months: number | null }; Returns: number };
+      field_addon_price: { Args: Record<PropertyKey, never>; Returns: number };
       field_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };
       grant_support_access: { Args: { p_hours: number | null }; Returns: string };
       holiday_name: { Args: { p_org: string | null; p_date: string | null }; Returns: string };
@@ -2061,23 +2108,27 @@ export type Database = {
       plan_visit: { Args: { p_member: string | null; p_site: string | null; p_date: string | null; p_note: string | null }; Returns: string };
       platform_trial_days: { Args: Record<PropertyKey, never>; Returns: number };
       post_auth_destination: { Args: Record<PropertyKey, never>; Returns: { destination: string; reason: string }[] };
+      prepare_paystack_field_addon: { Args: { p_reference: string | null; p_field_seats: number | null }; Returns: Json };
       prepare_paystack_seat_increase: { Args: { p_reference: string | null; p_seats: number | null }; Returns: Json };
-      prepare_paystack_subscription: { Args: { p_reference: string | null; p_plan: string | null; p_seats: number | null; p_months: number | null; p_auto_renew?: boolean | null }; Returns: Json };
+      prepare_paystack_subscription: { Args: { p_reference: string | null; p_plan: string | null; p_seats: number | null; p_months: number | null; p_auto_renew?: boolean | null; p_field_seats?: number | null }; Returns: Json };
       public_plans: { Args: Record<PropertyKey, never>; Returns: Json };
       record_paystack_subscription: { Args: { p_plan_code: string | null; p_subscription_code: string | null; p_customer_code: string | null; p_email_token: string | null }; Returns: boolean };
       release_missing_paystack_checkout: { Args: { p_reference: string | null }; Returns: boolean };
       remove_check_item: { Args: { p_item: string | null }; Returns: undefined };
       remove_task_file: { Args: { p_file: string | null }; Returns: string };
+      renewal_amount_kobo: { Args: { p_org: string | null }; Returns: number };
       replace_recovery_codes: { Args: { p_codes: string[] | null }; Returns: number };
       replace_schedule: { Args: { p_org: string | null; p_member: string | null; p_rows: Json | null }; Returns: undefined };
       report_presence: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: Json };
       request_attendance_correction: { Args: { p_work_date: string | null; p_check_in: string | null; p_check_out: string | null; p_reason: string | null }; Returns: string };
+      request_company_link: { Args: { p_slug: string | null }; Returns: Json };
       request_home_location: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null } | { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_address: string | null }; Returns: undefined };
       request_leave: { Args: { p_type: string | null; p_start: string | null; p_end: string | null; p_reason: string | null; p_document?: string | null }; Returns: string };
       request_task_update: { Args: { p_id: string | null; p_note: string | null }; Returns: undefined };
       request_work_elsewhere: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_reason: string | null; p_place_name?: string | null; p_address?: string | null }; Returns: string };
       require_visitors: { Args: { p_org: string | null }; Returns: undefined };
       reserved_slugs: { Args: Record<PropertyKey, never>; Returns: string[] };
+      resolve_company_link: { Args: { p_slug: string | null }; Returns: string };
       review_attendance_correction: { Args: { p_request_id: string | null; p_approve: boolean | null; p_note?: string | null }; Returns: undefined };
       review_home_location: { Args: { p_member: string | null; p_approve: boolean | null }; Returns: undefined };
       review_task: { Args: { p_id: string | null; p_approve: boolean | null; p_note: string | null }; Returns: undefined };
@@ -2090,6 +2141,7 @@ export type Database = {
       set_my_birthday: { Args: { p_month: number | null; p_day: number | null; p_opt_out: boolean | null }; Returns: undefined };
       set_paystack_subscription_cancelled: { Args: { p_subscription_code: string | null; p_cancelled: boolean | null; p_expected_updated_at?: string | null }; Returns: boolean };
       set_task_status: { Args: { p_id: string | null; p_status: string | null }; Returns: string };
+      slug_matches_org: { Args: { p_org: string | null; p_slug: string | null }; Returns: boolean };
       start_visit: { Args: { p_site: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: string };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
       task_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };

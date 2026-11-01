@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { billingAmountKobo, proratedSeatAmountKobo, addCalendarMonths } from "../src/lib/billing.ts";
+import { billingAmountKobo, proratedSeatAmountKobo, proratedFieldAmountKobo, addCalendarMonths } from "../src/lib/billing.ts";
 import { parseCsv, safeCsvField } from "../src/lib/csv.ts";
 
 test("billing totals are seat price multiplied by seats and calendar months", () => {
@@ -50,4 +50,11 @@ test("CSV export quotes fields and neutralizes formula-leading text after contro
   assert.ok(formula.includes('""x""'));
   assert.equal(safeCsvField("\t  @SUM(A1:A2)"), "'\t  @SUM(A1:A2)");
   assert.equal(safeCsvField(2500), "2500");
+});
+
+test("field staff add-on is prorated to the end of the term", () => {
+  // 4 places, half way through a 30 day month: half of 4 × ₦150.
+  assert.equal(proratedFieldAmountKobo(4, "monthly", "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z", "2026-11-16T00:00:00Z"), 30_000);
+  // Never less than ₦1.
+  assert.equal(proratedFieldAmountKobo(1, "monthly", "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z", "2026-11-30T23:59:00Z"), 100);
 });

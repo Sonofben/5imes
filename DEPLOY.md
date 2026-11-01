@@ -67,6 +67,7 @@ bash ~/vps-check.sh
    22. `supabase/migrations/0022_celebrations.sql`
    23. `supabase/migrations/0023_tasks.sql`
    24. `supabase/migrations/0024_field_staff.sql`
+   25. `supabase/migrations/0025_company_links_field_addon.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -613,4 +614,14 @@ visit photos to a private bucket, `visit-photos` (both created on first upload).
 
 Field staff is included in Premium. For a Pro company that buys the add-on, set the number of field
 people in Global Admin → Companies → the company → Field staff add-on.
+
+## 18. Company links under /c/ and the field staff add-on (0025)
+
+- Company sign-in links are now `https://5imes.click/c/<link>`. Old links (`5imes.click/<link>`) redirect
+  to the new address permanently, and every link a company has used stays with that company forever.
+- A link that does not match the company name or email domain waits for approval in
+  Global Admin → Companies → Company link requests (owner and support roles).
+- The field staff add-on (Pro, ₦150 per field person a month) is paid with Paystack only, at plan checkout
+  or later from Billing (prorated to the end of the term). Nothing else to configure: the existing
+  Paystack keys and webhook are used, and the places switch on when the payment is confirmed.
 

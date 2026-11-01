@@ -90,7 +90,7 @@ export async function retrySeatRenewalPrice() {
   const admin = createAdminClient();
   if (!admin) redirect(`/admin/billing?${flashQuery({ error: "Billing service is not configured." })}`);
   const { data: payment, error } = await admin.from("payments").select("reference")
-    .eq("org_id", org.id).eq("kind", "seat_increase").eq("status", "applied").eq("renewal_sync_status", "pending")
+    .eq("org_id", org.id).in("kind", ["seat_increase", "field_addon"]).eq("status", "applied").eq("renewal_sync_status", "pending")
     .order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (error) redirect(`/admin/billing?${flashQuery({ error: friendly(error, "admin/billing") })}`);
   if (!payment) redirect(`/admin/billing?${flashQuery({ msg: "The recurring seat price is already up to date." })}`);

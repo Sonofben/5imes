@@ -28,11 +28,11 @@ export async function saveBranding(formData: FormData) {
   const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
   const color = String(formData.get("brand_color") ?? "").trim();
   const accent = String(formData.get("accent_color") ?? "").trim();
-  if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug)) back({ error: "Company link: 3–40 lowercase letters, numbers or dashes." });
+  if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug)) back({ error: "Company link: 3 to 40 lowercase letters, numbers or dashes." });
   if ((color && !/^#[0-9a-fA-F]{6}$/.test(color)) || (accent && !/^#[0-9a-fA-F]{6}$/.test(accent))) back({ error: "Choose a valid colour." });
 
   // Colours are part of Pro and Premium; the database refuses them on other plans with a clear message.
-  const update: { slug: string; brand_color: string | null; accent_color: string | null } = { slug, brand_color: color || null, accent_color: accent || null };
+  const update: { brand_color: string | null; accent_color: string | null } = { brand_color: color || null, accent_color: accent || null };
   // The logo link is set only by the server after an upload (admins cannot write it directly).
   let logoUrl: string | null | undefined;
   const file = formData.get("logo");
@@ -57,8 +57,17 @@ export async function saveBranding(formData: FormData) {
     logoUrl = admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
   }
 
+  // The company link changes through a request: a matching link applies now, any other waits for approval.
+  let linkPending = false;
+  if (slug !== org.slug) {
+    const { data: link, error: linkError } = await supabase.rpc("request_company_link", { p_slug: slug });
+    if (linkError) back({ error: friendly(linkError, "admin/settings/link") });
+    linkPending = (link as { status?: string } | null)?.status === "pending";
+  } else {
+    await supabase.rpc("cancel_company_link_request");
+  }
   const { error } = await supabase.from("organizations").update(update).eq("id", org.id);
-  if (error) back({ error: error.message.includes("organizations_slug_key") ? "That company link is already taken." : friendly(error, "admin/settings") });
+  if (error) back({ error: friendly(error, "admin/settings") });
   revalidatePath("/", "layout");
   if (logoUrl !== undefined) {
     const admin = createAdminClient();
@@ -66,7 +75,7 @@ export async function saveBranding(formData: FormData) {
     const { error: logoError } = await admin.from("organizations").update({ logo_url: logoUrl }).eq("id", org.id);
     if (logoError) back({ error: friendly(logoError, "admin/settings/logo") });
   }
-  back({ msg: "Branding saved." });
+  back({ msg: linkPending ? "Branding saved. Your new company link is waiting for approval by the 5ime team." : "Branding saved." });
 }
 
 export async function grantSupport(formData: FormData) {
