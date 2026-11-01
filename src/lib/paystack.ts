@@ -97,6 +97,7 @@ async function syncSeatRenewal(admin: NonNullable<ReturnType<typeof createAdminC
       .eq("reference", payment.reference).eq("status", "applied").in("kind", TOPUP_KINDS);
     return { ok: false, reason: `the paid seats are active, but Paystack has not updated the next renewal yet (${reason})` };
   }
+  await admin.rpc("mark_renewal_price_synced", { p_org: payment.org_id, p_amount_kobo: recurringAmount });
   const { error } = await admin.from("payments").update({ renewal_sync_status: "synced", renewal_sync_error: null })
     .eq("reference", payment.reference).eq("status", "applied").in("kind", TOPUP_KINDS);
   if (error) return { ok: false, reason: `the paid seats are active, but the renewal update needs a retry (${friendly(error, "lib/paystack")})` };
@@ -273,4 +274,25 @@ export async function syncPaystackCancellation(subscriptionCode: string) {
   return stillCurrent
     ? { ok: false, reason: "renewal state changed concurrently; retry after checkout reconciliation" }
     : { ok: true, reason: "stale event for a superseded subscription ignored" };
+}
+
+/**
+ * Keeps Paystack's automatic renewal amount in step with what the database expects:
+ * a price deal starting or ending, seats or field places changing. Run by the timer.
+ */
+export async function syncRenewalPrices(admin: NonNullable<ReturnType<typeof createAdminClient>>) {
+  if (!paystackEnabled()) return;
+  const { data } = await admin.rpc("renewals_needing_price_sync");
+  for (const row of (data ?? []).slice(0, 50)) {
+    if (!row.plan_code || !Number.isSafeInteger(Number(row.amount_kobo)) || Number(row.amount_kobo) < 100) continue;
+    try {
+      await paystack(`/plan/${encodeURIComponent(row.plan_code)}`, {
+        method: "PUT",
+        body: JSON.stringify({ amount: Number(row.amount_kobo), update_existing_subscriptions: true }),
+      });
+      await admin.rpc("mark_renewal_price_synced", { p_org: row.org_id, p_amount_kobo: Number(row.amount_kobo) });
+    } catch {
+      // Left for the next run; the database accepts the old amount until Paystack confirms the new one.
+    }
+  }
 }

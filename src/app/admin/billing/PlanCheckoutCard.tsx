@@ -12,8 +12,11 @@ const CYCLE_OPTIONS: { id: BillingCycleId; label: string }[] = [
 ];
 
 export function PlanCheckoutCard({
-  plan, minSeats, defaultCycle, enabled, allowAutoRenew = true, payAheadUntil, providers = ["paystack"], fieldPlaces = 0, fieldUsed = 0,
+  plan, minSeats, defaultCycle, enabled, allowAutoRenew = true, payAheadUntil, providers = ["paystack"], fieldPlaces = 0, fieldUsed = 0, percentOff = 0, amountOffKobo = 0,
 }: {
+  /** A Global Admin deal for this company: a percentage or an amount taken off each payment. */
+  percentOff?: number;
+  amountOffKobo?: number;
   /** Field staff add-on places the company has now, and field staff in use (Pro only). */
   fieldPlaces?: number;
   fieldUsed?: number;
@@ -38,7 +41,10 @@ export function PlanCheckoutCard({
   const isPro = plan.id === "pro";
   const [field, setField] = useState(Math.max(fieldPlaces, fieldUsed));
   const safeField = isPro ? (Number.isSafeInteger(field) && field >= fieldUsed ? Math.min(field, safeSeats) : fieldUsed) : 0;
-  const amountNaira = billingAmountKobo(plan.pricePerSeat, safeSeats, cycle) / 100 + safeField * FIELD_ADDON_PRICE * months;
+  const grossNaira = billingAmountKobo(plan.pricePerSeat, safeSeats, cycle) / 100 + safeField * FIELD_ADDON_PRICE * months;
+  // Same rule as the database: the discount never takes a payment below ₦100.
+  const discountNaira = Math.max(0, Math.min(percentOff ? Math.round(grossNaira * percentOff) / 100 : amountOffKobo / 100, grossNaira - 100));
+  const amountNaira = grossNaira - discountNaira;
   const fieldBlocksMonnify = safeField > 0;
 
   return (
@@ -66,7 +72,7 @@ export function PlanCheckoutCard({
           <p className="rounded-xl bg-paper p-3 text-xs leading-5 text-muted">One-off payment — nothing is charged automatically.{payAheadUntil ? ` This new term starts when your current term ends (${payAheadUntil}).` : ""}</p>
         )}
         <div className="rounded-xl border border-line bg-[#fafbf9] p-4">
-          <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}{safeField > 0 ? ` + ${safeField} field staff × ${naira(FIELD_ADDON_PRICE)} × ${months}` : ""}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
+          <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted">Due now · {months} month{months === 1 ? "" : "s"} · no long-term discount</p><p className="mt-1 text-sm text-muted">{safeSeats} seats × {naira(plan.pricePerSeat)} × {months}{safeField > 0 ? ` + ${safeField} field staff × ${naira(FIELD_ADDON_PRICE)} × ${months}` : ""}{discountNaira > 0 ? <span className="block text-ok">Special price: {naira(discountNaira)} off</span> : null}</p></div><p aria-live="polite" className="text-right text-xl font-extrabold tabular-nums">{naira(amountNaira)}</p></div>
         </div>
         {tooMany ? (
           <p className="rounded-xl bg-amber-50 p-3 text-sm text-warn">You have {minSeats} staff. {plan.name} includes up to {maxSeats}, so choose Pro or Premium.</p>

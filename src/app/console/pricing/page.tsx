@@ -1,4 +1,6 @@
-import { requireConsole, can } from "@/lib/console";
+import Link from "next/link";
+import { requireConsole, can, fmtDate } from "@/lib/console";
+import { describeDeal } from "@/lib/deals";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
 import { Reason } from "../Reason";
@@ -12,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function PricingPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, role } = await requireConsole();
-  const [{ data, error }, { data: currencies }] = await Promise.all([supabase.rpc("console_plans"), supabase.rpc("console_currencies")]);
+  const [{ data, error }, { data: currencies }, { data: deals }] = await Promise.all([supabase.rpc("console_plans"), supabase.rpc("console_currencies"), supabase.rpc("console_deals", {})]);
   if (error || !data) return <p className="card text-bad">{(error ? friendly(error, "console/pricing") : "No data.")}</p>;
   const d = parseOrNull(ConsolePlans, data, "console/pricing");
   if (!d) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
@@ -64,6 +66,14 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
             </fieldset>
           </form>
         ))}</div>
+      </section>
+      <section className="card space-y-3">
+        <div><h2 className="font-bold">Company pricing deals</h2><p className="text-sm text-muted">Special prices given to single companies. Set or end a deal on the company’s page.</p></div>
+        {(deals ?? []).filter((x) => x.is_active).length === 0 ? <p className="text-sm text-muted">No active deals.</p> : (
+          <ul className="divide-y divide-line text-sm">{(deals ?? []).filter((x) => x.is_active).map((x) => (
+            <li key={x.id} className="flex flex-wrap justify-between gap-2 py-2"><Link href={`/console/companies/${x.org_id}`} className="font-semibold underline">{x.org_name}</Link><span className="text-muted">{describeDeal(x, fmtDate)}</span></li>
+          ))}</ul>
+        )}
       </section>
     </div>
   );

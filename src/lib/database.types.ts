@@ -917,6 +917,8 @@ export type Database = {
           provider: "paystack" | "complimentary" | "korapay" | "monnify" | "payaza";
           note: string | null;
           field_seats: number;
+          deal_id: string | null;
+          discount_kobo: number;
         };
         Insert: {
           reference: string;
@@ -940,6 +942,8 @@ export type Database = {
           provider?: "paystack" | "complimentary" | "korapay" | "monnify" | "payaza";
           note?: string | null;
           field_seats?: number;
+          deal_id?: string | null;
+          discount_kobo?: number;
         };
         Update: {
           reference?: string;
@@ -963,6 +967,8 @@ export type Database = {
           provider?: "paystack" | "complimentary" | "korapay" | "monnify" | "payaza";
           note?: string | null;
           field_seats?: number;
+          deal_id?: string | null;
+          discount_kobo?: number;
         };
         Relationships: [];
       };
@@ -1233,6 +1239,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      price_deals: {
+        Row: {
+          id: string;
+          org_id: string;
+          kind: "percent" | "amount" | "custom_price";
+          percent_off: number | null;
+          amount_off_kobo: number | null;
+          price_per_seat: number | null;
+          plan: string | null;
+          starts_at: string;
+          ends_at: string | null;
+          max_uses: number | null;
+          uses: number;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          kind: "percent" | "amount" | "custom_price";
+          percent_off?: number | null;
+          amount_off_kobo?: number | null;
+          price_per_seat?: number | null;
+          plan?: string | null;
+          starts_at?: string;
+          ends_at?: string | null;
+          max_uses?: number | null;
+          uses?: number;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          kind?: "percent" | "amount" | "custom_price";
+          percent_off?: number | null;
+          amount_off_kobo?: number | null;
+          price_per_seat?: number | null;
+          plan?: string | null;
+          starts_at?: string;
+          ends_at?: string | null;
+          max_uses?: number | null;
+          uses?: number;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
       private_attendance_locations: {
         Row: {
           attendance_id: string;
@@ -1468,6 +1528,7 @@ export type Database = {
           paystack_subscription_code: string | null;
           cancel_at_period_end: boolean;
           current_period_start: string | null;
+          paystack_amount_kobo: number | null;
         };
         Insert: {
           org_id: string;
@@ -1484,6 +1545,7 @@ export type Database = {
           paystack_subscription_code?: string | null;
           cancel_at_period_end?: boolean;
           current_period_start?: string | null;
+          paystack_amount_kobo?: number | null;
         };
         Update: {
           org_id?: string;
@@ -1500,6 +1562,7 @@ export type Database = {
           paystack_subscription_code?: string | null;
           cancel_at_period_end?: boolean;
           current_period_start?: string | null;
+          paystack_amount_kobo?: number | null;
         };
         Relationships: [];
       };
@@ -2141,10 +2204,12 @@ export type Database = {
       console_company_snapshot: { Args: { p_org: string | null }; Returns: Json };
       console_create_company: { Args: { p_name: string | null; p_domain: string | null; p_owner_email: string | null; p_owner_name: string | null; p_trial_days: number | null; p_reason: string | null }; Returns: string };
       console_currencies: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["platform_currencies"]["Row"][] };
+      console_deals: { Args: { p_org?: string | null }; Returns: { id: string; org_id: string; org_name: string; kind: string; percent_off: number; amount_off_kobo: number; price_per_seat: number; plan: string; starts_at: string; ends_at: string; max_uses: number; uses: number; note: string; created_at: string; revoked_at: string; is_active: boolean }[] };
       console_decide_company_link: { Args: { p_org: string | null; p_approve: boolean | null; p_reason: string | null }; Returns: undefined };
       console_delete_company: { Args: { p_org: string | null; p_confirm_domain: string | null; p_reason: string | null }; Returns: undefined };
       console_delete_post: { Args: { p_id: string | null; p_reason: string | null }; Returns: undefined };
       console_end_announcement: { Args: { p_id: string | null }; Returns: undefined };
+      console_end_deal: { Args: { p_org: string | null; p_reason: string | null }; Returns: undefined };
       console_extend_trial: { Args: { p_org: string | null; p_days: number | null; p_reason: string | null }; Returns: string };
       console_find_person: { Args: { p_email: string | null }; Returns: { user_id: string; email: string; full_name: string; company: string; org_id: string; role: string; status: string; last_sign_in_at: string; totp_enrolled: boolean; locked: boolean; global_admin_role: string }[] };
       console_force_signout: { Args: { p_user: string | null; p_reason: string | null }; Returns: undefined };
@@ -2168,6 +2233,7 @@ export type Database = {
       console_security: { Args: Record<PropertyKey, never>; Returns: Json };
       console_set_archived: { Args: { p_org: string | null; p_archived: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_currency: { Args: { p_code: string | null; p_ngn_per_unit: number | null; p_markup_pct: number | null; p_active: boolean | null; p_reason: string | null }; Returns: undefined };
+      console_set_deal: { Args: { p_org: string | null; p_kind: string | null; p_value: number | null; p_plan: string | null; p_months: number | null; p_payments: number | null; p_note: string | null; p_reason: string | null }; Returns: string };
       console_set_field_addon: { Args: { p_org: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
       console_set_locked: { Args: { p_user: string | null; p_locked: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_plan: { Args: { p_org: string | null; p_plan: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
@@ -2216,6 +2282,7 @@ export type Database = {
       log_security_event: { Args: { p_kind: string | null; p_detail?: Json | null }; Returns: undefined };
       mark_onboarded: { Args: Record<PropertyKey, never>; Returns: undefined };
       mark_paystack_invoice_failed: { Args: { p_subscription_code: string | null; p_expected_period_end: string | null }; Returns: boolean };
+      mark_renewal_price_synced: { Args: { p_org: string | null; p_amount_kobo: number | null }; Returns: undefined };
       my_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; maintenance: boolean }[] };
       my_celebrations_today: { Args: Record<PropertyKey, never>; Returns: Json };
       my_leave_balances: { Args: Record<PropertyKey, never>; Returns: Json };
@@ -2224,6 +2291,7 @@ export type Database = {
       my_org_brand: { Args: Record<PropertyKey, never>; Returns: Json };
       my_org_id: { Args: Record<PropertyKey, never>; Returns: string };
       my_plan_usage: { Args: Record<PropertyKey, never>; Returns: Json };
+      my_pricing: { Args: Record<PropertyKey, never>; Returns: Json };
       my_primary_role: { Args: Record<PropertyKey, never>; Returns: string };
       my_role: { Args: Record<PropertyKey, never>; Returns: string };
       my_security_status_fn: { Args: Record<PropertyKey, never>; Returns: { user_id: string; totp_enrolled: boolean; unused_recovery_codes: number }[] };
@@ -2258,6 +2326,7 @@ export type Database = {
       remove_check_item: { Args: { p_item: string | null }; Returns: undefined };
       remove_task_file: { Args: { p_file: string | null }; Returns: string };
       renewal_amount_kobo: { Args: { p_org: string | null }; Returns: number };
+      renewals_needing_price_sync: { Args: Record<PropertyKey, never>; Returns: { org_id: string; plan_code: string; amount_kobo: number }[] };
       replace_recovery_codes: { Args: { p_codes: string[] | null }; Returns: number };
       replace_schedule: { Args: { p_org: string | null; p_member: string | null; p_rows: Json | null }; Returns: undefined };
       report_presence: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: Json };

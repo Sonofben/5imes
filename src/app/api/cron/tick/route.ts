@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { runScheduleAutomation } from "@/lib/schedule";
 import { runCelebrationEmails } from "@/lib/celebrations";
 import { runTaskReminders } from "@/lib/tasks";
+import { syncRenewalPrices } from "@/lib/paystack";
 
 /**
  * Called every 5 minutes by the server's timer (deploy/systemd/5ime-tick.timer) so time-based work
@@ -19,6 +20,9 @@ export async function POST(request: Request) {
   await runScheduleAutomation(admin);
   await runCelebrationEmails(admin);
   await runTaskReminders(admin);
-  if (admin) await admin.rpc("purge_old_sales_enquiries");
+  if (admin) {
+    await admin.rpc("purge_old_sales_enquiries");
+    await syncRenewalPrices(admin);
+  }
   return NextResponse.json({ ok: true });
 }

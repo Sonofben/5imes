@@ -18,7 +18,14 @@ export const dynamic = "force-dynamic";
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   const sp = await searchParams;
   const { supabase, org } = await requireMember({ admin: true });
-  const { plans: PLANS } = await loadPlans(supabase);
+  const [{ plans: LIST_PLANS }, { data: pricingRaw }] = await Promise.all([loadPlans(supabase), supabase.rpc("my_pricing")]);
+  // This company's own prices: a Global Admin deal can change the price per seat or take money off each payment.
+  type MyPrice = { pricePerSeat: number; listPrice: number; percentOff: number | null; amountOffKobo: number | null; endsAt: string | null; usesLeft: number | null; hasDeal: boolean };
+  const myPricing = (pricingRaw ?? {}) as Partial<Record<PlanId, MyPrice>>;
+  const PLANS = Object.fromEntries(Object.entries(LIST_PLANS).map(([k, v]) => [k, { ...v, pricePerSeat: myPricing[k as PlanId]?.pricePerSeat ?? v.pricePerSeat }])) as typeof LIST_PLANS;
+  const discountFor = (plan: PlanId) => ({ percentOff: Number(myPricing[plan]?.percentOff ?? 0) || 0, amountOffKobo: Number(myPricing[plan]?.amountOffKobo ?? 0) || 0 });
+  const dealPlans = (Object.keys(myPricing) as PlanId[]).filter((k) => myPricing[k]?.hasDeal);
+  const dealText = (m: MyPrice, when: (d: string) => string) => `${m.percentOff ? `${Number(m.percentOff)}% off each payment` : m.amountOffKobo ? `${naira(Number(m.amountOffKobo) / 100)} off each payment` : `${naira(m.pricePerSeat)} per staff a month instead of ${naira(m.listPrice)}`}${m.endsAt ? `, until ${when(m.endsAt)}` : ""}${m.usesLeft != null ? `, for ${m.usesLeft} more payment${m.usesLeft === 1 ? "" : "s"}` : ""}. Normal prices apply after that.`;
   const [{ data: initialSub }, { count }, { data: fieldOrg }, { count: fieldCount }] = await Promise.all([
     supabase.from("subscriptions").select("*").eq("org_id", org.id).maybeSingle<Subscription>(),
     supabase.from("members").select("id", { count: "exact", head: true }).eq("org_id", org.id).in("status", ["active", "invited"]),
@@ -90,10 +97,13 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const seatIncreaseEnabled = checkoutEnabled && !pendingSubscription && !renewalSyncPending && sub?.status === "active"
     && !!sub.current_period_start && !!sub.current_period_end && new Date(sub.current_period_end).getTime() > Date.now();
 
+  const dealLines = [...dealPlans.reduce((acc, k) => { const t = dealText(myPricing[k]!, fmt); acc.set(t, [...(acc.get(t) ?? []), LIST_PLANS[k].name]); return acc; }, new Map<string, string[]>())];
   return (
     <div className="space-y-6">
       <div><p className="eyebrow">Organization</p><h1 className="page-heading">Billing</h1><p className="page-description">A clear per-seat subscription for your team. Choose a billing term; longer terms have no discount.</p></div>
       <Flash {...readFlash(sp)} />
+      {dealPlans.length > 0 && <section className="card border-ok/30 bg-green-50/40" role="status"><p className="eyebrow text-ok">Special pricing</p>
+        <ul className="mt-1 space-y-1 text-sm">{dealLines.map(([text, names]) => <li key={text}><b>{names.length === 3 ? "All plans" : names.join(", ")}:</b> {text}</li>)}</ul></section>}
 
       <section className="card grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div><p className="eyebrow">Current subscription</p><h2 className="mt-1 text-lg font-bold">{statusText}</h2><p className="mt-1 text-sm text-muted">{sub?.status === "trialing" ? `Trial ends ${fmt(sub.trial_ends_at)}.` : sub?.status === "active" ? `Current paid period ends ${accessUntil}.` : sub?.current_period_end ? `Current access ends ${accessUntil}.` : "Your subscription details will appear here."}</p>
@@ -119,8 +129,8 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       {seatIncreaseEnabled && sub?.plan === "pro" && sub.current_period_start && sub.current_period_end && <FieldAddonCard places={fieldPlaces} used={fieldUsed} paidSeats={sub.seats_paid} cycle={currentCycle} periodStart={sub.current_period_start} periodEnd={sub.current_period_end} enabled={!pendingSeatChange && providers.includes("paystack")} />}
 
       {canStartNewTerm ? (termRunning && sub
-        ? <div className="space-y-3"><div><p className="eyebrow">Pay ahead</p><h2 className="text-lg font-bold">Pay for your next term</h2><p className="mt-1 text-sm text-muted">Your current term runs until {accessUntil}. Paying now adds the next term right after it. To change plan, wait until this term ends.</p></div><div className="max-w-xl"><PlanCheckoutCard plan={PLANS[sub.plan]} fieldPlaces={fieldPlaces} fieldUsed={fieldUsed} minSeats={Math.max(minSeats, sub.seats_paid)} defaultCycle={currentCycle} enabled={checkoutEnabled} allowAutoRenew={false} payAheadUntil={accessUntil} providers={providers} /></div></div>
-        : <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} fieldPlaces={fieldPlaces} fieldUsed={fieldUsed} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} providers={providers} />)}</div>) : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its payment status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same payment before starting a new subscription." : "Automatic renewal is on, so Paystack will charge the next term for you. Turn automatic renewal off above if you would rather pay each term yourself."}</p></section>}
+        ? <div className="space-y-3"><div><p className="eyebrow">Pay ahead</p><h2 className="text-lg font-bold">Pay for your next term</h2><p className="mt-1 text-sm text-muted">Your current term runs until {accessUntil}. Paying now adds the next term right after it. To change plan, wait until this term ends.</p></div><div className="max-w-xl"><PlanCheckoutCard plan={PLANS[sub.plan]} {...discountFor(sub.plan)} fieldPlaces={fieldPlaces} fieldUsed={fieldUsed} minSeats={Math.max(minSeats, sub.seats_paid)} defaultCycle={currentCycle} enabled={checkoutEnabled} allowAutoRenew={false} payAheadUntil={accessUntil} providers={providers} /></div></div>
+        : <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">{Object.values(PLANS).map((plan) => <PlanCheckoutCard key={plan.id} plan={plan} {...discountFor(plan.id)} fieldPlaces={fieldPlaces} fieldUsed={fieldUsed} minSeats={minSeats} defaultCycle={currentCycle} enabled={checkoutEnabled} providers={providers} />)}</div>) : <section className="card border-dashed bg-[#fafbf9]"><h2 className="font-semibold">{checkoutPending ? "Resolve the pending checkout first" : "No overlapping subscriptions"}</h2><p className="mt-1 text-sm leading-6 text-muted">{pendingSubscription ? "A subscription payment is already in progress. Resume it or check its payment status; a second plan cannot be opened until the first attempt is resolved." : pendingSeatChange ? "A paid seat increase is still unresolved. Check or resume that same payment before starting a new subscription." : "Automatic renewal is on, so Paystack will charge the next term for you. Turn automatic renewal off above if you would rather pay each term yourself."}</p></section>}
       <p className="text-xs leading-5 text-muted">Quarterly is 3 months; biannually is 6 months; yearly is 12 months. Total = seats × monthly price per seat × months, paid upfront in naira. On Pro, field staff places add {naira(FIELD_ADDON_PRICE)} per person a month for the same term (Paystack only). Nothing is charged automatically unless you tick “Renew automatically”.</p>
 
       <section className="space-y-3">

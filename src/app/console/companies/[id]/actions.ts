@@ -81,3 +81,19 @@ export async function setFieldAddon(id: string, f: FormData) {
   const { error } = await supabase.rpc("console_set_field_addon", { p_org: id, p_seats: Number(f.get("seats") ?? 0), p_reason: reasonOf(f) });
   back(id, error ? { error: friendly(error, "console/companies/field") } : { msg: "Field staff add-on updated." });
 }
+
+export async function setDeal(id: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const num = (k: string) => { const v = String(f.get(k) ?? "").trim(); return v ? Number(v) : null; };
+  const { error } = await supabase.rpc("console_set_deal", {
+    p_org: id, p_kind: String(f.get("kind") ?? ""), p_value: num("value") ?? 0, p_plan: String(f.get("plan") ?? ""),
+    p_months: num("months") as number, p_payments: num("payments") as number, p_note: String(f.get("note") ?? ""), p_reason: reasonOf(f),
+  });
+  back(id, error ? { error: friendly(error, "console/companies/deal") } : { msg: "Pricing deal saved. It applies to the company’s next payment." });
+}
+
+export async function endDeal(id: string, f: FormData) {
+  const { supabase } = await requireConsoleAction();
+  const { error } = await supabase.rpc("console_end_deal", { p_org: id, p_reason: reasonOf(f) });
+  back(id, error ? { error: friendly(error, "console/companies/deal") } : { msg: "Pricing deal ended. Normal prices apply from the next payment." });
+}

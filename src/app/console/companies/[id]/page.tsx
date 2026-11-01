@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireConsole, can, naira, fmtDate, fmtDateTime } from "@/lib/console";
 import { Flash } from "@/components/Flash";
 import { readFlash } from "@/lib/flash";
-import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany, setFieldAddon } from "./actions";
+import { extendTrial, grantComplimentary, invitePerson, setSuspended, transferOwner, changeDomain, setPlan, setArchived, deleteCompany, setFieldAddon, setDeal, endDeal } from "./actions";
+import { describeDeal } from "@/lib/deals";
 import { friendly } from "@/lib/errors";
 import { parseOrNull, ConsoleCompany as CompanyShape } from "@/lib/jsonShapes";
 
@@ -20,7 +21,11 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
   if (error || !data) return <p className="card text-bad">{(error ? friendly(error, "console/companies/[id]") : "Company not found.")}</p>;
   const d = parseOrNull(CompanyShape, data, "console/companies/[id]");
   if (!d) return <p className="card text-bad">This data came back in an unexpected shape, so it isn’t shown. The details were logged.</p>;
-  const { data: archivedRows } = await supabase.rpc("console_companies", { p_search: d.org.domain, p_archived: true });
+  const [{ data: archivedRows }, { data: dealRows }] = await Promise.all([
+    supabase.rpc("console_companies", { p_search: d.org.domain, p_archived: true }),
+    supabase.rpc("console_deals", { p_org: id }),
+  ]);
+  const deal = (dealRows ?? []).find((x) => x.is_active) ?? null;
   const isArchived = (archivedRows ?? []).some((r) => r.id === id);
   const s = d.subscription;
   let staff: StaffRow[] | null = null; let staffError: string | null = null;
@@ -81,6 +86,22 @@ export default async function ConsoleCompany({ params, searchParams }: { params:
         {can.setPlan(role) && <form action={setFieldAddon.bind(null, id)} className="card space-y-2"><h2 className="font-bold">Field staff add-on (Pro)</h2><p className="text-xs text-muted">How many field staff a Pro company has paid for. Premium includes field staff already. Set 0 to switch it off.</p>
           <input name="seats" type="number" min={0} max={100000} required defaultValue={0} className="input" aria-label="Field staff places" />
           <Reason /><button className="btn-ghost">Save add-on</button></form>}
+        <section className="card space-y-3 lg:col-span-2">
+          <div><h2 className="font-bold">Pricing deal</h2><p className="text-xs text-muted">A special price for this company. It applies to their next payment, seat top ups and automatic renewals, and normal prices come back when it ends. A new deal replaces the current one.</p></div>
+          <p className="rounded-xl bg-paper px-3 py-2 text-sm">{deal ? <><b>Active:</b> {describeDeal(deal, fmtDate)}{deal.note ? ` · ${deal.note}` : ""}</> : "No deal. This company pays normal prices."}</p>
+          {can.setPlan(role) && <form action={setDeal.bind(null, id)} className="grid gap-2 md:grid-cols-3">
+            <div><label className="label" htmlFor="deal-kind">Type</label><select id="deal-kind" name="kind" className="input"><option value="percent">Percentage off</option><option value="amount">Amount off each payment (₦)</option><option value="custom_price">Custom price per staff a month (₦)</option></select></div>
+            <div><label className="label" htmlFor="deal-value">Value</label><input id="deal-value" name="value" type="number" min="0.01" step="0.01" required className="input" placeholder="20" /></div>
+            <div><label className="label" htmlFor="deal-plan">Plan</label><select id="deal-plan" name="plan" className="input"><option value="">Any plan</option><option value="basic">Basic</option><option value="pro">Pro</option><option value="premium">Premium</option></select></div>
+            <div><label className="label" htmlFor="deal-months">Lasts for (months)</label><input id="deal-months" name="months" type="number" min={1} max={120} className="input" placeholder="24, or blank for no end date" /></div>
+            <div><label className="label" htmlFor="deal-payments">Or for this many payments</label><input id="deal-payments" name="payments" type="number" min={1} max={1000} className="input" placeholder="Blank for no limit" /></div>
+            <div><label className="label" htmlFor="deal-note">Note for the client (optional)</label><input id="deal-note" name="note" maxLength={300} className="input" placeholder="Launch partner price" /></div>
+            <div className="md:col-span-2"><Reason /></div>
+            <button className="btn-primary">Save deal</button>
+          </form>}
+          {can.setPlan(role) && deal && <form action={endDeal.bind(null, id)} className="flex flex-wrap gap-2"><Reason /><button className="btn-ghost text-bad">End deal now</button></form>}
+          {(dealRows ?? []).length > 1 && <details className="text-sm"><summary className="cursor-pointer text-muted">Earlier deals</summary><ul className="mt-2 space-y-1">{(dealRows ?? []).filter((x) => !x.is_active).map((x) => <li key={x.id} className="text-muted">{describeDeal(x, fmtDate)} · set {fmtDate(x.created_at)}{x.revoked_at ? ` · ended ${fmtDate(x.revoked_at)}` : ""}</li>)}</ul></details>}
+        </section>
         {can.archive(role) && <form action={setArchived.bind(null, id, !isArchived)} className="card space-y-2"><h2 className="font-bold">{isArchived ? "Restore from archive" : "Archive company"}</h2>
           <p className="text-xs text-muted">{isArchived ? "Brings the company back into the lists. It stays suspended until you reactivate it." : "Hides the company from lists and suspends it. Nothing is deleted."}</p>
           <Reason /><button className={isArchived ? "btn-primary" : "btn-ghost text-bad"}>{isArchived ? "Restore" : "Archive"}</button></form>}
