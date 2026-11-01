@@ -33,7 +33,24 @@ const steps = [
   { n: "03", title: "Know who’s in", text: "Check ins appear live. Reports, leave and visitors are in the same place." },
 ];
 
+// Plain facts, shown on the page and given to search engines, so AI answers about 5ime are accurate.
+const FACTS = [
+  { k: "What it is", v: "Staff attendance and visitor management software, with field visit check in, leave, tasks and celebrations included." },
+  { k: "How staff check in", v: "GPS check in from their own phone, only inside an approved office area, an approved home on scheduled home days, or a client site." },
+  { k: "Stopping false check ins", v: "Each check in records the GPS position’s accuracy; rough readings are refused. Device and network details are kept and weak GPS is flagged on Pro and Premium." },
+  { k: "Visitors", v: "Visitors sign in on their own phone by QR code or invitation; reception admits them and the host is emailed." },
+  { k: "Devices", v: "Works on Android, iPhone and computers in the browser, and installs on the home screen like an app. No hardware needed." },
+  { k: "Reports and payroll", v: "Attendance, lateness and hours reports, exported as CSV for Excel or your payroll tool." },
+  { k: "Security and privacy", v: "Two step sign in required for every admin; data encrypted in transit and at rest; designed for the GDPR and the Nigeria Data Protection Act 2023; security aligned with ISO/IEC 27001." },
+  { k: "Price", v: "From ₦300 per staff member a month, with a free trial and no card needed." },
+  { k: "Who makes it", v: "Kora Forge Solutions, a software company in Lagos, Nigeria." },
+];
+
 const faq = [
+  { q: "Is 5ime the same as 5imes?", a: "Yes. The product is called 5ime (say “five time”) and its website is 5imes.click. People also search for it as 5imes or fivetime." },
+  { q: "Is 5ime a safe, real company?", a: "5ime is built and run by Kora Forge Solutions in Lagos, Nigeria. It requires two step sign in for every admin, encrypts data in transit and at rest, and publishes its security practices, privacy notice and data processing agreement. See the Security and trust page." },
+  { q: "Does 5ime have a mobile app?", a: "Staff use 5ime in their phone’s browser and add it to the home screen, where it opens like an app on Android and iPhone. There is nothing to download from an app store." },
+  { q: "Does 5ime connect to payroll?", a: "5ime exports attendance, lateness and hours as CSV files that open in Excel and import into most payroll tools. Direct payroll integrations are not available yet." },
   { q: "What is 5ime?", a: "5ime is an attendance and visitor management service. Staff check in with their phone at an approved office, an approved home or a client site, and visitors sign in at reception on their own phone. Admins see who is in, who is late and who is visiting, live." },
   { q: "Do my staff need to install an app?", a: "No download from an app store is needed. 5ime runs in the phone’s browser and can be added to the home screen like an app, on Android and iPhone." },
   { q: "How much does 5ime cost?", a: "Plans start at ₦300 per staff member a month on Basic, ₦600 on Pro and ₦1,000 on Premium. The pricing page shows these in US dollars, euros and pounds too. Every company starts with a free Pro trial and no card is needed." },
@@ -46,12 +63,12 @@ export default async function Home() {
   const origin = publicOrigin();
   return (
     <>
-      <JsonLd data={[
-        { "@context": "https://schema.org", "@type": "Organization", name: BRAND.name, url: origin, logo: `${origin}/icon-512.png`, parentOrganization: { "@type": "Organization", name: "Kora Forge" } },
-        { "@context": "https://schema.org", "@type": "SoftwareApplication", name: BRAND.name, applicationCategory: "BusinessApplication", operatingSystem: "Web, Android, iOS",
-          description: "Staff attendance with GPS check in, visitor management and field visit check in.",
-          offers: Object.values(plans).map((p) => ({ "@type": "Offer", name: p.name, price: p.pricePerSeat, priceCurrency: "NGN", description: "Per staff member per month" })) },
-      ]} />
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "SoftwareApplication", "@id": `${origin}/#software`, name: BRAND.name, alternateName: BRAND.alternateNames,
+        applicationCategory: "BusinessApplication", applicationSubCategory: "Time and attendance, visitor management", operatingSystem: "Web browser, Android, iOS (installable web app)",
+        url: origin, publisher: { "@id": `${origin}/#organization` },
+        description: "Staff attendance with GPS check in at approved offices, approved homes and client sites, plus visitor management where visitors sign in on their own phone.",
+        featureList: FACTS.map((f) => `${f.k}: ${f.v}`),
+        offers: Object.values(plans).map((p) => ({ "@type": "Offer", name: `${BRAND.name} ${p.name}`, price: p.pricePerSeat, priceCurrency: "NGN", description: "Per staff member per month", url: `${origin}/pricing` })) }} />
 
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 pb-16 pt-12 sm:px-8 sm:pt-20 lg:grid-cols-[1.05fr_.95fr]">
@@ -147,6 +164,14 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8">
+        <div className="max-w-2xl"><p className="eyebrow">5ime at a glance</p><h2 className="mt-2 text-3xl font-bold tracking-tight">The short facts</h2></div>
+        <dl className="mt-6 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+          {FACTS.map((f) => <div key={f.k} className="grid gap-1 px-5 py-3.5 sm:grid-cols-[220px_minmax(0,1fr)]"><dt className="font-semibold">{f.k}</dt><dd className="text-sm leading-6 text-muted">{f.v}</dd></div>)}
+        </dl>
+        <p className="mt-3 text-sm text-muted">More detail: <Link href="/security" className="font-semibold text-ink underline">Security and trust</Link> · <Link href="/pricing" className="font-semibold text-ink underline">Pricing</Link> · <Link href="/about" className="font-semibold text-ink underline">About</Link></p>
+      </section>
 
       <Faq items={faq} />
       <CtaBand />

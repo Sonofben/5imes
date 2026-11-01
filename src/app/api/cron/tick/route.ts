@@ -5,6 +5,8 @@ import { runScheduleAutomation } from "@/lib/schedule";
 import { runCelebrationEmails } from "@/lib/celebrations";
 import { runTaskReminders } from "@/lib/tasks";
 import { syncRenewalPrices } from "@/lib/paystack";
+import { submitToIndexNow, indexNowKey } from "@/lib/indexnow";
+import sitemap from "@/app/sitemap";
 
 /**
  * Called every 5 minutes by the server's timer (deploy/systemd/5ime-tick.timer) so time-based work
@@ -33,6 +35,13 @@ export async function POST(request: Request) {
       const b = await admin.rpc("purge_operations_logs"); if (b.error) throw new Error(b.error.message);
     });
     await run("renewal_price_sync", () => syncRenewalPrices(admin));
+    // Once a day, tell search engines about every public page (new blog posts get crawled quickly).
+    if (indexNowKey()) {
+      const { data: last } = await admin.from("job_runs").select("started_at").eq("job", "indexnow").eq("ok", true).order("started_at", { ascending: false }).limit(1).maybeSingle();
+      if (!last || Date.now() - new Date(last.started_at).getTime() > 23 * 3600_000) {
+        await run("indexnow", async () => { await submitToIndexNow((await sitemap()).map((e) => e.url)); });
+      }
+    }
   }
   return NextResponse.json({ ok: true });
 }

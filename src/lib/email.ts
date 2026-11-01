@@ -67,6 +67,6 @@ ${stripe}<tr><td style="padding:24px 24px 8px;font-size:22px;font-weight:800">${
 <tr><td style="padding:0 24px 8px;font-size:18px;font-weight:700">${esc(title)}</td></tr>
 <tr><td style="padding:0 24px 24px;font-size:14px;line-height:22px">${body}</td></tr>
 </table>
-<p style="font-size:11px;color:#68737a;margin:12px 0 0">Sent by 5imes, a Kora Forge product.</p>
+<p style="font-size:11px;color:#68737a;margin:12px 0 0">Sent by 5ime (5imes.click), a Kora Forge product.</p>
 </td></tr></table></body></html>`;
 }

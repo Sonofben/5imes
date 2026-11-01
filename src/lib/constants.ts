@@ -3,7 +3,17 @@ export const BRAND = {
   altName: "fivetime",
   tagline: "Work from anywhere, 5 days, on time.",
   supportEmail: "support@5imes.click",
+  /** Other names people search for. The product is "5ime"; the website is 5imes.click. */
+  alternateNames: ["5imes", "fivetime", "5ime attendance"],
+  legalOwner: "Kora Forge Solutions",
 };
+
+/**
+ * Official profiles on other sites (LinkedIn, X, Facebook, Product Hunt, G2, Capterra, Crunchbase…).
+ * Search engines and AI assistants use these to confirm 5ime is a real company. Add each link
+ * here once the profile exists, then deploy.
+ */
+export const SOCIAL_PROFILES: string[] = [];
 
 /** Public contact addresses on the website. Create these mailboxes before launch. */
 export const CONTACT = {

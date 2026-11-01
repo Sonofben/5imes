@@ -74,6 +74,7 @@ bash ~/vps-check.sh
    29. `supabase/migrations/0029_price_deals.sql`
    30. `supabase/migrations/0030_support_and_operations.sql`
    31. `supabase/migrations/0031_restore_decide_leave.sql`
+   32. `supabase/migrations/0032_blog_jibble_alternatives.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.

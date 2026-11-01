@@ -7,6 +7,8 @@ import { requireConsoleAction } from "@/lib/console";
 import { createAdminClient } from "@/lib/supabase/server";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
+import { submitToIndexNow } from "@/lib/indexnow";
+import { publicOrigin } from "@/lib/site";
 
 const COVER_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 function looksLike(ext: string, b: Uint8Array) {
@@ -73,6 +75,8 @@ export async function savePost(id: string | null, f: FormData) {
   if (error) back({ error: friendly(error, "console/blog") });
   revalidatePath("/blog", "layout");
   revalidatePath("/console/blog");
+  // A published post is announced to search engines straight away.
+  if (publish) await submitToIndexNow([`${publicOrigin()}/blog/${d.slug}`, `${publicOrigin()}/blog`, `${publicOrigin()}/sitemap.xml`]).catch(() => false);
   back({ msg: publish ? "Published." : "Draft saved." }, String(savedId));
 }
 

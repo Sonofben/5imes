@@ -51,7 +51,7 @@ export default async function PosterPage({ searchParams }: { searchParams: Promi
           <p className="w-full rounded-2xl border border-line bg-white px-5 py-4 text-base"><b>Invited?</b> You don’t need to scan this. Open the <b>“I’ve arrived”</b> link in your invitation email.</p>
         </div>
         <footer className="flex justify-between border-t border-line px-10 py-3 text-xs text-muted">
-          <span>Your details are used only to manage this visit.</span><span>Powered by 5imes</span>
+          <span>Your details are used only to manage this visit.</span><span>Powered by 5ime</span>
         </footer>
       </article>
     </div>

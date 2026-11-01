@@ -12,7 +12,7 @@ type Ops = {
   support: { open: number; urgent_open: number };
   privacy: { open: number; overdue: number };
 };
-const LABEL: Record<string, string> = { schedule_automation: "Automatic check in and check out", celebration_emails: "Celebration emails", task_reminders: "Task reminders", cleanup: "Clean up old records", renewal_price_sync: "Renewal price sync with Paystack" };
+const LABEL: Record<string, string> = { schedule_automation: "Automatic check in and check out", celebration_emails: "Celebration emails", task_reminders: "Task reminders", cleanup: "Clean up old records", renewal_price_sync: "Renewal price sync with Paystack", indexnow: "Tell search engines about pages (daily)" };
 
 function Tile({ label, value, bad, href }: { label: string; value: number | string; bad?: boolean; href?: string }) {
   const body = <><p className="text-xs text-muted">{label}</p><p className={`mt-1 text-2xl font-extrabold tabular-nums ${bad ? "text-bad" : ""}`}>{value}</p></>;

@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const o = publicOrigin();
   const [{ plans, trialDays }, posts] = await Promise.all([loadPublicPlans(), listPosts().catch(() => [])]);
-  const body = `# 5ime
+  const body = `# 5ime (also written 5imes)
 
+> 5ime is made by Kora Forge Solutions, a software company in Lagos, Nigeria. Website: ${o}. Contact: info@5imes.click.
 > 5ime is staff attendance and visitor management for offices, hybrid and field teams. It started in Nigeria and serves teams anywhere. Staff check in with their own phone by GPS, only at an approved office, an approved home on their home days, or a client site. Visitors sign in on their own phone and reception admits them. Priced per staff member per month (billed in naira today; the website also shows US dollars, euros and pounds), with a ${trialDays} day free trial and no hardware.
 
 ## Product
@@ -23,6 +24,12 @@ export async function GET() {
 ${Object.values(plans).map((p) => `- ${p.name}: ₦${p.pricePerSeat}. ${p.blurb}`).join("\n")}
 - Field staff on Pro: ₦${FIELD_ADDON_PRICE} per field person per month. Included in Premium.
 - Details: ${o}/pricing
+
+## Key facts
+- Verification: GPS position and its accuracy are checked at every check in; rough readings are refused; device and network records and weak GPS flags on Pro and Premium.
+- Devices: Android, iPhone and computers, in the browser; installs on the home screen like an app; no hardware needed.
+- Reports: attendance, lateness and hours, exported as CSV for Excel or payroll tools. No direct payroll integrations yet.
+- Security: two step sign in required for every admin; encryption in transit and at rest.
 
 ## Trust
 - [Security and trust](${o}/security): information security aligned with ISO/IEC 27001; designed for the GDPR and the Nigeria Data Protection Act 2023.

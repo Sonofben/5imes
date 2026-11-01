@@ -14,6 +14,10 @@ faq:
     a: "Jibble’s website describes time tracking, timesheets, time off, geofencing, GPS tracking, face recognition and kiosks. It does not list visitor management when we checked in November 2026. 5ime includes visitor management on its Pro and Premium plans."
   - q: "Is Jibble free?"
     a: "Jibble’s website says it is free forever for unlimited users. 5ime is a paid product with a free trial. If you only need a free time clock, Jibble is a strong option."
+  - q: "Is 5ime safe to use?"
+    a: "5ime is built and run by Kora Forge Solutions in Lagos, Nigeria. It requires two step sign in for every admin, encrypts data in transit and at rest, and publishes its privacy notice, security practices and data processing agreement at 5imes.click."
+  - q: "Is 5ime the same as 5imes?"
+    a: "Yes. The product is 5ime and its website is 5imes.click."
   - q: "Why pay for 5ime when Jibble is free?"
     a: "Pay for 5ime if you need what Jibble does not cover: visitor management at reception, home check in limited to an approved home on scheduled home days, field visit reports with notes and photos, and no tracking between visits."
 ---
@@ -21,7 +25,7 @@ faq:
 
 If you are searching for a Jibble alternative, you probably like the idea of staff clocking in on their phones, but something does not fit. For many companies the gap is one of three things: staff who work from home on agreed days, visitors at reception, or field staff who need visit reports without being tracked all day.
 
-This post compares Jibble and 5ime fairly, including where Jibble is the better choice.
+This post compares Jibble and 5ime fairly, including where Jibble is the better choice. Looking at more options? See our list of the [best Jibble alternatives](/blog/best-jibble-alternatives).
 
 ## The short answer
 
@@ -65,6 +69,10 @@ Jibble offers GPS tracking. 5ime takes a different view: field staff check in at
 - **Face recognition, NFC and kiosks.** If you want staff to clock in with their face on a shared tablet, Jibble does this and 5ime does not.
 - **Timesheets and projects.** Jibble tracks time against projects and activities for payroll and invoicing. 5ime focuses on attendance, not timesheets.
 - **Offline mode.** Jibble can record time without a connection. 5ime needs a connection to check in.
+
+## Who is behind 5ime
+
+5ime is built and run by Kora Forge Solutions, a software company in Lagos, Nigeria. Read how we protect data on the [Security and trust](/security) page, or [contact the team](/contact).
 
 ## How to switch
 
