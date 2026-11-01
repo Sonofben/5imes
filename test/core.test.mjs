@@ -58,3 +58,19 @@ test("field staff add-on is prorated to the end of the term", () => {
   // Never less than ₦1.
   assert.equal(proratedFieldAmountKobo(1, "monthly", "2026-11-01T00:00:00Z", "2026-12-01T00:00:00Z", "2026-11-30T23:59:00Z"), 100);
 });
+
+import { parseMarkdown, parseInline, safeHref } from "../src/lib/markdownParse.ts";
+test("blog markdown keeps only safe links and builds tables", () => {
+  assert.equal(safeHref("javascript:alert(1)"), null);
+  assert.equal(safeHref("//evil.example"), null);
+  assert.equal(safeHref("/pricing"), "/pricing");
+  const bad = parseInline("[click](javascript:alert(1))");
+  assert.ok(bad.every((n) => n.t === "text"));
+  const blocks = parseMarkdown("## Hello world\n\nA **bold** line\nand more.\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n- one\n- two\n\n<script>x</script>");
+  assert.equal(blocks[0].t, "h"); assert.equal(blocks[0].id, "hello-world");
+  assert.equal(blocks[1].t, "p");
+  assert.equal(blocks[2].t, "table"); assert.equal(blocks[2].rows.length, 1);
+  assert.equal(blocks[3].t, "ul");
+  // Raw HTML stays as text, never markup.
+  assert.deepEqual(blocks[4], { t: "p", c: [{ t: "text", v: "<script>x</script>" }] });
+});

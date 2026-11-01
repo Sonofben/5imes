@@ -19,5 +19,6 @@ export async function POST(request: Request) {
   await runScheduleAutomation(admin);
   await runCelebrationEmails(admin);
   await runTaskReminders(admin);
+  if (admin) await admin.rpc("purge_old_sales_enquiries");
   return NextResponse.json({ ok: true });
 }

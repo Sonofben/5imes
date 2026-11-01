@@ -81,7 +81,9 @@ begin
   perform set_config('test.uid', '', false);
   perform set_config('test.jwt', '{}', false);
   for r in select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
-            where n.nspname = 'public' and c.relkind in ('r', 'v') loop
+            where n.nspname = 'public' and c.relkind in ('r', 'v')
+              -- Published blog posts are public on purpose (98_yblog checks drafts stay hidden).
+              and c.relname not in ('blog_posts') loop
     begin
       execute format('select count(*) from public.%I', r.relname) into v_n;
     exception when insufficient_privilege then v_n := 0;

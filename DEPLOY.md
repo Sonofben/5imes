@@ -68,6 +68,8 @@ bash ~/vps-check.sh
    23. `supabase/migrations/0023_tasks.sql`
    24. `supabase/migrations/0024_field_staff.sql`
    25. `supabase/migrations/0025_company_links_field_addon.sql`
+   26. `supabase/migrations/0026_blog_and_sales.sql`
+   27. `supabase/migrations/0027_seed_blog_posts.sql`
 
    For a **new** project, the easier way is step 8's `scripts/migrate.sh`, which runs them all in order and records them.
    Never run the files in `supabase/tests/` there. They are for throwaway test databases.
@@ -624,4 +626,14 @@ people in Global Admin → Companies → the company → Field staff add-on.
 - The field staff add-on (Pro, ₦150 per field person a month) is paid with Paystack only, at plan checkout
   or later from Billing (prorated to the end of the term). Nothing else to configure: the existing
   Paystack keys and webhook are used, and the places switch on when the payment is confirmed.
+
+## 19. Website, blog and Talk to sales (0026, 0027)
+
+- Create these mailboxes on 5imes.click before launch: hello@, sales@, privacy@ and security@.
+  "Talk to sales" messages are saved in Global Admin → Sales enquiries and emailed to sales@ (needs RESEND_API_KEY and EMAIL_FROM).
+- Blog posts are written in Global Admin → Blog. Add writers in Global Admin → Team with the "Blog writer" role:
+  they need two step sign in like every Global Admin user, and they see only the blog.
+- Cover images go to a public "blog" storage bucket, created on the first upload.
+- The launch posts live in supabase/seed/blog. After editing those files, regenerate 0027 with
+  `node scripts/build-blog-seed.mjs > supabase/migrations/0027_seed_blog_posts.sql` (only before 0027 has been applied anywhere).
 

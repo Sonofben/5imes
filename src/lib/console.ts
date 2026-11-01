@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { throttle } from "@/lib/throttle";
 import { flashQuery } from "@/lib/flash";
 
-export type ConsoleRole = "owner" | "support" | "finance" | "viewer";
+export type ConsoleRole = "owner" | "support" | "finance" | "viewer" | "writer";
 
 /**
  * Kora Forge console guard: must be signed in, listed in platform_staff, and on a
@@ -35,12 +35,14 @@ export const ROLE_LABELS: Record<ConsoleRole, string> = {
   support: "Support admin",
   finance: "Billing admin",
   viewer: "Read-only admin",
+  writer: "Blog writer",
 };
 export const ROLE_HELP: Record<ConsoleRole, string> = {
   owner: "Everything, including prices, the team and deleting companies.",
   support: "Companies, people, security and announcements.",
   finance: "Revenue, payments, plans and seats, complimentary terms.",
   viewer: "Can look at everything, change nothing.",
+  writer: "Writes and publishes blog posts. Sees no company data.",
 };
 
 const any = (...roles: ConsoleRole[]) => (r: ConsoleRole | null) => !!r && roles.includes(r);
@@ -57,6 +59,9 @@ export const can = {
   people: any("owner", "support"),
   announce: any("owner", "support"),
   ownerOnly: any("owner"),
+  blog: any("owner", "support", "writer"),
+  writeBlog: any("owner", "writer"),
+  enquiries: any("owner", "support", "finance"),
 };
 
 export const naira = (kobo: number | string) => "₦" + (Number(kobo) / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 });

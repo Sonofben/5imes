@@ -165,6 +165,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      blog_posts: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          excerpt: string;
+          body: string;
+          category: "comparison" | "guide" | "product" | "news";
+          tags: string[];
+          cover_url: string | null;
+          author_name: string;
+          seo_title: string | null;
+          seo_description: string | null;
+          faq: Json;
+          status: "draft" | "published";
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          title: string;
+          excerpt?: string;
+          body?: string;
+          category?: "comparison" | "guide" | "product" | "news";
+          tags?: string[];
+          cover_url?: string | null;
+          author_name?: string;
+          seo_title?: string | null;
+          seo_description?: string | null;
+          faq?: Json;
+          status?: "draft" | "published";
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          title?: string;
+          excerpt?: string;
+          body?: string;
+          category?: "comparison" | "guide" | "product" | "news";
+          tags?: string[];
+          cover_url?: string | null;
+          author_name?: string;
+          seo_title?: string | null;
+          seo_description?: string | null;
+          faq?: Json;
+          status?: "draft" | "published";
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       celebration_sends: {
         Row: {
           org_id: string;
@@ -1045,19 +1108,19 @@ export type Database = {
         Row: {
           user_id: string;
           email: string;
-          role: "owner" | "support" | "finance" | "viewer";
+          role: "owner" | "support" | "finance" | "viewer" | "writer";
           created_at: string;
         };
         Insert: {
           user_id: string;
           email: string;
-          role: "owner" | "support" | "finance" | "viewer";
+          role: "owner" | "support" | "finance" | "viewer" | "writer";
           created_at?: string;
         };
         Update: {
           user_id?: string;
           email?: string;
-          role?: "owner" | "support" | "finance" | "viewer";
+          role?: "owner" | "support" | "finance" | "viewer" | "writer";
           created_at?: string;
         };
         Relationships: [];
@@ -1227,6 +1290,42 @@ export type Database = {
           max_hits?: number;
           hits?: number;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      sales_enquiries: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          company: string | null;
+          phone: string | null;
+          staff_count: number | null;
+          message: string;
+          created_at: string;
+          handled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          company?: string | null;
+          phone?: string | null;
+          staff_count?: number | null;
+          message: string;
+          created_at?: string;
+          handled_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          email?: string;
+          company?: string | null;
+          phone?: string | null;
+          staff_count?: number | null;
+          message?: string;
+          created_at?: string;
+          handled_at?: string | null;
         };
         Relationships: [];
       };
@@ -2001,6 +2100,7 @@ export type Database = {
       console_announce: { Args: { p_message: string | null; p_level: string | null; p_org: string | null; p_audience: string | null; p_hours: number | null; p_reason: string | null }; Returns: string };
       console_announcements: { Args: Record<PropertyKey, never>; Returns: { id: string; message: string; level: string; company: string; audience: string; starts_at: string; ends_at: string; ended_at: string; live: boolean }[] };
       console_audit: { Args: { p_limit?: number | null }; Returns: { at: string; actor_email: string; org_name: string; action: string; reason: string; details: Json }[] };
+      console_blog_posts: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["blog_posts"]["Row"][] };
       console_companies: { Args: { p_search?: string | null; p_archived?: boolean | null }; Returns: { id: string; name: string; domain: string; slug: string; plan: string; status: string; trial_ends_at: string; current_period_end: string; seats_paid: number; seats_used: number; created_at: string; suspended_at: string; owner_email: string; last_check_in: string; support_until: string; archived_at: string }[] };
       console_company: { Args: { p_org: string | null }; Returns: Json };
       console_company_export: { Args: { p_org: string | null; p_reason: string | null }; Returns: Json };
@@ -2009,6 +2109,7 @@ export type Database = {
       console_create_company: { Args: { p_name: string | null; p_domain: string | null; p_owner_email: string | null; p_owner_name: string | null; p_trial_days: number | null; p_reason: string | null }; Returns: string };
       console_decide_company_link: { Args: { p_org: string | null; p_approve: boolean | null; p_reason: string | null }; Returns: undefined };
       console_delete_company: { Args: { p_org: string | null; p_confirm_domain: string | null; p_reason: string | null }; Returns: undefined };
+      console_delete_post: { Args: { p_id: string | null; p_reason: string | null }; Returns: undefined };
       console_end_announcement: { Args: { p_id: string | null }; Returns: undefined };
       console_extend_trial: { Args: { p_org: string | null; p_days: number | null; p_reason: string | null }; Returns: string };
       console_find_person: { Args: { p_email: string | null }; Returns: { user_id: string; email: string; full_name: string; company: string; org_id: string; role: string; status: string; last_sign_in_at: string; totp_enrolled: boolean; locked: boolean; global_admin_role: string }[] };
@@ -2017,6 +2118,7 @@ export type Database = {
       console_health: { Args: Record<PropertyKey, never>; Returns: Json };
       console_invite_member: { Args: { p_org: string | null; p_email: string | null; p_name: string | null; p_reason: string | null }; Returns: string };
       console_log: { Args: { p_org: string | null; p_action: string | null; p_reason: string | null; p_details?: Json | null }; Returns: undefined };
+      console_mark_enquiry: { Args: { p_id: string | null; p_handled: boolean | null }; Returns: undefined };
       console_note: { Args: { p_org: string | null; p_action: string | null; p_reason: string | null; p_details?: Json | null }; Returns: undefined };
       console_overview: { Args: Record<PropertyKey, never>; Returns: Json };
       console_payments: { Args: { p_from?: string | null; p_to?: string | null; p_status?: string | null; p_search?: string | null }; Returns: { reference: string; org_id: string; company: string; domain: string; provider: string; kind: string; status: string; plan: string; seats: number; months: number; amount_kobo: number; created_at: string; applied_at: string; note: string }[] };
@@ -2027,6 +2129,8 @@ export type Database = {
       console_reset_mfa: { Args: { p_user: string | null; p_reason: string | null }; Returns: undefined };
       console_revenue: { Args: Record<PropertyKey, never>; Returns: Json };
       console_role: { Args: Record<PropertyKey, never>; Returns: string };
+      console_sales_enquiries: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Tables"]["sales_enquiries"]["Row"][] };
+      console_save_post: { Args: { p_id: string | null; p_post: Json | null; p_publish: boolean | null; p_publish_at?: string | null }; Returns: string };
       console_security: { Args: Record<PropertyKey, never>; Returns: Json };
       console_set_archived: { Args: { p_org: string | null; p_archived: boolean | null; p_reason: string | null }; Returns: undefined };
       console_set_field_addon: { Args: { p_org: string | null; p_seats: number | null; p_reason: string | null }; Returns: undefined };
@@ -2112,6 +2216,7 @@ export type Database = {
       prepare_paystack_seat_increase: { Args: { p_reference: string | null; p_seats: number | null }; Returns: Json };
       prepare_paystack_subscription: { Args: { p_reference: string | null; p_plan: string | null; p_seats: number | null; p_months: number | null; p_auto_renew?: boolean | null; p_field_seats?: number | null }; Returns: Json };
       public_plans: { Args: Record<PropertyKey, never>; Returns: Json };
+      purge_old_sales_enquiries: { Args: Record<PropertyKey, never>; Returns: number };
       record_paystack_subscription: { Args: { p_plan_code: string | null; p_subscription_code: string | null; p_customer_code: string | null; p_email_token: string | null }; Returns: boolean };
       release_missing_paystack_checkout: { Args: { p_reference: string | null }; Returns: boolean };
       remove_check_item: { Args: { p_item: string | null }; Returns: undefined };
@@ -2143,6 +2248,7 @@ export type Database = {
       set_task_status: { Args: { p_id: string | null; p_status: string | null }; Returns: string };
       slug_matches_org: { Args: { p_org: string | null; p_slug: string | null }; Returns: boolean };
       start_visit: { Args: { p_site: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: string };
+      submit_sales_enquiry: { Args: { p_name: string | null; p_email: string | null; p_company: string | null; p_phone: string | null; p_staff: number | null; p_message: string | null }; Returns: string };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
       task_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };
       throttle: { Args: { p_bucket: string | null }; Returns: undefined };

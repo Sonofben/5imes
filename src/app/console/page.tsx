@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireConsole, naira, fmtDate, ROLE_LABELS } from "@/lib/console";
 import { Bars } from "./Bars";
 import { Flash } from "@/components/Flash";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function GlobalAdminOverview({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const flash = readFlash(await searchParams);
   const { supabase, role } = await requireConsole();
+  if (role === "writer") redirect("/console/blog");
   const [ovRes, healthRes, revRes] = await Promise.all([
     supabase.rpc("console_overview"), supabase.rpc("console_health"), supabase.rpc("console_revenue"),
   ]);

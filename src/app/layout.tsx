@@ -5,21 +5,21 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { BRAND } from "@/lib/constants";
 import { isStaging, publicOrigin } from "@/lib/site";
 
-const description = `${BRAND.tagline} GPS check-in at approved offices and approved homes on scheduled days. From ₦300 per employee per month.`;
+const description = "Staff attendance and visitor management for Nigerian teams: GPS check in at the office, an approved home or a client site, and visitors who sign in on their own phone. From ₦300 per staff a month.";
 
 export const metadata: Metadata = {
-  title: { default: `${BRAND.name} — scheduled attendance`, template: `%s · ${BRAND.name}` },
+  title: { default: `${BRAND.name}: staff attendance and visitor management`, template: `%s · ${BRAND.name}` },
   metadataBase: new URL(publicOrigin()),
   description,
   openGraph: {
     type: "website",
     siteName: BRAND.name,
-    title: `${BRAND.name} — scheduled attendance for hybrid teams`,
+    title: `${BRAND.name}: staff attendance and visitor management`,
     description,
     locale: "en_NG",
     images: [{ url: "/icon-512.png", width: 512, height: 512, alt: BRAND.name }],
   },
-  twitter: { card: "summary", title: `${BRAND.name} — scheduled attendance`, description, images: ["/icon-512.png"] },
+  twitter: { card: "summary", title: `${BRAND.name}: staff attendance and visitor management`, description, images: ["/icon-512.png"] },
   applicationName: BRAND.name,
   appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "default" },
   icons: {

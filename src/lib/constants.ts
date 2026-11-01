@@ -2,8 +2,16 @@ export const BRAND = {
   name: "5ime",
   altName: "fivetime",
   tagline: "Work from anywhere, 5 days, on time.",
-  supportEmail: "support@5ime.ng",
+  supportEmail: "hello@5imes.click",
 };
+
+/** Public contact addresses on the website. Create these mailboxes before launch. */
+export const CONTACT = {
+  hello: "hello@5imes.click",
+  sales: "sales@5imes.click",
+  privacy: "privacy@5imes.click",
+  security: "security@5imes.click",
+} as const;
 
 export const PLANS = {
   basic: {
