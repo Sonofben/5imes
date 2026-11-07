@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/site";
 import { friendly } from "@/lib/errors";
 import { flashQuery } from "@/lib/flash";
+import { safeNextPath } from "@/lib/safeNext";
 
 /**
  * Single auth callback used by every email we send:
@@ -62,7 +63,8 @@ export async function GET(request: Request) {
 
   if (landed === "recovery") return NextResponse.redirect(`${base}/auth/reset`);
   if (landed === "invite") return NextResponse.redirect(`${base}/auth/invite`);
-  return NextResponse.redirect(`${base}${next || "/start"}`);
+  // Only a path on this site; "//host", "/\host" or anything else falls back to the default.
+  return NextResponse.redirect(`${base}${safeNextPath(next, "/start")}`);
 }
 
 const LINK_TYPES: EmailOtpType[] = ["recovery", "invite", "magiclink", "signup", "email_change"];
