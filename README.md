@@ -64,7 +64,7 @@ The included deployment guide runs 5ime in a Docker container on a shared Contab
 
 ## Verification
 
-The core test suite covers billing totals, calendar renewals, CSV parsing, and spreadsheet formula injection. `npm audit` should be reviewed on every dependency update; Next.js 16.4.0 is currently used to address the available upstream Next.js security fixes.
+The core test suite covers billing totals, calendar renewals, CSV parsing, and spreadsheet formula injection. `npm audit` should be reviewed on every dependency update; Next.js 16.4.5 is currently used to address the available upstream Next.js security fixes.
 
 ## Tests
 
