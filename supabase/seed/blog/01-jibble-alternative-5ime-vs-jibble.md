@@ -14,8 +14,6 @@ faq:
     a: "Jibble’s website describes time tracking, timesheets, time off, geofencing, GPS tracking, face recognition and kiosks. It does not list visitor management when we checked in November 2026. 5ime includes visitor management on its Pro and Premium plans."
   - q: "Is Jibble free?"
     a: "Jibble’s website says it is free forever for unlimited users. 5ime is a paid product with a free trial. If you only need a free time clock, Jibble is a strong option."
-  - q: "Is 5ime safe to use?"
-    a: "5ime is built and run by Kora Forge Solutions in Lagos, Nigeria. It requires two step sign in for every admin, encrypts data in transit and at rest, and publishes its privacy notice, security practices and data processing agreement at 5imes.click."
   - q: "Is 5ime the same as 5imes?"
     a: "Yes. The product is 5ime and its website is 5imes.click."
   - q: "Why pay for 5ime when Jibble is free?"

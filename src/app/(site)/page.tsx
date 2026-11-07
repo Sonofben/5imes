@@ -48,7 +48,6 @@ const FACTS = [
 
 const faq = [
   { q: "Is 5ime the same as 5imes?", a: "Yes. The product is called 5ime (say “five time”) and its website is 5imes.click. People also search for it as 5imes or fivetime." },
-  { q: "Is 5ime a safe, real company?", a: "5ime is built and run by Kora Forge Solutions in Lagos, Nigeria. It requires two step sign in for every admin, encrypts data in transit and at rest, and publishes its security practices, privacy notice and data processing agreement. See the Security and trust page." },
   { q: "Does 5ime have a mobile app?", a: "Staff use 5ime in their phone’s browser and add it to the home screen, where it opens like an app on Android and iPhone. There is nothing to download from an app store." },
   { q: "Does 5ime connect to payroll?", a: "5ime exports attendance, lateness and hours as CSV files that open in Excel and import into most payroll tools. Direct payroll integrations are not available yet." },
   { q: "What is 5ime?", a: "5ime is an attendance and visitor management service. Staff check in with their phone at an approved office, an approved home or a client site, and visitors sign in at reception on their own phone. Admins see who is in, who is late and who is visiting, live." },
