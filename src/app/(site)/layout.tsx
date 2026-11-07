@@ -16,7 +16,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     name: BRAND.name, alternateName: BRAND.alternateNames, url: origin, logo: `${origin}/icon-512.png`, email: CONTACT.info,
     description: "5ime is staff attendance and visitor management software: GPS check in at approved offices, approved homes and client sites, and visitors who sign in on their own phone.",
     foundingLocation: { "@type": "Place", name: "Lagos, Nigeria" },
-    address: { "@type": "PostalAddress", addressLocality: "Lagos", addressCountry: "NG" },
+    address: { "@type": "PostalAddress", ...BRAND.postalAddress },
     parentOrganization: { "@type": "Organization", name: BRAND.legalOwner },
     contactPoint: [
       { "@type": "ContactPoint", contactType: "customer support", email: CONTACT.support, availableLanguage: "en" },

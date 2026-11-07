@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       title="Privacy notice"
       updated="1 November 2026"
       intro={<>
-        <p>{BRAND.name} is a product built and owned by Kora Forge Solutions, a company registered in Nigeria. In this notice, “{BRAND.name}”, “we” and “us” mean Kora Forge Solutions in its operation of the {BRAND.name} service.</p>
+        <p>{BRAND.name} is a product built and owned by {BRAND.legalOwner}, registered with the Corporate Affairs Commission of Nigeria ({BRAND.cacNumber}), {BRAND.address}. In this notice, “{BRAND.name}”, “we” and “us” mean {BRAND.legalOwner} in its operation of the {BRAND.name} service.</p>
         <p>This notice explains how we handle personal data when you use our website and our attendance and visitor management service. It is written to meet the Nigeria Data Protection Act 2023 (NDPA) and, where they apply, the EU General Data Protection Regulation and the UK GDPR.</p>
         <p>Contact us about privacy at {m(CONTACT.privacy)}. This address also reaches our data protection officer.</p>
       </>}

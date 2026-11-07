@@ -14,7 +14,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms of Service"
       updated="1 November 2026"
-      intro={<p>These terms apply to your use of {BRAND.name}, an attendance and visitor management service built and owned by Kora Forge Solutions, a company registered in Nigeria (“we”, “us”). By creating a workspace or signing in, you agree to them. If you accept them for a company, you confirm you are allowed to do so.</p>}
+      intro={<p>These terms apply to your use of {BRAND.name}, an attendance and visitor management service built and owned by {BRAND.legalOwner}, registered with the Corporate Affairs Commission of Nigeria ({BRAND.cacNumber}), {BRAND.address} (“we”, “us”). By creating a workspace or signing in, you agree to them. If you accept them for a company, you confirm you are allowed to do so.</p>}
       sections={[
         { heading: "The service", body: <p>{BRAND.name} lets a company record staff check ins and check outs at approved offices, approved homes, client sites and other approved places, manage visitors, and review attendance. We may improve or change features over time; we will not remove a core feature you pay for without notice.</p> },
         { heading: "Accounts", body: <ul>

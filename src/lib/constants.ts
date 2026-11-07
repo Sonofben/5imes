@@ -6,6 +6,11 @@ export const BRAND = {
   /** Other names people search for. The product is "5ime"; the website is 5imes.click. */
   alternateNames: ["5imes", "fivetime", "5ime attendance"],
   legalOwner: "Kora Forge Solutions",
+  /** Business name registration with the Corporate Affairs Commission (CAC). */
+  cacNumber: "BN 9504114",
+  address: "19 Shogunwa Avenue, Benson, Ikorodu, Lagos",
+  /** The same address in parts, for structured data. */
+  postalAddress: { streetAddress: "19 Shogunwa Avenue, Benson", addressLocality: "Ikorodu", addressRegion: "Lagos", addressCountry: "NG" },
 };
 
 /**

@@ -28,7 +28,7 @@ export function SiteFooter() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-muted sm:px-8">
           <span>© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</span>
-          <span>A Kora Forge product · Made in Lagos</span>
+          <span>{BRAND.name} is a product of {BRAND.legalOwner}, registered with the Corporate Affairs Commission ({BRAND.cacNumber}). {BRAND.address}.</span>
         </div>
       </div>
     </footer>
