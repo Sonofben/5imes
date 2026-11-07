@@ -37,7 +37,7 @@ const steps = [
 const FACTS = [
   { k: "What it is", v: "Staff attendance and visitor management software, with field visit check in, leave, tasks and celebrations included." },
   { k: "How staff check in", v: "GPS check in from their own phone, only inside an approved office area, an approved home on scheduled home days, or a client site." },
-  { k: "Stopping false check ins", v: "Each check in records the GPS position’s accuracy; rough readings are refused. Device and network details are kept and weak GPS is flagged on Pro and Premium." },
+  { k: "Stopping false check ins", v: "Each check in records the GPS position and its accuracy. Check ins with weak GPS or outside the approved area are recorded and flagged for admin review. Device and network details are kept on Pro and Premium." },
   { k: "Visitors", v: "Visitors sign in on their own phone by QR code or invitation; reception admits them and the host is emailed." },
   { k: "Devices", v: "Works on Android, iPhone and computers in the browser, and installs on the home screen like an app. No hardware needed." },
   { k: "Reports and payroll", v: "Attendance, lateness and hours reports, exported as CSV for Excel or your payroll tool." },
@@ -54,7 +54,7 @@ const faq = [
   { q: "What is 5ime?", a: "5ime is an attendance and visitor management service. Staff check in with their phone at an approved office, an approved home or a client site, and visitors sign in at reception on their own phone. Admins see who is in, who is late and who is visiting, live." },
   { q: "Do my staff need to install an app?", a: "No download from an app store is needed. 5ime runs in the phone’s browser and can be added to the home screen like an app, on Android and iPhone." },
   { q: "How much does 5ime cost?", a: "Plans start at ₦300 per staff member a month on Basic, ₦600 on Pro and ₦1,000 on Premium. The pricing page shows these in US dollars, euros and pounds too. Every company starts with a free Pro trial and no card is needed." },
-  { q: "Can staff fake their location?", a: "5ime checks the GPS position and how accurate it is at the moment of check in. Rough readings are refused, and on Pro and Premium weak GPS, device and network details are flagged for review." },
+  { q: "Can staff fake their location?", a: "No phone attendance app can fully prevent it. 5ime records the GPS position and how accurate it is at every check in, keeps device and network details on Pro and Premium, and flags anything unusual, such as weak GPS or a check in outside the approved area, for an admin to review." },
   { q: "Does 5ime follow data protection law?", a: "5ime is designed around the GDPR and the Nigeria Data Protection Act 2023: location is read only when staff check in or out, access follows roles, and companies decide how long records are kept. See our Security and trust page for details." },
 ];
 

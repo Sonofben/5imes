@@ -14,12 +14,12 @@ const core = [
   { title: "Approved home, on agreed days", text: "Staff ask for their home to be approved. Once an admin approves it, they can check in from home on their home days only." },
   { title: "Weekly schedules", text: "Set which days are office days and which are home days, for everyone, a team or one person." },
   { title: "Late, early and absent", text: "Grace periods, late arrivals and early exits are worked out against each person’s hours. Nobody has to do sums." },
-  { title: "Automatic check in and check out", text: "Staff can be checked in when they arrive and checked out at closing time, with overtime counted when they stay." },
+  { title: "Automatic check in and check out", text: "Staff who open 5ime at work can be checked in automatically, and checked out at closing time, with overtime counted when they stay." },
   { title: "Public and company holidays", text: "Public holidays are built in for Nigeria, and you can add your own public and company days off anywhere. Nobody is marked absent on a holiday." },
 ];
 
 const control = [
-  { title: "Accuracy checks", text: "Every check in records how accurate the GPS reading was. Rough readings are refused and weak ones are flagged." },
+  { title: "Accuracy checks", text: "Every check in records how accurate the GPS reading was. Check ins with weak GPS or outside the approved area are recorded and flagged for admin review." },
   { title: "Requests, not workarounds", text: "Working at another site for a day, or forgot to check out? Staff send a request and a manager approves it." },
   { title: "Managers and teams", text: "Managers see their own team. Admins see everyone. Exact positions and home addresses stay private." },
   { title: "Overnight shifts", text: "A shift that crosses midnight stays open and its hours land on the right dates." },
@@ -28,7 +28,7 @@ const control = [
 ];
 
 const faq = [
-  { q: "How does GPS attendance work in 5ime?", a: "When a staff member taps Check in, 5ime reads the phone’s GPS position and its accuracy once. If the position is inside an approved office, or inside their approved home on a home day, the check in is recorded. Otherwise it is refused with a clear message." },
+  { q: "How does GPS attendance work in 5ime?", a: "When a staff member taps Check in, 5ime reads the phone’s GPS position and its accuracy once. If the position is inside an approved office, or inside their approved home on a home day, the check in is recorded. Otherwise it is still recorded, and flagged as outside the approved area for an admin to review." },
   { q: "Does 5ime track staff all day?", a: "No. Location is read at check in and check out. Companies can switch on occasional presence checks while the app is open, but 5ime never tracks staff in the background or after work." },
   { q: "Can staff work from home and still check in?", a: "Yes, on the days their schedule says they are at home, and only from a home location an admin has approved." },
   { q: "What if someone forgets to check out?", a: "5ime can check everyone out automatically at closing time. Staff can also send a correction request, which a manager approves." },

@@ -11,7 +11,7 @@ faq:
   - q: "Is a fingerprint attendance machine better than a phone app?"
     a: "A fingerprint machine is good at proving who was at one door. A phone app with GPS check in also covers branches, approved homes and client sites, and needs no hardware. Companies with hybrid or field staff usually find the phone better."
   - q: "Can staff cheat a phone attendance app?"
-    a: "Any system can be gamed. 5ime reduces it by checking the GPS position and its accuracy at check in, refusing rough readings, allowing home check in only from an approved home on home days, and flagging weak GPS on Pro and Premium."
+    a: "Any system can be gamed. 5ime makes it easier to spot: it records the GPS position and its accuracy at every check in, allows home check in only from an approved home on home days, and flags weak GPS and check ins outside the approved area for an admin to review."
   - q: "Is fingerprint data allowed under the NDPA?"
     a: "Fingerprints are biometric data, a sensitive category under the Nigeria Data Protection Act 2023. Companies need a lawful basis, strong security and a clear notice to staff. Phone check in avoids collecting biometric data at all."
 ---

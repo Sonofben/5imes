@@ -59,7 +59,7 @@ export const PLANS = {
       "Unlimited offices and branches, check-in area per office",
       "Schedules per person or team",
       "Managers and teams",
-      "Automatic check-in on arrival, overtime and company holidays",
+      "Automatic check-in when staff open 5ime at work, overtime and company holidays",
       "Your full brand: colours, sign-in page, app icon and emails",
       "Visitor management at one office (up to 100 visits a month)",
       "Weak-GPS flags, device and IP records",

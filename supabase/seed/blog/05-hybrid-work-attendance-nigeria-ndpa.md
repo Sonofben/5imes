@@ -33,7 +33,7 @@ You do not need to know where staff are all day. You need to know they started w
 
 ## 4. Treat accuracy honestly
 
-Phones in buildings and laptops without GPS give rough positions. A fair system records how accurate each reading is, refuses readings that are too rough to judge, and flags weak ones for a person to review instead of punishing automatically.
+Phones in buildings and laptops without GPS give rough positions. A fair system records how accurate each reading is and flags weak or out-of-area readings for a person to review, instead of refusing them or punishing automatically.
 
 ## 5. Keep private things private
 

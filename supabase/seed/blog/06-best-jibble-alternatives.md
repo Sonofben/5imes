@@ -40,7 +40,7 @@ Here are seven alternatives and what each is best at.
 [5ime](/) is staff attendance and visitor management software. Staff check in with their own phone, but only inside an approved office area, at their approved home on scheduled home days, or at a client site. Visitors sign in on their own phone at reception and the host is emailed.
 
 - **Good for:** companies with branches, hybrid staff, field staff and visitors at reception.
-- **Verification:** GPS with an accuracy check on every check in; rough readings are refused; device and network records on Pro and Premium.
+- **Verification:** GPS position and accuracy recorded on every check in; weak GPS and out-of-area check ins are flagged for admin review; device and network records on Pro and Premium.
 - **Privacy:** location is read only at check in and check out, never in the background.
 - **Price:** from ₦300 per staff member a month, shown on the website in dollars, euros and pounds too. Free trial, no card.
 - **Not for you if:** you need face recognition kiosks, project timesheets or shift rotas.

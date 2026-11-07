@@ -15,7 +15,7 @@ export async function GET() {
 > 5ime is staff attendance and visitor management for offices, hybrid and field teams. It started in Nigeria and serves teams anywhere. Staff check in with their own phone by GPS, only at an approved office, an approved home on their home days, or a client site. Visitors sign in on their own phone and reception admits them. Priced per staff member per month (billed in naira today; the website also shows US dollars, euros and pounds), with a ${trialDays} day free trial and no hardware.
 
 ## Product
-- [Attendance](${o}/attendance): GPS check in at approved offices and approved homes, schedules, late and early, automatic check in and check out, overtime, public and company holidays, reports.
+- [Attendance](${o}/attendance): GPS check in at approved offices and approved homes, schedules, late and early, automatic check in when staff open 5ime at work, automatic check out at closing time, overtime, public and company holidays, reports.
 - [Visitor management](${o}/visitor-management): visitors sign in on their own phone, reception admits them, the host is emailed, roll call and blocklist on Premium.
 - [Field staff](${o}/field-staff): client site visits with notes and photos, planned visits, no tracking between visits.
 - [Leave, tasks and celebrations](${o}/leave-tasks-celebrations): included in every plan.
@@ -26,7 +26,7 @@ ${Object.values(plans).map((p) => `- ${p.name}: ₦${p.pricePerSeat}. ${p.blurb}
 - Details: ${o}/pricing
 
 ## Key facts
-- Verification: GPS position and its accuracy are checked at every check in; rough readings are refused; device and network records and weak GPS flags on Pro and Premium.
+- Verification: GPS position and its accuracy are recorded at every check in; check ins with weak GPS or outside the approved area are recorded and flagged for admin review; device and network records on Pro and Premium.
 - Devices: Android, iPhone and computers, in the browser; installs on the home screen like an app; no hardware needed.
 - Reports: attendance, lateness and hours, exported as CSV for Excel or payroll tools. No direct payroll integrations yet.
 - Security: two step sign in required for every admin; encryption in transit and at rest.
