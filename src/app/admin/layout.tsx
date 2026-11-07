@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { requireMember, type Subscription } from "@/lib/session";
 import { CompanyMark } from "@/components/CompanyMark";
 import { AdminNav } from "./AdminNav";
@@ -10,7 +11,10 @@ import { BrandShape, parseOrNull } from "@/lib/jsonShapes";
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, org, isAdmin, me } = await requireMember({ viewer: true });
+  // Owners and admins need two-step sign-in for everything under /admin, except the Security page
+  // where they set it up (that page checks for itself with allowAal1).
+  const path = (await headers()).get("x-pathname") ?? "";
+  const { supabase, org, isAdmin, me } = await requireMember({ viewer: true, allowAal1: path === "/admin/security" });
   const [{ count: pendingPeople }, { count: pendingHomes }, { data: sub }, { count: pendingCorrections }, { count: pendingPlaces }, { data: brandRaw }, { count: pendingLeave }] = await Promise.all([
     supabase.from("members").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "pending"),
     isAdmin

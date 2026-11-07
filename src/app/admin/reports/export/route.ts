@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loadDeviceInfo, loadReport, shiftDate } from "@/lib/reports";
-import { todayIn, type Org } from "@/lib/session";
+import { needsTwoStep, todayIn, twoStepRedirect, twoStepState, type Org } from "@/lib/session";
+import { siteUrl } from "@/lib/site";
 import { FLAG_LABELS } from "@/lib/constants";
 import { csvRow } from "@/lib/csv";
 import { friendly } from "@/lib/errors";
@@ -20,6 +21,10 @@ export async function GET(request: Request) {
 
   const { data: me } = await supabase.from("members").select("id,org_id,status,role").eq("user_id", user.id).maybeSingle();
   if (!me || me.status !== "active" || !["owner", "admin", "manager"].includes(me.role)) return new NextResponse("Forbidden", { status: 403 });
+  if (needsTwoStep(me.role)) {
+    const twoStep = await twoStepState(supabase, user.id);
+    if (twoStep !== "ok") return NextResponse.redirect(`${siteUrl(request)}${twoStepRedirect(twoStep)}`, { status: 303 });
+  }
   const limited = await throttle(supabase, "report_export");
   if (limited) return new NextResponse(limited, { status: 429 });
   const [{ data: org }, { data: sub }] = await Promise.all([

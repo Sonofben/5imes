@@ -26,10 +26,17 @@ select test.ok((select count(*) from public.organizations o
   join public.members m on m.org_id = o.id
   where m.user_id = '00000000-0000-0000-0000-00000000f001' and o.slug is not null) = 1,
   'Owner can read their company (with a company link)');
+-- Billing is admin data: since 0033 it needs two-step sign-in, which a brand-new owner hasn't set up yet.
+select test.ok((select count(*) from public.subscriptions s
+  join public.members m on m.org_id = s.org_id
+  where m.user_id = '00000000-0000-0000-0000-00000000f001') = 0,
+  'Owner on a password-only session does not see billing yet');
+select test.as_user_sess('00000000-0000-0000-0000-00000000f001', 'joseph.benson@trostech.ng', 'aal2');
 select test.ok((select count(*) from public.subscriptions s
   join public.members m on m.org_id = s.org_id
   where m.user_id = '00000000-0000-0000-0000-00000000f001' and s.status = 'trialing') = 1,
-  'Owner sees the 14-day trial');
+  'Owner sees the 14-day trial after two-step sign-in');
+select test.as_user_sess('00000000-0000-0000-0000-00000000f001', 'joseph.benson@trostech.ng');
 
 \echo '--- my_security_status works for the authenticated role'
 select test.ok((select totp_enrolled from public.my_security_status) = false, 'No authenticator yet → not enrolled');

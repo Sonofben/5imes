@@ -13,6 +13,8 @@ export async function proxy(request: NextRequest) {
     const headers = new Headers(request.headers);
     headers.set("x-nonce", nonce);
     headers.set("content-security-policy", csp);
+    // The path, for server layouts that need it (always set here, so a value sent by the browser is replaced).
+    headers.set("x-pathname", request.nextUrl.pathname);
     return NextResponse.next({ request: { headers } });
   };
   const done = (res: NextResponse) => {

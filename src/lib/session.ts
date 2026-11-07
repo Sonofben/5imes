@@ -67,9 +67,10 @@ export type Subscription = {
 /**
  * Signed-in active member + their company. Redirects otherwise.
  *
- * MFA behaviour (default): if `admin: true` and the member's role is owner or
+ * MFA behaviour (default): if `admin`, `viewer` or `desk` is set and the member's role is owner or
  * admin, the server requires an aal2 session (TOTP already proved for this
- * sign-in). If the user hasn't enrolled TOTP yet, they go to /admin/security.
+ * sign-in). Managers and reception staff are not required to use two-step sign-in.
+ * If the user hasn't enrolled TOTP yet, they go to /admin/security.
  * If they're enrolled but on aal1 (just signed in with password), they go to
  * /auth/challenge. A recent `recovery_used` event (within RECOVERY_GRACE_MINUTES)
  * lets them through on aal1 so an admin who lost their phone can still work.
@@ -90,6 +91,45 @@ function decodeJwtPayload(token: string): { session_id?: string } | null {
   } catch {
     return null;
   }
+}
+
+type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Has this signed-in user passed two-step sign-in for the current session?
+ * "ok" — aal2, or a recovery code used in this same session within RECOVERY_GRACE_MINUTES;
+ * "enrol" — no verified authenticator yet; "challenge" — enrolled but this session is password-only.
+ * The database applies the same rule to owners and admins (public.admin_mfa_satisfied, 0033).
+ */
+export async function twoStepState(supabase: ServerSupabase, userId: string): Promise<"ok" | "enrol" | "challenge"> {
+  const { data: session } = await supabase.auth.getSession();
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel === "aal2") return "ok";
+  // Ask Supabase Auth directly: the authenticated role cannot read auth.mfa_factors.
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  if (!factors?.totp?.some((f) => f.status === "verified")) return "enrol";
+  // Enrolled but this session is aal1. Allow a short recovery window ONLY if a recovery_used event
+  // exists for THIS session (bound by session_id in the DB). A recovery event from an older session
+  // doesn't revive it — the lost-phone grace is single-use per sign-in.
+  const sessionId = session?.session?.access_token ? decodeJwtPayload(session.session.access_token)?.session_id : null;
+  if (!sessionId) return "challenge";
+  const since = new Date(Date.now() - RECOVERY_GRACE_MINUTES * 60_000).toISOString();
+  const { data: recent } = await supabase
+    .from("member_security_events")
+    .select("id")
+    .eq("user_id", userId).eq("kind", "recovery_used").eq("session_id", sessionId)
+    .gte("created_at", since).limit(1);
+  return recent?.length ? "ok" : "challenge";
+}
+
+/** Where to send an owner or admin who hasn't passed two-step sign-in. */
+export function twoStepRedirect(state: "enrol" | "challenge") {
+  return state === "enrol" ? "/admin/security?setup=1" : "/auth/challenge";
+}
+
+/** Owners and admins must use two-step sign-in; managers and staff are not required to (yet). */
+export function needsTwoStep(role: string) {
+  return role === "owner" || role === "admin";
 }
 
 export async function requireMember(opts: { admin?: boolean; viewer?: boolean; allowAal1?: boolean; desk?: boolean } = {}) {
@@ -119,36 +159,12 @@ export async function requireMember(opts: { admin?: boolean; viewer?: boolean; a
   const isDesk = isViewer || !!memberRow.can_reception;
   if (opts.desk && !isDesk) redirect("/app");
 
-  // Enforce two-factor for admin pages, unless the caller explicitly opts out
-  // (the enrolment / challenge pages have to be reachable without aal2).
-  if (opts.admin && !opts.allowAal1) {
-    const { data: session } = await supabase.auth.getSession();
-    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (aal?.currentLevel !== "aal2") {
-      // Ask Supabase Auth directly: the authenticated role cannot read auth.mfa_factors.
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const totpEnrolled = !!factors?.totp?.some((f) => f.status === "verified");
-      if (!totpEnrolled) {
-        // Not enrolled yet. Admin pages are gated; send them to Security to set up.
-        redirect("/admin/security?setup=1");
-      }
-      // Enrolled but current session is aal1. Allow a short recovery window
-      // ONLY if a recovery_used event exists for THIS session (bound by
-      // session_id in the DB). A recovery event from an older session doesn't
-      // revive it — the lost-phone grace is single-use per sign-in.
-      const sessionId = session?.session?.access_token
-        ? decodeJwtPayload(session.session.access_token)?.session_id
-        : null;
-      const since = new Date(Date.now() - RECOVERY_GRACE_MINUTES * 60_000).toISOString();
-      const { data: recent } = sessionId
-        ? await supabase
-            .from("member_security_events")
-            .select("id")
-            .eq("user_id", user.id).eq("kind", "recovery_used").eq("session_id", sessionId)
-            .gte("created_at", since).limit(1)
-        : { data: null as { id: string }[] | null };
-      if (!recent?.length) redirect("/auth/challenge");
-    }
+  // Owners and admins need two-step sign-in for every admin area page and action (/admin, its
+  // viewer pages, and the visitor desk), unless the caller explicitly opts out — the enrolment
+  // page has to be reachable without aal2. Managers and reception staff are not required to.
+  if ((opts.admin || opts.viewer || opts.desk) && !opts.allowAal1 && needsTwoStep(memberRow.role)) {
+    const state = await twoStepState(supabase, user.id);
+    if (state !== "ok") redirect(twoStepRedirect(state));
   }
 
   const [{ data: org, error: orgError }, { data: privateLocation }] = await Promise.all([

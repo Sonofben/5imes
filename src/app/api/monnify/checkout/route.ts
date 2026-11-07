@@ -6,6 +6,7 @@ import { PLANS as DEFAULT_PLANS, type PlanId } from "@/lib/constants";
 import { loadPlans } from "@/lib/plans";
 import { BILLING_CYCLES, type BillingCycleId } from "@/lib/billing";
 import { siteUrl } from "@/lib/site";
+import { twoStepRedirect, twoStepState } from "@/lib/session";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
 import { Reservation, parseResult } from "@/lib/schemas";
@@ -23,6 +24,8 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.redirect(`${base}/login`, { status: 303 });
   const { data: me } = await supabase.from("members").select("id,org_id,role,status,full_name").eq("user_id", user.id).maybeSingle();
   if (!me || me.status !== "active" || !["owner", "admin"].includes(me.role)) return back({ error: "Only admins can change billing." });
+  const twoStep = await twoStepState(supabase, user.id);
+  if (twoStep !== "ok") return NextResponse.redirect(`${base}${twoStepRedirect(twoStep)}`, { status: 303 });
   if (!monnifyEnabled()) return back({ error: "Moniepoint payment is not switched on yet." });
   if (!user.email) return back({ error: "Add an email address to your account before starting payment." });
   const admin = createAdminClient();

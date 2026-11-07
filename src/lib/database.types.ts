@@ -2432,6 +2432,7 @@ export type Database = {
       admin_celebration_settings: { Args: { p_on: boolean | null; p_email: string | null; p_hr_email: string | null; p_heads_up: number | null; p_weekend: string | null }; Returns: undefined };
       admin_leave_overview: { Args: { p_type: string | null }; Returns: Json };
       admin_leave_settings: { Args: { p_mode: string | null; p_start_month: number | null; p_prorate: boolean | null }; Returns: undefined };
+      admin_mfa_satisfied: { Args: Record<PropertyKey, never>; Returns: boolean };
       admin_remove_holiday: { Args: { p_id: string | null }; Returns: undefined };
       admin_remove_leave_rule: { Args: { p_id: string | null }; Returns: undefined };
       admin_save_leave_rule: { Args: { p_type: string | null; p_team: string | null; p_role: string | null; p_min_years: number | null; p_days: number | null }; Returns: string };

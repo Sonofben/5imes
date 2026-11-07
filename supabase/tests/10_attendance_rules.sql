@@ -30,10 +30,12 @@ begin
   raise exception 'FAIL: % (it was allowed)', label;
 end $$;
 
+-- Test users act on a session that has passed two-step sign-in (aal2), as admins must since 0033.
+-- 98_zzzz1_admin_two_step.sql covers password-only (aal1) sessions explicitly.
 create function test.as_user(uid text, email text) returns void language plpgsql as $$
 begin
   perform set_config('test.uid', uid, false);
-  perform set_config('test.jwt', json_build_object('email', email, 'user_metadata', json_build_object('full_name', split_part(email, '@', 1)))::text, false);
+  perform set_config('test.jwt', json_build_object('email', email, 'aal', 'aal2', 'user_metadata', json_build_object('full_name', split_part(email, '@', 1)))::text, false);
 end $$;
 
 insert into auth.users values

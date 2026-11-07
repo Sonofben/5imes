@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isDefinitivePaystackRejection, paystack, paystackEnabled } from "@/lib/paystack";
 import { siteUrl } from "@/lib/site";
+import { twoStepRedirect, twoStepState } from "@/lib/session";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
 import { Reservation, parseResult } from "@/lib/schemas";
@@ -15,6 +16,8 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.redirect(`${base}/login`, { status: 303 });
   const { data: member } = await supabase.from("members").select("id,org_id,role,status").eq("user_id", user.id).maybeSingle();
   if (!member || member.status !== "active" || !["owner", "admin"].includes(member.role)) return back({ error: "Only organization admins can add seats." });
+  const twoStep = await twoStepState(supabase, user.id);
+  if (twoStep !== "ok") return NextResponse.redirect(`${base}${twoStepRedirect(twoStep)}`, { status: 303 });
   if (!paystackEnabled()) return back({ error: "Paystack is not configured yet." });
   if (!user.email) return back({ error: "Your account needs an email address before checkout." });
   const admin = createAdminClient();

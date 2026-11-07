@@ -4,6 +4,8 @@ import { csvRow } from "@/lib/csv";
 import { statusFor } from "@/lib/throttle";
 import { reasonLabel, zonedIso } from "@/lib/visitors";
 import { friendly } from "@/lib/errors";
+import { needsTwoStep, twoStepRedirect, twoStepState } from "@/lib/session";
+import { siteUrl } from "@/lib/site";
 
 /** Visitor log as CSV for admins and managers (same filters as the Visitor log page). Each download is recorded in the audit trail. */
 export async function GET(request: Request) {
@@ -12,6 +14,10 @@ export async function GET(request: Request) {
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
   const { data: me } = await supabase.from("members").select("org_id,role,status").eq("user_id", user.id).maybeSingle();
   if (!me || me.status !== "active" || !["owner", "admin", "manager"].includes(me.role)) return new NextResponse("Forbidden", { status: 403 });
+  if (needsTwoStep(me.role)) {
+    const twoStep = await twoStepState(supabase, user.id);
+    if (twoStep !== "ok") return NextResponse.redirect(`${siteUrl(request)}${twoStepRedirect(twoStep)}`, { status: 303 });
+  }
   const { data: org } = await supabase.from("organizations").select("timezone,domain").eq("id", me.org_id).single();
   const tz = org?.timezone ?? "Africa/Lagos";
   const sp = new URL(request.url).searchParams;
