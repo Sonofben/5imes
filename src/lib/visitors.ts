@@ -7,6 +7,7 @@ import { siteUrl } from "./site.ts";
 import { BrandShape, Invitation, parseOrNull, type Admission } from "./jsonShapes.ts";
 import { brandTheme, type Brand } from "./brand.ts";
 import { createHash } from "node:crypto";
+import { runVisitorCleanup, visitorCleanupDryRun } from "./visitorCleanup.ts";
 
 export const PHOTO_BUCKET = "visitor-photos";
 
@@ -76,19 +77,17 @@ export async function photoLinks(admin: SupabaseClient<Database>, paths: string[
 let lastPurge = 0;
 /**
  * Delete visitor details past each company's retention period (and their photos).
- * Runs at most every 10 minutes, triggered by visitor pages, so no separate scheduler is needed.
+ * Runs at most every 10 minutes when visitor pages are opened, as well as every 5 minutes from the
+ * server timer (/api/cron/tick). Both follow the same dry-run switch (lib/visitorCleanup.ts).
  */
 export async function purgeExpiredVisitors(admin: SupabaseClient<Database>) {
   if (Date.now() - lastPurge < 10 * 60 * 1000) return;
   lastPurge = Date.now();
-  const { data, error } = await admin.rpc("vms_purge_expired", { p_limit: 500 });
-  if (error) { log.error("visitors.purge", { message: error.message }); return; }
-  const paths = (data ?? []).map((r) => r.photo_path).filter((p): p is string => !!p);
-  if (paths.length) {
-    const { error: rmError } = await admin.storage.from(PHOTO_BUCKET).remove(paths);
-    if (rmError) log.error("visitors.purge.photos", { message: rmError.message, count: paths.length });
+  try {
+    await runVisitorCleanup(admin, visitorCleanupDryRun());
+  } catch (error) {
+    log.error("visitors.purge", { message: error instanceof Error ? error.message : String(error) });
   }
-  if (paths.length || (data ?? []).length) log.info("visitors.purge", { photos: paths.length });
 }
 
 /**

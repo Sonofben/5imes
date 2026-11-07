@@ -12,7 +12,7 @@ type Ops = {
   support: { open: number; urgent_open: number };
   privacy: { open: number; overdue: number };
 };
-const LABEL: Record<string, string> = { schedule_automation: "Automatic check in and check out", celebration_emails: "Celebration emails", task_reminders: "Task reminders", cleanup: "Clean up old records", renewal_price_sync: "Renewal price sync with Paystack", indexnow: "Tell search engines about pages (daily)" };
+const LABEL: Record<string, string> = { schedule_automation: "Automatic check in and check out", celebration_emails: "Celebration emails", task_reminders: "Task reminders", cleanup: "Clean up old records", renewal_price_sync: "Renewal price sync with Paystack", visitor_cleanup: "Visitor clean-up (retention)", indexnow: "Tell search engines about pages (daily)" };
 
 function Tile({ label, value, bad, href }: { label: string; value: number | string; bad?: boolean; href?: string }) {
   const body = <><p className="text-xs text-muted">{label}</p><p className={`mt-1 text-2xl font-extrabold tabular-nums ${bad ? "text-bad" : ""}`}>{value}</p></>;
@@ -39,7 +39,7 @@ export default async function Operations() {
         {d.jobs.length === 0 ? <p className="text-sm text-bad">No job has run yet. Check that the server timer and CRON_SECRET are set up (DEPLOY.md §16).</p> : (
           <table className="table"><thead><tr><th>Job</th><th>Last run</th><th>Result</th><th>Failures (24 h)</th></tr></thead>
             <tbody>{d.jobs.map((j) => <tr key={j.job}><td>{LABEL[j.job] ?? j.job}</td><td className={`text-xs ${stale(j) ? "font-semibold text-bad" : ""}`}>{fmtDateTime(j.started_at)}{stale(j) ? " · late" : ""}</td>
-              <td>{j.ok ? <span className="chip bg-green-50 text-ok">OK</span> : <span className="chip bg-red-50 text-bad" title={j.detail ?? ""}>Failed</span>}</td><td className="tabular-nums">{j.failures_24h}</td></tr>)}</tbody></table>
+              <td>{j.ok ? <span className="chip bg-green-50 text-ok" title={j.detail ?? ""}>OK</span> : <span className="chip bg-red-50 text-bad" title={j.detail ?? ""}>Failed</span>}</td><td className="tabular-nums">{j.failures_24h}</td></tr>)}</tbody></table>
         )}
       </section>
       <section className="card space-y-2">

@@ -5,6 +5,7 @@ import { runScheduleAutomation } from "@/lib/schedule";
 import { runCelebrationEmails } from "@/lib/celebrations";
 import { runTaskReminders } from "@/lib/tasks";
 import { syncRenewalPrices } from "@/lib/paystack";
+import { runVisitorCleanup, visitorCleanupDryRun } from "@/lib/visitorCleanup";
 import { submitToIndexNow, indexNowKey } from "@/lib/indexnow";
 import sitemap from "@/app/sitemap";
 
@@ -23,7 +24,10 @@ export async function POST(request: Request) {
   const run = async (job: string, fn: () => Promise<unknown>) => {
     const started = new Date().toISOString();
     let ok = true, detail: string | null = null;
-    try { await fn(); } catch (error) { ok = false; detail = (error instanceof Error ? error.message : String(error)).slice(0, 1000); }
+    try {
+      const out = await fn();
+      if (typeof out === "string") detail = out.slice(0, 1000);   // a job may report a one-line summary
+    } catch (error) { ok = false; detail = (error instanceof Error ? error.message : String(error)).slice(0, 1000); }
     if (admin) await admin.from("job_runs").insert({ job, started_at: started, finished_at: new Date().toISOString(), ok, detail });
   };
   await run("schedule_automation", () => runScheduleAutomation(admin));
@@ -34,6 +38,9 @@ export async function POST(request: Request) {
       const a = await admin.rpc("purge_old_sales_enquiries"); if (a.error) throw new Error(a.error.message);
       const b = await admin.rpc("purge_operations_logs"); if (b.error) throw new Error(b.error.message);
     });
+    // Visitor details, photos and stale visits past each company's retention settings. Dry run
+    // (counts only, nothing changed) when VISITOR_CLEANUP_DRY_RUN=1, and by default on staging.
+    await run("visitor_cleanup", async () => (await runVisitorCleanup(admin, visitorCleanupDryRun())).summary);
     await run("renewal_price_sync", () => syncRenewalPrices(admin));
     // Once a day, tell search engines about every public page (new blog posts get crawled quickly).
     if (indexNowKey()) {

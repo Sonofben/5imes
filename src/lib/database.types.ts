@@ -2685,6 +2685,7 @@ export type Database = {
       vms_on_site: { Args: { p_location?: string | null }; Returns: { kind: string; name: string; detail: string; since: string; location_id: string }[] };
       vms_open_now: { Args: { p_org: string | null }; Returns: boolean };
       vms_purge_expired: { Args: { p_limit?: number | null }; Returns: { photo_path: string }[] };
+      vms_purge_preview: { Args: Record<PropertyKey, never>; Returns: { org_id: string; details_due: number; photos_due: number; sign_out_due: number; waiting_due: number; audit_due: number }[] };
       vms_report: { Args: { p_from: string | null; p_to: string | null; p_location?: string | null }; Returns: Json };
       vms_rotate_visitor_link: { Args: { p_location: string | null }; Returns: string };
       vms_save_settings: { Args: { p_photo_required: boolean | null; p_rules: string | null; p_retention_days: number | null; p_notify_host: boolean | null }; Returns: undefined };

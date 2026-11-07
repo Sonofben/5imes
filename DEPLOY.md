@@ -370,6 +370,13 @@ Setup:
 4. **Privacy (NDPA).** Visitors → Settings: edit the privacy notice, how long details and photos are kept, and
    whether reception must admit every visitor (on by default). Reports → *Audit trail* and *A visitor's data request*
    are the records to show how visitor data is handled.
+   **Clean-up (0035):** every 5 minutes the server timer (§16) deletes visitor details and photos past each company's own
+   retention settings, signs out visitors still on site after 16 hours, cancels arrivals nobody answered in 12 hours and
+   drops visitor audit entries older than 2 years. Opening Visitors also runs it. `VISITOR_CLEANUP_DRY_RUN=1` in `.env`
+   makes it a dry run: it only logs, per company, how many records *would* be cleaned up (counts only, no names) and
+   changes nothing. Without the variable it is a dry run on staging (`APP_ENV=staging`) and live everywhere else.
+   Each run shows in Global Admin → Operations (job `visitor_cleanup`; hover the status for the counts) and in
+   `docker logs` (`visitors.cleanup.dry_run` or `visitors.cleanup`).
 5. **Optional tablet.** Visitors → Settings → *Reception tablets* → **Add tablet**; on the tablet open `/kiosk` and type
    the code (valid 15 minutes). Photos (off by default) go to the private Storage bucket `visitor-photos`.
 
