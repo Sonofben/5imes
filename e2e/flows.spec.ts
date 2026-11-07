@@ -3,7 +3,7 @@ import { createHmac } from "node:crypto";
 
 /**
  * Signed-in smoke tests against staging. Needs (as CI secrets or local env):
- *   E2E_BASE_URL            e.g. https://staging.5imes.koraforge.com.ng
+ *   E2E_BASE_URL            e.g. https://staging.5imes.click
  *   E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD / E2E_ADMIN_TOTP_SECRET   a company admin with two-factor
  *   E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD                            a staff member of the same company
  * Staging must use Cloudflare's Turnstile *test* keys (they always pass) if CAPTCHA is on.

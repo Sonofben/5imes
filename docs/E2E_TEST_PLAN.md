@@ -1,6 +1,6 @@
 # 5ime — End-to-End Test Plan (live site)
 
-**Site:** https://5imes.koraforge.com.ng
+**Site:** https://5imes.click
 **Product:** 5ime — "Work from anywhere, 5 days, on time." GPS attendance: staff check in only at an approved **office**, or at their individually approved **home** on days scheduled as home days.
 **Test workspace:** Trostechnologies (email domain `@trostechnologies.com`)
 **Code:** github.com/Sonofben/5imes (branch `main`)
@@ -42,7 +42,7 @@ In Chrome: DevTools (F12) → ⋮ → **More tools → Sensors** → **Location*
 ## 2. Pre-checks (Supabase settings — owner confirms before testing)
 
 - [ ] Migrations 0001–0010 applied (0009 security status fix, 0010 API grants).
-- [ ] Authentication → URL Configuration: Site URL = `https://5imes.koraforge.com.ng`; redirect URL `https://5imes.koraforge.com.ng/auth/callback**` added.
+- [ ] Authentication → URL Configuration: Site URL = `https://5imes.click`; redirect URL `https://5imes.click/auth/callback**` added.
 - [ ] Authentication → Emails → **Invite user** template link = `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite`
 - [ ] (Recommended) **Confirm signup** template link = `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`
 - [ ] Latest code deployed on the VPS (`cd /opt/apps/5ime && git pull && docker compose up -d --build`).
@@ -56,7 +56,7 @@ In Chrome: DevTools (F12) → ⋮ → **More tools → Sensors** → **Location*
 | P1 | Open `/` on desktop | Landing loads: logo **5ime**, headline “Know your team is where they planned to be.”, buttons “Start a 14-day Pro trial” and “See how it works”, How it works, Features, Pricing (Basic ₦250, Pro ₦500 per seat per month) |
 | P2 | Open `/` at phone width (375 px) | No horizontal scrolling; text readable; buttons tappable |
 | P3 | Click every link/button on `/` | All go somewhere valid (no 404) |
-| P4 | Open `/robots.txt` | Plain text; allows `/`, `/login`, `/signup`; disallows `/admin`, `/app`, `/console`, `/auth/`, `/api/`; shows `Sitemap: https://5imes.koraforge.com.ng/sitemap.xml` |
+| P4 | Open `/robots.txt` | Plain text; allows `/`, `/login`, `/signup`; disallows `/admin`, `/app`, `/console`, `/auth/`, `/api/`; shows `Sitemap: https://5imes.click/sitemap.xml` |
 | P5 | Open `/sitemap.xml` | XML listing `/`, `/signup`, `/login` on the 5imes domain |
 | P6 | View page source of `/` | Has `<title>`, meta description, `og:title`, `og:description`, `og:image`, `twitter:card`, canonical link, JSON-LD `SoftwareApplication` with NGN prices |
 | P7 | Open `/manifest.webmanifest` | JSON with name “5ime — scheduled attendance”, icons |
@@ -106,7 +106,7 @@ In Chrome: DevTools (F12) → ⋮ → **More tools → Sensors** → **Location*
 | C6 | Settings → Branding: company link `trostech`, brand colour `#1F6FEB`, upload a PNG logo < 1 MB → Save branding | Saved; logo shows in admin header |
 | C7 | Branding: upload a file > 1 MB, or a PDF | Refused with a clear message |
 | C8 | Branding: company link `admin` or `login` (reserved) | Refused |
-| C9 | Open `https://5imes.koraforge.com.ng/trostech` signed out | Branded staff sign-in page: logo, brand colour, “Trostechnologies staff portal”, “Powered by 5ime” |
+| C9 | Open `https://5imes.click/trostech` signed out | Branded staff sign-in page: logo, brand colour, “Trostechnologies staff portal”, “Powered by 5ime” |
 | C10 | Settings → Support access: Grant 24 hours | Shows active until a time; “Turn off now” works; support log visible |
 | C11 | `/admin/billing` | Shows trial status, plans Basic/Pro, terms 1/3/6/12 months, no multi-month discount, auto-renew unticked by default. **Do not pay** |
 

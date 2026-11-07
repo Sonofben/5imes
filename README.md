@@ -19,10 +19,14 @@
 
 | Plan | Price per seat per month | Typical fit |
 |---|---:|---|
-| Basic | ₦250 | One office and a shared weekly schedule |
-| Pro | ₦500 | Branches, individual schedules and manager tools |
+| Basic | ₦300 | Up to 15 staff, one office and a shared weekly schedule |
+| Pro | ₦600 | Branches, individual schedules, manager tools, visitors at one office (100 visits a month) |
+| Premium | ₦1,000 | Everything in Pro, visitors at every office, reception tablet, field staff |
 
-The 14-day Pro trial remains available. Customers can pay monthly, quarterly (3 months), biannually (6 months), or yearly (12 months). **There are no multi-month discounts**: the term charge is seats × monthly price × months. For example, 10 Basic seats cost ₦2,500 monthly or ₦7,500 quarterly.
+These are the defaults from migration 0018. The live prices, limits and feature lists are kept in the database
+(`platform_plans`) and can be changed in Global Admin → Plans & pricing without a code change.
+
+The 14-day free trial (all features) remains available. Customers can pay monthly, quarterly (3 months), biannually (6 months), or yearly (12 months). **There are no multi-month discounts**: the term charge is seats × monthly price × months. For example, 10 Basic seats cost ₦3,000 monthly or ₦9,000 quarterly.
 
 Active and invited people share the paid-seat limit. An admin can add seats during a paid term; each added seat costs the full per-seat monthly price × the term's months (no proration), and the term end date is unchanged. Payment is per term by default and nothing is charged automatically unless the admin ticks “Renew automatically”. Only one unresolved checkout is allowed per organization.
 
@@ -65,8 +69,14 @@ The core test suite covers billing totals, calendar renewals, CSV parsing, and s
 ## Tests
 
 GitHub runs these on every push (repo **Actions** tab):
-- **Database rules:** applies migrations 0001–0004 to a throwaway Postgres and runs `supabase/tests/` (sign-up rules, tenant isolation, manager privacy, payment ledger lock-down, seat limits, attendance corrections).
-- **App:** lint, unit tests (`npm test`) and production build.
+- **Database rules:** applies every migration in `supabase/migrations/` to a throwaway Postgres 16 and runs every test in
+  `supabase/tests/`, ending with the tenant sweep (no company can see another's rows). Then it checks that
+  `src/lib/database.types.ts` is up to date and that the app's jsonb schemas match what the database functions return.
+- **App:** lint, type check (`tsc`), unit tests (`npm test`), `npm audit` of production dependencies (fails on high),
+  production build, and Playwright smoke tests of the public pages (`e2e/public.spec.ts`).
+- **Secrets:** gitleaks scans the code and its full history.
+
+To run the database tests locally: `scripts/test-db.sh` (uses Docker when no Postgres is configured).
 
 
 ## Global Admin (`/console`)

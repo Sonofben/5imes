@@ -14,7 +14,7 @@ The VPS is shared, and **CACTS is live on it and must not be disturbed.**
 | App | Folder | Local port | Public address |
 |---|---|---|---|
 | CACTS | (existing, untouched) | (existing) | (existing) |
-| 5ime | `/opt/apps/5ime` | **3005** | `https://<ip-with-dashes>.sslip.io` (demo) → `5ime.ng` later |
+| 5ime | `/opt/apps/5ime` | **3005** | `https://5imes.click` (staging: `https://staging.5imes.click`, port 3006) |
 | GBIN | `/opt/apps/gbin` | 3006 (reserved) | — |
 
 **Why this is safe for CACTS:**
@@ -83,7 +83,7 @@ bash ~/vps-check.sh
    - the `anon public` key
    - the `service_role` key
 4. **Set the auth URLs.** In **Authentication → URL Configuration**:
-   - **Site URL:** your canonical HTTPS address, e.g. `https://5imes.koraforge.com.ng` (no trailing slash). Or, for a demo on a bare IP, `https://<ip-with-dashes>.sslip.io`.
+   - **Site URL:** your canonical HTTPS address, e.g. `https://5imes.click` (no trailing slash). Or, for a demo on a bare IP, `https://<ip-with-dashes>.sslip.io`.
    - **Redirect URLs:** add `<Site URL>/auth/callback**` (the two stars at the end matter: they allow `?type=invite` and the other variants)
 5. **Email + password sign-in** is now the normal route.
    - In **Authentication → Providers**, make sure *Email* is enabled with *Confirm email* ON. The signup page sends a verification link; invites use `inviteUserByEmail` and land on `/auth/invite` for the staff member to pick their own password.
@@ -94,7 +94,7 @@ bash ~/vps-check.sh
      - *Port:* `465`
      - *Username:* `resend`
      - *Password:* your Resend API key (starts with `re_`)
-     - *Sender email:* a verified address on your Resend domain (e.g. `no-reply@koraforge.com.ng`)
+     - *Sender email:* a verified address on your Resend domain (e.g. `noreply@5imes.click`)
      - *Sender name:* `5ime`
    - **Email templates (required).** Still under *Emails → Templates*, replace each template with the matching file from `docs/email-templates/` (open the file, copy everything, paste into the *Message body*, save). Set these subjects:
 
@@ -299,7 +299,7 @@ above `location / {`:
 Then:
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
-for i in $(seq 1 25); do curl -s -o /dev/null -w "%{http_code} " https://5imes.koraforge.com.ng/api/health; done; echo
+for i in $(seq 1 25); do curl -s -o /dev/null -w "%{http_code} " https://5imes.click/api/health; done; echo
 ```
 You should see `200`s and then `429`s (the limit working). If `nginx -t` fails, remove the
 `include` line and reload — nothing else changes. CACTS's site file is not touched.
@@ -308,7 +308,7 @@ You should see `200`s and then `429`s (the limit working). If `nginx -t` fails, 
 
 The order matters: the app must send the CAPTCHA before Supabase starts requiring it.
 
-1. Cloudflare dashboard → **Turnstile** → **Add widget**: name `5ime`, hostname `5imes.koraforge.com.ng`,
+1. Cloudflare dashboard → **Turnstile** → **Add widget**: name `5ime`, hostname `5imes.click`,
    widget mode **Managed**. Copy the **Site key** and the **Secret key**. (Your domain doesn't have to
    be on Cloudflare for this.)
 2. In `/opt/apps/5ime/.env` add the **site** key only:
@@ -421,7 +421,7 @@ The watchdog can't help if the whole VPS or its network is down — only somethi
 see that. Use UptimeRobot (uptimerobot.com) or Better Stack (betterstack.com); both have free plans.
 
 1. Create the account yourself.
-2. Add an **HTTP(s)** monitor: URL `https://5imes.koraforge.com.ng/api/health`, every **1–5 minutes**
+2. Add an **HTTP(s)** monitor: URL `https://5imes.click/api/health`, every **1–5 minutes**
    (free UptimeRobot is 5), and for UptimeRobot add a keyword check for `"ok":true`.
 3. Alert contacts: your email, plus the mobile app (push) or Telegram so you see it quickly.
 4. Optional: a public status page you can share with clients, and the monitor's monthly
@@ -540,7 +540,7 @@ Each app stays in its own house: one can be rebuilt or stopped without touching 
 
 - **Domain:** in Cloudflare or your registrar's DNS, add `A @ → VPS IP` and `A www → VPS IP`. Then:
   1. Add the domain to the `server_name` line in `/etc/nginx/sites-available/5ime`.
-  2. Run `certbot --nginx -d 5ime.ng -d www.5ime.ng`.
+  2. Run `certbot --nginx -d 5imes.click -d www.5imes.click`.
   3. Update `NEXT_PUBLIC_SITE_URL` in `.env`, then rebuild: `docker compose up -d --build`.
   4. Update the Supabase Site URL and Redirect URLs.
 - **Microsoft sign-in:**
