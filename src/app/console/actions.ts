@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireConsoleAction } from "@/lib/console";
+import { requireStepUp } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/site";
 import { flashQuery } from "@/lib/flash";
@@ -29,6 +30,8 @@ export async function setLocked(userId: string, email: string, locked: boolean, 
 }
 export async function resetMfa(userId: string, email: string, f: FormData) {
   const { supabase } = await requireConsoleAction();
+  // A fresh code first (the database checks it too, in console_reset_mfa).
+  await requireStepUp(supabase, `/console/people?email=${encodeURIComponent(email)}`);
   const { error } = await supabase.rpc("console_reset_mfa", { p_user: userId, p_reason: reasonOf(f) });
   done("/console/people", error, `Two-factor removed for ${email}. They will set it up again at next admin sign-in.`, { email });
 }

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireMember } from "@/lib/session";
+import { requireMember, requireStepUp } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/server";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
@@ -159,6 +159,8 @@ export async function findVisitorData(_prev: DsrState, formData: FormData): Prom
   const q = DsrQuery.safeParse(formData.get("query") ?? "");
   if (!q.success) return { query: "", rows: [], error: q.error.issues[0]?.message };
   if (formData.get("intent") === "erase") {
+    // Erasing needs a fresh code (the database checks it too, in vms_forget_visitor).
+    await requireStepUp(supabase, "/visitors/reports");
     const { data, error } = await supabase.rpc("vms_forget_visitor", { p_query: q.data });
     if (error) return { query: q.data, rows: [], error: friendly(error, "visitors/dsr-erase") };
     const paths = (data ?? []).map((r) => r.photo_path).filter((p): p is string => !!p);

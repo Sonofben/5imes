@@ -6,6 +6,7 @@ import { reasonLabel, zonedIso } from "@/lib/visitors";
 import { friendly } from "@/lib/errors";
 import { needsTwoStep, twoStepRedirect, twoStepState } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
+import { hasFreshStepUp, stepUpUrl } from "@/lib/stepUp";
 
 /** Visitor log as CSV for admins and managers (same filters as the Visitor log page). Each download is recorded in the audit trail. */
 export async function GET(request: Request) {
@@ -17,6 +18,11 @@ export async function GET(request: Request) {
   if (needsTwoStep(me.role)) {
     const twoStep = await twoStepState(supabase, user.id);
     if (twoStep !== "ok") return NextResponse.redirect(`${siteUrl(request)}${twoStepRedirect(twoStep)}`, { status: 303 });
+    // Exports need a fresh code (the database checks it too, in vms_log_export).
+    if (!(await hasFreshStepUp(supabase))) {
+      const here = new URL(request.url);
+      return NextResponse.redirect(`${siteUrl(request)}${stepUpUrl(here.pathname + here.search)}`, { status: 303 });
+    }
   }
   const { data: org } = await supabase.from("organizations").select("timezone,domain").eq("id", me.org_id).single();
   const tz = org?.timezone ?? "Africa/Lagos";

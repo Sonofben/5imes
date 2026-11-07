@@ -12,7 +12,8 @@ insert into platform_staff (user_id, email, role) values
 create function test.as_console(uid text, email text, aal text default 'aal2') returns void language plpgsql as $$
 begin
   perform set_config('test.uid', uid, false);
-  perform set_config('test.jwt', json_build_object('email', email, 'aal', aal)::text, false);
+  -- A fixed session id, so a fresh two-step code can be recorded for it (0034).
+  perform set_config('test.jwt', json_build_object('email', email, 'aal', aal, 'session_id', '00000000-0000-0000-0000-0000000c5e55')::text, false);
 end $$;
 grant execute on function test.as_console(text, text, text) to authenticated;
 grant usage on schema test to anon;

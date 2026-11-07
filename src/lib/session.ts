@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { hasFreshStepUp, stepUpUrl } from "@/lib/stepUp";
 
 export type Member = {
   id: string;
@@ -81,7 +82,7 @@ export type Subscription = {
 const RECOVERY_GRACE_MINUTES = 10;
 
 /** Read the `session_id` claim from a Supabase JWT. Returns null on parse failure. */
-function decodeJwtPayload(token: string): { session_id?: string } | null {
+export function decodeJwtPayload(token: string): { session_id?: string } | null {
   try {
     const parts = token.split(".");
     if (parts.length < 2) return null;
@@ -120,6 +121,11 @@ export async function twoStepState(supabase: ServerSupabase, userId: string): Pr
     .eq("user_id", userId).eq("kind", "recovery_used").eq("session_id", sessionId)
     .gte("created_at", since).limit(1);
   return recent?.length ? "ok" : "challenge";
+}
+
+/** For server actions: a fresh two-step code first (step-up, see lib/stepUp.ts), then come back to `next`. */
+export async function requireStepUp(supabase: ServerSupabase, next: string) {
+  if (!(await hasFreshStepUp(supabase))) redirect(stepUpUrl(next));
 }
 
 /** Where to send an owner or admin who hasn't passed two-step sign-in. */

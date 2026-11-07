@@ -182,6 +182,10 @@ select test.ok((select count(*) from public.visitor_audit a where exists (select
 set role authenticated;
 select test.as_console('00000000-0000-0000-0000-00000000f901', 'boss@visit.ng');
 select test.ok((select count(*) from public.visitor_audit where action = 'turned_away') >= 2, 'Admins can read the audit trail');
+-- An admin's export needs a fresh two-step code in this session (0034; tested in 98_zzzz2_step_up.sql).
+reset role;
+select public.record_step_up('00000000-0000-0000-0000-00000000f901', '00000000-0000-0000-0000-0000000c5e55');
+set role authenticated;
 select public.vms_log_export(current_date - 7, current_date);
 select test.ok(exists (select 1 from public.visitor_audit where action = 'exported'), 'Exports are recorded');
 

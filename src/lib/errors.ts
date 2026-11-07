@@ -20,7 +20,7 @@ type AnyError = { message?: string; code?: string; status?: number; name?: strin
 
 const GENERIC = "Something went wrong on our side. Please try again";
 
-const OWN_CODES = new Set(["P0001", "KF401", "KF403", "KF429"]);
+const OWN_CODES = new Set(["P0001", "KF401", "KF403", "KF412", "KF429"]);
 const PLAIN: Record<string, string> = {
   "23505": "That already exists.",
   "23514": "Some of the details aren’t valid. Check them and try again.",

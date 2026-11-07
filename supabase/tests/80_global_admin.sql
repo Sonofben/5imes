@@ -72,6 +72,10 @@ select test.as_user('00000000-0000-0000-0000-00000000b801', 'ceo@newco.ng');
 select test.ok(join_organization() ->> 'status' = 'active', 'Owner becomes active on first sign-in');
 select test.ok((select destination from public.post_auth_destination()) = '/admin', 'Owner lands on /admin');
 
+-- Export, delete and two-step reset need a fresh code in this session (0034; tested in 98_zzzz2_step_up.sql).
+reset role;
+select public.record_step_up('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000c5e55');
+set role authenticated;
 select test.as_console('00000000-0000-0000-0000-0000000000c1', 'joseph@koraforge.com');
 select public.console_set_plan(current_setting('test.newco')::uuid, 'basic', 25, 'Annual contract, 25 seats');
 select test.ok((select (public.console_company(current_setting('test.newco')::uuid) -> 'subscription' ->> 'seats_paid')::int) = 25, 'Plan and seats changed');

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
 import { z } from "zod";
-import { requireMember } from "@/lib/session";
+import { requireMember, requireStepUp } from "@/lib/session";
 import { latitude, longitude, officeRadius, parseForm } from "@/lib/schemas";
 
 function back(params: Record<string, string>): never {
@@ -42,6 +42,7 @@ export async function updateRadius(id: string, formData: FormData) {
 
 export async function deleteLocation(id: string) {
   const { supabase } = await requireMember({ admin: true });
+  await requireStepUp(supabase, "/admin/locations");
   const { error } = await supabase.from("locations").delete().eq("id", id);
   if (error) back({ error: friendly(error, "admin/locations") });
   back({ msg: "Office removed." });

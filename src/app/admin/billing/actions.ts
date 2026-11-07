@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
-import { requireMember } from "@/lib/session";
+import { requireMember, requireStepUp } from "@/lib/session";
 import { paystack, paystackEnabled, retrySeatPlanSync } from "@/lib/paystack";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
 
 async function updateRenewal(cancelled: boolean): Promise<never> {
-  const { org } = await requireMember({ admin: true });
+  const { org, supabase } = await requireMember({ admin: true });
+  await requireStepUp(supabase, "/admin/billing");
   const admin = createAdminClient();
   if (!admin) redirect(`/admin/billing?${flashQuery({ error: "Billing service is not configured." })}`);
   if (!paystackEnabled()) redirect(`/admin/billing?${flashQuery({ error: "Paystack is not configured." })}`);
@@ -86,7 +87,8 @@ export async function cancelRenewal() { return updateRenewal(true); }
 export async function resumeRenewal() { return updateRenewal(false); }
 
 export async function retrySeatRenewalPrice() {
-  const { org } = await requireMember({ admin: true });
+  const { org, supabase } = await requireMember({ admin: true });
+  await requireStepUp(supabase, "/admin/billing");
   const admin = createAdminClient();
   if (!admin) redirect(`/admin/billing?${flashQuery({ error: "Billing service is not configured." })}`);
   const { data: payment, error } = await admin.from("payments").select("reference")

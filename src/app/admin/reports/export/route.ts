@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadDeviceInfo, loadReport, shiftDate } from "@/lib/reports";
 import { needsTwoStep, todayIn, twoStepRedirect, twoStepState, type Org } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
+import { hasFreshStepUp, stepUpUrl } from "@/lib/stepUp";
 import { FLAG_LABELS } from "@/lib/constants";
 import { csvRow } from "@/lib/csv";
 import { friendly } from "@/lib/errors";
@@ -24,6 +25,11 @@ export async function GET(request: Request) {
   if (needsTwoStep(me.role)) {
     const twoStep = await twoStepState(supabase, user.id);
     if (twoStep !== "ok") return NextResponse.redirect(`${siteUrl(request)}${twoStepRedirect(twoStep)}`, { status: 303 });
+    // Exports need a fresh code; afterwards the browser comes straight back here and downloads.
+    if (!(await hasFreshStepUp(supabase))) {
+      const here = new URL(request.url);
+      return NextResponse.redirect(`${siteUrl(request)}${stepUpUrl(here.pathname + here.search)}`, { status: 303 });
+    }
   }
   const limited = await throttle(supabase, "report_export");
   if (limited) return new NextResponse(limited, { status: 429 });

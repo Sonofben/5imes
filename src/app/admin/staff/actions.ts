@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { requireMember } from "@/lib/session";
+import { requireMember, requireStepUp } from "@/lib/session";
 import { parseCsv } from "@/lib/csv";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
@@ -102,7 +102,9 @@ export async function setRole(id: string, formData: FormData) {
 }
 
 export async function removeMember(id: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireMember({ admin: true });
+  // Removing a person needs a fresh code (the database checks it too: member_delete_step_up, 0034).
+  await requireStepUp(supabase, "/admin/staff");
   const { error } = await supabase.from("members").delete().eq("id", id);
   if (error) back({ error: friendly(error, "admin/staff"), ...upgradeHint(error) });
   back({ msg: "Person removed." });

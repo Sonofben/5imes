@@ -9,7 +9,7 @@ import { friendly, isRateLimited } from "./errors.ts";
  */
 export type Bucket =
   | "report_export" | "password_change" | "payment_verify" | "logo_upload"
-  | "invite_email" | "console_export" | "console_action";
+  | "invite_email" | "console_export" | "console_action" | "step_up";
 
 export async function throttle(supabase: SupabaseClient, bucket: Bucket): Promise<string | null> {
   const { error } = await supabase.rpc("throttle", { p_bucket: bucket });

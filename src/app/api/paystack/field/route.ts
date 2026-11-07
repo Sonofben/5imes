@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isDefinitivePaystackRejection, paystack, paystackEnabled } from "@/lib/paystack";
 import { siteUrl } from "@/lib/site";
 import { twoStepRedirect, twoStepState } from "@/lib/session";
+import { hasFreshStepUp, stepUpUrl } from "@/lib/stepUp";
 import { flashQuery } from "@/lib/flash";
 import { friendly } from "@/lib/errors";
 import { Reservation, parseResult } from "@/lib/schemas";
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
   if (!member || member.status !== "active" || !["owner", "admin"].includes(member.role)) return back({ error: "Only organization admins can change billing." });
   const twoStep = await twoStepState(supabase, user.id);
   if (twoStep !== "ok") return NextResponse.redirect(`${base}${twoStepRedirect(twoStep)}`, { status: 303 });
+  if (!(await hasFreshStepUp(supabase))) return NextResponse.redirect(`${base}${stepUpUrl("/admin/billing")}`, { status: 303 });
   if (!paystackEnabled()) return back({ error: "Paystack is not configured yet." });
   if (!user.email) return back({ error: "Your account needs an email address before checkout." });
   const admin = createAdminClient();

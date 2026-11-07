@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireConsoleAction } from "@/lib/console";
+import { requireStepUp } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/site";
 import { flashQuery } from "@/lib/flash";
@@ -70,6 +71,8 @@ export async function setArchived(id: string, archived: boolean, f: FormData) {
 
 export async function deleteCompany(id: string, f: FormData) {
   const { supabase } = await requireConsoleAction();
+  // A fresh code first (the database checks it too, in console_delete_company).
+  await requireStepUp(supabase, `/console/companies/${id}`);
   const { error } = await supabase.rpc("console_delete_company", { p_org: id, p_confirm_domain: String(f.get("confirm") ?? ""), p_reason: reasonOf(f) });
   if (error) back(id, { error: friendly(error, "console/companies/[id]") });
   revalidatePath("/console/companies");

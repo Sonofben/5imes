@@ -1698,6 +1698,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      step_up_verifications: {
+        Row: {
+          id: number;
+          user_id: string;
+          session_id: string;
+          verified_at: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          session_id: string;
+          verified_at?: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          session_id?: string;
+          verified_at?: string;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           org_id: string;
@@ -2601,6 +2622,7 @@ export type Database = {
       purge_old_sales_enquiries: { Args: Record<PropertyKey, never>; Returns: number };
       purge_operations_logs: { Args: Record<PropertyKey, never>; Returns: undefined };
       record_paystack_subscription: { Args: { p_plan_code: string | null; p_subscription_code: string | null; p_customer_code: string | null; p_email_token: string | null }; Returns: boolean };
+      record_step_up: { Args: { p_user: string | null; p_session: string | null }; Returns: undefined };
       release_missing_paystack_checkout: { Args: { p_reference: string | null }; Returns: boolean };
       remove_check_item: { Args: { p_item: string | null }; Returns: undefined };
       remove_task_file: { Args: { p_file: string | null }; Returns: string };
@@ -2616,6 +2638,7 @@ export type Database = {
       request_leave: { Args: { p_type: string | null; p_start: string | null; p_end: string | null; p_reason: string | null; p_document?: string | null }; Returns: string };
       request_task_update: { Args: { p_id: string | null; p_note: string | null }; Returns: undefined };
       request_work_elsewhere: { Args: { p_lat: number | null; p_lng: number | null; p_accuracy: number | null; p_reason: string | null; p_place_name?: string | null; p_address?: string | null }; Returns: string };
+      require_step_up: { Args: Record<PropertyKey, never>; Returns: undefined };
       require_visitors: { Args: { p_org: string | null }; Returns: undefined };
       reserved_slugs: { Args: Record<PropertyKey, never>; Returns: string[] };
       resolve_company_link: { Args: { p_slug: string | null }; Returns: string };
@@ -2633,6 +2656,7 @@ export type Database = {
       set_task_status: { Args: { p_id: string | null; p_status: string | null }; Returns: string };
       slug_matches_org: { Args: { p_org: string | null; p_slug: string | null }; Returns: boolean };
       start_visit: { Args: { p_site: string | null; p_lat: number | null; p_lng: number | null; p_accuracy: number | null }; Returns: string };
+      step_up_fresh: { Args: Record<PropertyKey, never>; Returns: boolean };
       submit_sales_enquiry: { Args: { p_name: string | null; p_email: string | null; p_company: string | null; p_phone: string | null; p_staff: number | null; p_message: string | null }; Returns: string };
       support_access_until: { Args: { p_org: string | null }; Returns: string };
       task_report: { Args: { p_from: string | null; p_to: string | null }; Returns: Json };

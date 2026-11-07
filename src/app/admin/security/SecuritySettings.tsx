@@ -148,11 +148,12 @@ function TotpCard({ requiresMfa, enrolled, role, currentAal, onDone }: { require
   async function disable() {
     if (!confirm("Turn off two-factor for your account? Admins must have it on; you may be asked to set it up again.")) return;
     setBusy(true); setError(null);
-    const supabase = createClient();
-    const { data } = await supabase.auth.mfa.listFactors();
-    for (const f of data?.all ?? []) await supabase.auth.mfa.unenroll({ factorId: f.id });
-    void supabase.rpc("log_security_event", { p_kind: "totp_disabled", p_detail: {} }).then(() => undefined, () => undefined);
-    setBusy(false); setPhase("idle"); setMsg("Two-factor removed.");
+    // The server checks for a fresh code first (step-up); without one it says where to type it.
+    const result = await fetch("/api/security/two-step/disable", { method: "POST" }).then((r) => r.json()).catch(() => null);
+    if (result?.stepUp) { window.location.assign(result.stepUp); return; }
+    setBusy(false);
+    if (!result?.ok) { setError(result?.error ?? "We couldn’t turn off two-factor. Please try again."); return; }
+    setPhase("idle"); setMsg("Two-factor removed.");
     onDone();
   }
 

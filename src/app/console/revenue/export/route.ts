@@ -3,10 +3,17 @@ import { requireConsole } from "@/lib/console";
 import { csvRow } from "@/lib/csv";
 import { friendly } from "@/lib/errors";
 import { throttle } from "@/lib/throttle";
+import { hasFreshStepUp, stepUpUrl } from "@/lib/stepUp";
+import { siteUrl } from "@/lib/site";
 
 export async function GET(request: Request) {
   const sp = new URL(request.url).searchParams;
   const { supabase } = await requireConsole();
+  // Exports need a fresh code.
+  if (!(await hasFreshStepUp(supabase))) {
+    const here = new URL(request.url);
+    return NextResponse.redirect(`${siteUrl(request)}${stepUpUrl(here.pathname + here.search)}`, { status: 303 });
+  }
   const limited = await throttle(supabase, "console_export");
   if (limited) return NextResponse.json({ error: limited }, { status: 429 });
   const { data, error } = await supabase.rpc("console_payments", {

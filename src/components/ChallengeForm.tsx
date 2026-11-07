@@ -5,7 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { friendly } from "@/lib/errors";
 
-export function ChallengeForm({ factorId, next }: { factorId: string; next: string }) {
+/**
+ * The authenticator code screen. `stepUp` reuses it for a fresh code before a sensitive action:
+ * the code is checked on the server (/api/security/step-up) and a recovery code is not accepted.
+ */
+export function ChallengeForm({ factorId, next, stepUp = false }: { factorId: string; next: string; stepUp?: boolean }) {
   const [mode, setMode] = useState<"totp" | "recovery">("totp");
   const [code, setCode] = useState("");
   const [recovery, setRecovery] = useState("");
@@ -15,6 +19,14 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
   async function submitTotp(e: React.FormEvent) {
     e.preventDefault();
     setError(null); setBusy(true);
+    if (stepUp) {
+      const result = await fetch("/api/security/step-up", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code.trim() }) })
+        .then((r) => r.json()).catch(() => null);
+      setBusy(false);
+      if (!result?.ok) { setError(result?.error ?? "We couldn’t confirm that code. Please try again."); return; }
+      window.location.assign(next); // full load so the server sees the refreshed session cookie
+      return;
+    }
     const { error } = await createClient().auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
     setBusy(false);
     if (error) { setError(friendly(error, "auth/challenge")); return; }
@@ -40,8 +52,8 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
         <div className="card space-y-4 p-5 sm:p-6">
           <div>
             <p className="eyebrow">Two-factor</p>
-            <h1 className="mt-1 text-xl font-bold">{mode === "totp" ? "Enter your authenticator code" : "Use a recovery code"}</h1>
-            <p className="mt-1 text-sm text-muted">{mode === "totp" ? "Open the app on your phone and type the current 6-digit code." : "Enter one of the single-use codes you saved when you turned on two-factor."}</p>
+            <h1 className="mt-1 text-xl font-bold">{stepUp ? "Confirm it’s you" : mode === "totp" ? "Enter your authenticator code" : "Use a recovery code"}</h1>
+            <p className="mt-1 text-sm text-muted">{stepUp ? "This action needs a fresh code. Open the app on your phone and type the current 6-digit code. It stays valid for 5 minutes." : mode === "totp" ? "Open the app on your phone and type the current 6-digit code." : "Enter one of the single-use codes you saved when you turned on two-factor."}</p>
           </div>
 
           {mode === "totp" ? (
@@ -49,7 +61,7 @@ export function ChallengeForm({ factorId, next }: { factorId: string; next: stri
               <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value)} className="input text-center text-lg tracking-[0.4em]" placeholder="000000"/>
               {error && <p role="alert" className="rounded-lg bg-[#fff3ee] px-3 py-2 text-sm text-bad">{error}</p>}
               <button className="btn-primary w-full" disabled={busy || code.length !== 6}>{busy ? "Verifying…" : "Continue"}</button>
-              <button type="button" className="w-full text-xs text-muted underline" onClick={() => { setMode("recovery"); setError(null); }}>Lost your phone? Use a recovery code</button>
+              {!stepUp && <button type="button" className="w-full text-xs text-muted underline" onClick={() => { setMode("recovery"); setError(null); }}>Lost your phone? Use a recovery code</button>}
             </form>
           ) : (
             <form onSubmit={submitRecovery} className="space-y-3">
